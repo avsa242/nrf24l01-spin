@@ -1,20 +1,49 @@
 {
     --------------------------------------------
-    Filename:
-    Author:
-    Description:
-    Copyright (c) 20__
-    Started Month Day, Year
-    Updated Month Day, Year
+    Filename: wireless.2_4.nrf24l01.spin
+    Author: Jesse Burt
+    Description: Driver for Nordic Semi. nRF24L01+
+    Copyright (c) 2019
+    Started Jan 6, 2019
+    Updated Jan 6, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
+    TPOR        = 100 'ms
+    TRXSETTLE   = 130 'us
+    TTXSETTLE   = 130 'us
+    THCE        = 10  'us
+
+    RF_PWR_0    = %11           ' 0dBm
+    RF_PWR__6   = %10           ' -6dBm
+    RF_PWR__12  = %01           ' -12dBm
+    RF_PWR__18  = %00           ' -18dBm
+
+' Recommended states:
+' Power down:
+'   PWR_UP = 1: XO Start (wait Tpd2stby) transition to Standby I
+'   Tpd2stby:
+'       150uS Ext clock
+'       1.5ms Ext xtal, Ls < 30mH
+'       3.0ms Ext xtal, Ls < 60mH
+'       4.5ms Ext xtal, Ls < 90mH
+
+' Standby-I:
+'   TX_FIFO not empty, PRIM_RX = 0, CE = 1 for >= 10uS: -> TX Settling 130uS -> TX Mode
+'   TX finished with one packet, CE = 0: -> Standby-I
+
+'   PRIM_RX = 1, CE = 1: -> RX Settling 130uS -> RX Mode
+'   CE = 0 to return to Standby-I
+
+'   PWR-UP = 0 to return to Power Down
 
 VAR
 
+    byte    _CE, _CSN, _SCK, _MOSI, _MISO
+    word    _status
 
 OBJ
 
@@ -29,33 +58,74 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
     if lookdown(CE_PIN: 0..31) and lookdown(CSN_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
         if okay := spi.start (core#CLK_DELAY, core#CPOL)
-            time.MSleep (1)
+            time.MSleep (100)
+            _CE := CE_PIN
+            _CSN := CSN_PIN
+            _SCK := SCK_PIN
+            _MOSI := MOSI_PIN
+            _MISO := MISO_PIN
 
-                return okay
+            outa[_CE] := 0
+            dira[_CE] := 1
+            outa[_CSN] := 1
+            dira[_CSN] := 1
+
+            return okay
 
     return FALSE                                                'If we got here, something went wrong
 
-PRI readOne: readbyte
+PUB RPD
+' Received Power Detector
+'   Returns
+'   FALSE/0: No Carrier
+'   TRUE/-1: Carrier Detected
+    readRegX (core#NRF24_RPD, 8, @result)
+    result *= TRUE
 
-    readX (@readbyte, 1)
+PUB RXAddr(pipe, buf_addr)
+' Return address for data pipe 0 to 5 into buffer at address buf_addr
+' NOTE: This buffer must be a minimum of 5 bytes
+' Out-of-range values for pipe fill the buffer with (5) 0's and return FALSE
+    ifnot lookdown(pipe: 0..5)
+        bytefill(buf_addr, 0, 5)
+        return FALSE
+    readRegX (core#NRF24_RX_ADDR_P0 + pipe, 5, buf_addr)
 
-PRI readX(ptr_buff, num_bytes)
-'' Read num_bytes from the slave device into the address stored in ptr_buff
-    i2c.start
-    i2c.write (SLAVE_RD)
-    i2c.pread (ptr_buff, num_bytes, TRUE)
-    i2c.stop
+PUB TXAddr(buf_addr)
+' Writes transmit address to buffer at address buf_addr
+' NOTE: This buffer must be a minimum of 5 bytes
+    readRegX (core#NRF24_TX_ADDR, 5, buf_addr)
 
-PRI writeOne(data)
+PUB Status
+' Returns status of last SPI transaction
+    readRegX (core#NRF24_STATUS, 1, @result)'(reg, nr_bytes, buf_addr)
 
-    WriteX (data, 1)
+PUB writeRegX(cmd)
+' Write reg to MOSI
+' Read STATUS reg from MISO
+    outa[_CSN] := 0
+    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, cmd)'(Dpin, Cpin, Mode, Bits, Value)
+    _status := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)'Dpin, Cpin, Mode, Bits)
+'    spi.SHIFTOUT (_MOSI, _SCK, core#BITORDER, 8, LSB)
+'    spi.SHIFTOUT (_MOSI, _SCK, core#BITORDER, 8, MSB)
+    outa[_CSN] := 1
 
-PRI WriteX(ptr_buff, num_bytes)
-'' Write num_bytes to the slave device from the address stored in ptr_buff
-    i2c.start
-    i2c.write (SLAVE_WR)
-    i2c.pwrite (ptr_buff, num_bytes)
-    i2c.stop
+PUB readRegX(reg, nr_bytes, buf_addr) | tmp
+
+    ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet say sare for testing
+        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
+    outa[_CSN] := 0
+    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)              'Which register to query
+    _status := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)         'Get the status byte
+
+    case nr_bytes
+        1..5:
+            repeat tmp from 0 to nr_bytes-1
+                byte[buf_addr][tmp] := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)
+        OTHER:
+            result := FALSE
+            buf_addr := 0
+    outa[_CSN] := 1
 
 DAT
 {
