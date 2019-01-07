@@ -48,8 +48,8 @@ VAR
 OBJ
 
     spi:    "SPI_Asm"
-    core:   "core.con.nrf24l01"                           'File containing your device's register set
-    time:   "time"                                                'Basic timing functions
+    core:   "core.con.nrf24l01"
+    time:   "time"
 
 PUB Null
 ''This is not a top-level object
@@ -73,6 +73,19 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
             return okay
 
     return FALSE                                                'If we got here, something went wrong
+
+PUB Channel(ch)
+' Set/Get RF Channel
+'   Resulting frequency of set channel = 2400MHz + chan
+'       e.g., if chan is 35, Frequency is 2435MHz
+'   Valid values: 0..127 sets channel, -1 returns current channel
+    case ch
+        0..127:
+            writeRegX (core#NRF24_RF_CH, 1, @ch)
+        -1:
+            readRegX (core#NRF24_RF_CH, 1, @result)
+        OTHER:
+            return FALSE
 
 PUB RPD
 ' Received Power Detector
@@ -100,23 +113,31 @@ PUB Status
 ' Returns status of last SPI transaction
     readRegX (core#NRF24_STATUS, 1, @result)'(reg, nr_bytes, buf_addr)
 
-PUB writeRegX(cmd)
+PUB writeRegX(reg, nr_bytes, buf_addr) | tmp
 ' Write reg to MOSI
-' Read STATUS reg from MISO
+    ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet says are for testing
+        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
+
     outa[_CSN] := 0
-    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, cmd)'(Dpin, Cpin, Mode, Bits, Value)
-    _status := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)'Dpin, Cpin, Mode, Bits)
-'    spi.SHIFTOUT (_MOSI, _SCK, core#BITORDER, 8, LSB)
-'    spi.SHIFTOUT (_MOSI, _SCK, core#BITORDER, 8, MSB)
+    case nr_bytes
+        0:
+            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_W_REG|reg)     'Simple command
+        1..5:
+            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_W_REG|reg)     'Command w/nr_bytes data bytes following
+            repeat tmp from 0 to nr_bytes-1
+                spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
+        OTHER:
+            result := FALSE
+            buf_addr := 0
     outa[_CSN] := 1
 
 PUB readRegX(reg, nr_bytes, buf_addr) | tmp
-
-    ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet say sare for testing
+' Read reg from MISO
+    ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet says are for testing
         return FALSE                                                    ' only and will cause the chip to malfunction if written to.
+
     outa[_CSN] := 0
-    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)              'Which register to query
-    _status := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)         'Get the status byte
+    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_R_REG | reg)              'Which register to query
 
     case nr_bytes
         1..5:

@@ -21,6 +21,7 @@ OBJ
     ser   : "com.serial.terminal"
     time  : "time"
     nrf24 : "wireless.2_4.nrf24l01"
+    int   : "string.integer"
 
 VAR
 
@@ -29,9 +30,50 @@ VAR
 PUB Main
 
     Setup
+    Sweep(5)
+    repeat
+
     Read_RXPipe_Addr
     Read_TXPipe_Addr
+    Channel
     RPD
+
+PUB Sweep(reps) | ch, list
+
+    repeat reps
+        repeat ch from 0 to 127
+            ser.Position (0, 2)
+            ser.Str (string("Scanning channel "))
+            ser.Str (int.DecPadded (ch, 3))
+            nrf24.Channel (ch)
+            if nrf24.RPD
+                list++
+                ser.Position (0, list + 4)
+                ser.Str (int.DecPadded (ch, 3))
+            time.MSleep (100)
+
+PUB Channel | ch
+
+    ser.Str (string("RF Channel = "))
+    ser.Dec (ch := nrf24.Channel (-1))
+    ser.Str (string(" ("))
+    ser.Dec (2400+ch)
+    ser.Str (string("MHz)"))
+    ser.Str (string("  status = "))
+    ser.Hex (nrf24.Status, 8)
+    ser.NewLine
+
+    ch := 62
+    ser.Str (string("Set RF Channel = "))
+    ser.Dec (ch)
+    nrf24.Channel (ch)
+    ser.Str (string(" ("))
+    ser.Dec (2400+ch)
+    ser.Str (string("MHz). Readback channel = "))
+    ser.Dec (nrf24.Channel (-1))
+    ser.Str (string("  status = "))
+    ser.Hex (nrf24.Status, 8)
+    ser.NewLine
 
 PUB RPD
 
