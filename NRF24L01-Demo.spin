@@ -29,16 +29,41 @@ VAR
 
 PUB Main
 
+    dira[26] := 1
     Setup
 '    Sweep(1)
+'    CW_Test  
     CW (5)
-    repeat
+ '   repeat
 
     Read_RXPipe_Addr
     Read_TXPipe_Addr
     Channel
     RPD
     repeat
+
+PUB CW_Test | tmp
+' Set pwr_up = 1 and prim_rx = 0 (CONFIG)
+' wait 1.5ms
+' CONT_WAVE = 1
+' PLL_LOCK = 1
+' RF_PWR = x
+' Set CH
+' High (CE)
+
+    nrf24.PowerUp (TRUE)
+    nrf24.RXTX (0)
+    time.USleep (1500)
+    nrf24.CW (TRUE)
+    nrf24.PLL_Lock (TRUE)
+    nrf24.RFPower (%11)
+    nrf24.Channel (2)
+    nrf24.CE (1)
+    repeat until ser.CharIn == 13
+    nrf24.CE (0)
+'    repeat
+'        !outa[26]
+'        time.MSleep (100)
 
 PUB CW(reps) | cw_set, tmp
 

@@ -35,8 +35,11 @@ CON
 
 ' Register definitions (individual fields set in/read from registers are indented)
     NRF24_CONFIG                = $00
+    NRF24_CONFIG_MASK           = $7F
         FLD_PRIM_RX             = 0             ' Set TX/RX mode
+        FLD_PRIM_RX_MASK        = NRF24_CONFIG_MASK ^ (1 << FLD_PRIM_RX)
         FLD_PWR_UP              = 1
+        FLD_PWR_UP_MASK         = NRF24_CONFIG_MASK ^ (1 << FLD_PWR_UP)
         FLD_CRCO                = 2
         FLD_EN_CRC              = 3
         FLD_MASK_MAX_RT         = 4
@@ -74,14 +77,17 @@ CON
         MASK_RF_CH              = %1111111
 
     NRF24_RF_SETUP              = $06           'XXX UNEXPECTED POR VALUE ($00 - expected $0E)
+    NRF24_RF_SETUP_MASK         = $BE
         FLD_RF_PWR              = 1             ' Power Amplifier
-        MASK_RF_PWR             = %11
+        FLD_RF_PWR_BITS         = %11
+        FLD_RF_PWR_MASK         = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_PWR)
         FLD_RF_DR_HIGH          = 3             ' RF Data rates
         FLD_PLL_LOCK            = 4
+        FLD_PLL_LOCK_MASK       = NRF24_RF_SETUP_MASK ^ (1 << FLD_PLL_LOCK)
         FLD_RF_DR_LOW           = 5
                                                 ' Bit 6 reserved - set to 0
         FLD_CONT_WAVE           = 7
-        FLD_CONT_WAVE_MASK      = $BF ^ (1 << FLD_CONT_WAVE)
+        FLD_CONT_WAVE_MASK      = NRF24_RF_SETUP_MASK ^ (1 << FLD_CONT_WAVE)
 
     NRF24_STATUS                = $07
         FLD_TX_FULL             = 0

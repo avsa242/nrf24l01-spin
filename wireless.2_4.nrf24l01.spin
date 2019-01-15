@@ -74,6 +74,10 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
     return FALSE                                                'If we got here, something went wrong
 
+PUB CE(state)
+
+    outa[_CE] := state
+
 PUB Channel(ch)
 ' Set/Get RF Channel
 '   Resulting frequency of set channel = 2400MHz + ch
@@ -97,8 +101,7 @@ PUB CW(enabled) | tmp
             readRegX (core#NRF24_RF_SETUP, 1, @tmp)
         OTHER:
             readRegX (core#NRF24_RF_SETUP, 1, @result)
-'            return result
-            result >>= (core#FLD_CONT_WAVE & %1) * TRUE
+            result := ((result >> core#FLD_CONT_WAVE) & %1) * TRUE
             return result
 
     tmp &= core#FLD_CONT_WAVE_MASK
@@ -112,11 +115,65 @@ PUB LostPackets
     readRegX (core#NRF24_OBSERVE_TX, 1, @result)
     result := (result >> core#FLD_PLOS_CNT) & core#MASK_PLOS_CNT
 
+PUB PLL_Lock(enabled) | tmp
+' Force PLL Lock signal
+'   Valid values: 0: Disable, TRUE or 1: Enable.
+'   Any other value polls the chip and returns the current setting
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_PLL_LOCK
+            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
+        OTHER:
+            readRegX (core#NRF24_RF_SETUP, 1, @result)
+'            return result
+            result >>= (core#FLD_PLL_LOCK & %1) * TRUE
+            return result
+
+    tmp &= core#FLD_CONT_WAVE_MASK
+    tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
+    writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
+
+PUB PowerUp(enabled) | tmp
+'
+'   Valid values: 0: Disable, TRUE or 1: Enable.
+'   Any other value polls the chip and returns the current setting
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_PWR_UP
+            readRegX (core#NRF24_CONFIG, 1, @tmp)
+        OTHER:
+            readRegX (core#NRF24_CONFIG, 1, @result)
+'            return result
+            result >>= (core#FLD_PWR_UP & %1) * TRUE
+            return result
+
+    tmp &= core#FLD_PWR_UP_MASK
+    tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
+    writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
+
 PUB RetrPackets
 ' Count retransmitted packets
 '   Returns: Number of packets retransmitted since the start of transmission of a new packet
     readRegX (core#NRF24_OBSERVE_TX, 1, @result)
     result &= core#MASK_ARC_CNT
+
+PUB RFPower(power) | tmp
+' Force PLL Lock signal
+'   Valid values: 0: Disable, TRUE or 1: Enable.
+'   Any other value polls the chip and returns the current setting
+    case power
+        0..3:
+            power := power << core#FLD_RF_PWR
+            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
+        OTHER:
+            readRegX (core#NRF24_RF_SETUP, 1, @result)
+'            return result
+            result >>= (core#FLD_RF_PWR & %11)
+            return result
+
+    tmp &= core#FLD_RF_PWR_MASK
+    tmp := (tmp | power) & core#NRF24_RF_SETUP_MASK
+    writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
 PUB RPD
 ' Received Power Detector
@@ -139,6 +196,23 @@ PUB RXPipePending
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
     result := (Status & core#FLD_RX_P_NO)
+
+PUB RXTX(role) | tmp
+' 1: PRX, 0: PTX
+'   Any other value polls the chip and returns the current setting
+    case role
+        0, 1:
+            role := role << core#FLD_PRIM_RX
+            readRegX (core#NRF24_CONFIG, 1, @tmp)
+        OTHER:
+            readRegX (core#NRF24_CONFIG, 1, @result)
+'            return result
+            result >>= (core#FLD_PRIM_RX & %1)
+            return result
+
+    tmp &= core#FLD_PRIM_RX_MASK
+    tmp := (tmp | role) & core#NRF24_CONFIG_MASK
+    writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
 PUB TXAddr(buf_addr)
 ' Writes transmit address to buffer at address buf_addr
