@@ -76,8 +76,8 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
 PUB Channel(ch)
 ' Set/Get RF Channel
-'   Resulting frequency of set channel = 2400MHz + chan
-'       e.g., if chan is 35, Frequency is 2435MHz
+'   Resulting frequency of set channel = 2400MHz + ch
+'       e.g., if ch is 35, Frequency is 2435MHz
 '   Valid values: 0..127 sets channel, -1 returns current channel
     case ch
         0..127:
@@ -87,9 +87,40 @@ PUB Channel(ch)
         OTHER:
             return FALSE
 
+PUB CW(enabled) | tmp
+' Enable continuous carrier transmit
+'   Valid values: 0: Disable, TRUE or 1: Enable.
+'   Any other value polls the chip and returns the current setting
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_CONT_WAVE
+            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
+        OTHER:
+            readRegX (core#NRF24_RF_SETUP, 1, @result)
+'            return result
+            result >>= (core#FLD_CONT_WAVE & %1) * TRUE
+            return result
+
+    tmp &= core#FLD_CONT_WAVE_MASK
+    tmp := (tmp | enabled) & $BF
+    writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
+
+PUB LostPackets
+' Count lost packets
+'   Returns: Number of lost packets since last write to RF_CH reg.
+'   Max value is 15
+    readRegX (core#NRF24_OBSERVE_TX, 1, @result)
+    result := (result >> core#FLD_PLOS_CNT) & core#MASK_PLOS_CNT
+
+PUB RetrPackets
+' Count retransmitted packets
+'   Returns: Number of packets retransmitted since the start of transmission of a new packet
+    readRegX (core#NRF24_OBSERVE_TX, 1, @result)
+    result &= core#MASK_ARC_CNT
+
 PUB RPD
 ' Received Power Detector
-'   Returns
+'   Returns:
 '   FALSE/0: No Carrier
 '   TRUE/-1: Carrier Detected
     readRegX (core#NRF24_RPD, 8, @result)
@@ -104,14 +135,24 @@ PUB RXAddr(pipe, buf_addr)
         return FALSE
     readRegX (core#NRF24_RX_ADDR_P0 + pipe, 5, buf_addr)
 
+PUB RXPipePending
+' Returns pipe number of pending data available in FIFO
+'   Returns: Pipe number 0..5, or 7 if FIFO is empty
+    result := (Status & core#FLD_RX_P_NO)
+
 PUB TXAddr(buf_addr)
 ' Writes transmit address to buffer at address buf_addr
 ' NOTE: This buffer must be a minimum of 5 bytes
     readRegX (core#NRF24_TX_ADDR, 5, buf_addr)
 
+PUB TXFIFO_Full
+' Returns TX FIFO full flag
+'   Returns: TRUE if full, FALSE if locations available in TX FIFO
+    result := (Status & core#FLD_TX_FULL) * TRUE
+
 PUB Status
 ' Returns status of last SPI transaction
-    readRegX (core#NRF24_STATUS, 1, @result)'(reg, nr_bytes, buf_addr)
+    readRegX (core#NRF24_STATUS, 1, @result)
 
 PUB writeRegX(reg, nr_bytes, buf_addr) | tmp
 ' Write reg to MOSI

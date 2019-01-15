@@ -79,7 +79,9 @@ CON
         FLD_RF_DR_HIGH          = 3             ' RF Data rates
         FLD_PLL_LOCK            = 4
         FLD_RF_DR_LOW           = 5
+                                                ' Bit 6 reserved - set to 0
         FLD_CONT_WAVE           = 7
+        FLD_CONT_WAVE_MASK      = $BF ^ (1 << FLD_CONT_WAVE)
 
     NRF24_STATUS                = $07
         FLD_TX_FULL             = 0

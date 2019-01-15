@@ -30,13 +30,29 @@ VAR
 PUB Main
 
     Setup
-    Sweep(5)
+'    Sweep(1)
+    CW (5)
     repeat
 
     Read_RXPipe_Addr
     Read_TXPipe_Addr
     Channel
     RPD
+    repeat
+
+PUB CW(reps) | cw_set, tmp
+
+    repeat tmp from 1 to reps
+        cw_set := nrf24.CW (2)
+        case cw_set
+            FALSE:
+                nrf24.CW (TRUE)
+            TRUE:
+                nrf24.CW (FALSE)
+        ser.Position (0, 2+tmp)
+        ser.Str (string("Current CW setting: "))
+        ser.Dec (cw_set)
+        time.Sleep (1)
 
 PUB Sweep(reps) | ch, list
 
