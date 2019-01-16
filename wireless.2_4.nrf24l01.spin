@@ -86,10 +86,8 @@ PUB Channel(ch)
     case ch
         0..127:
             writeRegX (core#NRF24_RF_CH, 1, @ch)
-        -1:
-            readRegX (core#NRF24_RF_CH, 1, @result)
         OTHER:
-            return FALSE
+            readRegX (core#NRF24_RF_CH, 1, @result)
 
 PUB CW(enabled) | tmp
 ' Enable continuous carrier transmit
@@ -105,7 +103,7 @@ PUB CW(enabled) | tmp
             return result
 
     tmp &= core#FLD_CONT_WAVE_MASK
-    tmp := (tmp | enabled) & $BF
+    tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
 PUB LostPackets
@@ -126,10 +124,10 @@ PUB PLL_Lock(enabled) | tmp
         OTHER:
             readRegX (core#NRF24_RF_SETUP, 1, @result)
 '            return result
-            result >>= (core#FLD_PLL_LOCK & %1) * TRUE
+            result := ((result >> core#FLD_PLL_LOCK) & %1) * TRUE
             return result
 
-    tmp &= core#FLD_CONT_WAVE_MASK
+    tmp &= core#FLD_PLL_LOCK_MASK
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
@@ -144,12 +142,12 @@ PUB PowerUp(enabled) | tmp
         OTHER:
             readRegX (core#NRF24_CONFIG, 1, @result)
 '            return result
-            result >>= (core#FLD_PWR_UP & %1) * TRUE
+            result := ((result >> core#FLD_PWR_UP) & %1) * TRUE
             return result
 
     tmp &= core#FLD_PWR_UP_MASK
-    tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
-    writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
+    tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
+    writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
 PUB RetrPackets
 ' Count retransmitted packets
@@ -168,7 +166,7 @@ PUB RFPower(power) | tmp
         OTHER:
             readRegX (core#NRF24_RF_SETUP, 1, @result)
 '            return result
-            result >>= (core#FLD_RF_PWR & %11)
+            result := (result >> core#FLD_RF_PWR) & %11
             return result
 
     tmp &= core#FLD_RF_PWR_MASK
@@ -206,8 +204,7 @@ PUB RXTX(role) | tmp
             readRegX (core#NRF24_CONFIG, 1, @tmp)
         OTHER:
             readRegX (core#NRF24_CONFIG, 1, @result)
-'            return result
-            result >>= (core#FLD_PRIM_RX & %1)
+            result := ((result >> core#FLD_PRIM_RX) & %1)
             return result
 
     tmp &= core#FLD_PRIM_RX_MASK

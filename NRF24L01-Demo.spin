@@ -32,8 +32,9 @@ PUB Main
     dira[26] := 1
     Setup
 '    Sweep(1)
-'    CW_Test  
-    CW (5)
+    CW_Test  
+    flash
+'    CW (5)
  '   repeat
 
     Read_RXPipe_Addr
@@ -41,6 +42,12 @@ PUB Main
     Channel
     RPD
     repeat
+
+PUB flash
+
+    repeat
+        !outa[26]
+        time.MSleep (100)
 
 PUB CW_Test | tmp
 ' Set pwr_up = 1 and prim_rx = 0 (CONFIG)
@@ -52,18 +59,47 @@ PUB CW_Test | tmp
 ' High (CE)
 
     nrf24.PowerUp (TRUE)
+    ser.Str (string("PowerUp = "))
+    ser.Dec (nrf24.PowerUp (-2))
+    ser.NewLine
+
     nrf24.RXTX (0)
+    ser.Str (string("RX/TX = "))
+    ser.Dec (nrf24.RXTX (-2))
+    ser.NewLine
+
     time.USleep (1500)
+
     nrf24.CW (TRUE)
+    ser.Str (string("CW = "))
+    ser.Dec (nrf24.CW (-2))
+    ser.NewLine
+
     nrf24.PLL_Lock (TRUE)
-    nrf24.RFPower (%11)
+    ser.Str (string("PLL_LOCK = "))
+    ser.Dec (nrf24.PLL_Lock (-2))
+    ser.NewLine
+
+    nrf24.RFPower (%00)
+    ser.Str (string("RF Power = "))
+    ser.Dec (nrf24.RFPower (-2))
+    ser.NewLine
+
     nrf24.Channel (2)
+    ser.Str (string("CH = "))
+    ser.Dec (nrf24.Channel (-2))
+    ser.NewLine
+
     nrf24.CE (1)
+    ser.Str (string("CE = "))
+    ser.Dec (ina[0])
+    ser.NewLine
+
     repeat until ser.CharIn == 13
     nrf24.CE (0)
-'    repeat
-'        !outa[26]
-'        time.MSleep (100)
+    ser.Str (string("CE = "))
+    ser.Dec (ina[0])
+    ser.NewLine
 
 PUB CW(reps) | cw_set, tmp
 
