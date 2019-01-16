@@ -82,7 +82,8 @@ PUB Channel(ch)
 ' Set/Get RF Channel
 '   Resulting frequency of set channel = 2400MHz + ch
 '       e.g., if ch is 35, Frequency is 2435MHz
-'   Valid values: 0..127 sets channel, -1 returns current channel
+'   Valid values: 0..127 sets channel
+'   Any other value polls the chip and returns the current setting
     case ch
         0..127:
             writeRegX (core#NRF24_RF_CH, 1, @ch)
@@ -90,7 +91,7 @@ PUB Channel(ch)
             readRegX (core#NRF24_RF_CH, 1, @result)
 
 PUB CW(enabled) | tmp
-' Enable continuous carrier transmit
+' Enable continuous carrier transmit (intended for testing only)
 '   Valid values: 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
     case ||enabled
@@ -114,7 +115,7 @@ PUB LostPackets
     result := (result >> core#FLD_PLOS_CNT) & core#MASK_PLOS_CNT
 
 PUB PLL_Lock(enabled) | tmp
-' Force PLL Lock signal
+' Force PLL Lock signal (intended for testing only)
 '   Valid values: 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
     case ||enabled
@@ -123,7 +124,6 @@ PUB PLL_Lock(enabled) | tmp
             readRegX (core#NRF24_RF_SETUP, 1, @tmp)
         OTHER:
             readRegX (core#NRF24_RF_SETUP, 1, @result)
-'            return result
             result := ((result >> core#FLD_PLL_LOCK) & %1) * TRUE
             return result
 
@@ -132,7 +132,7 @@ PUB PLL_Lock(enabled) | tmp
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
 PUB PowerUp(enabled) | tmp
-'
+' Power on or off
 '   Valid values: 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
     case ||enabled
@@ -141,7 +141,6 @@ PUB PowerUp(enabled) | tmp
             readRegX (core#NRF24_CONFIG, 1, @tmp)
         OTHER:
             readRegX (core#NRF24_CONFIG, 1, @result)
-'            return result
             result := ((result >> core#FLD_PWR_UP) & %1) * TRUE
             return result
 
@@ -156,8 +155,8 @@ PUB RetrPackets
     result &= core#MASK_ARC_CNT
 
 PUB RFPower(power) | tmp
-' Force PLL Lock signal
-'   Valid values: 0: Disable, TRUE or 1: Enable.
+' Set RF output power in TX mode
+'   Valid values: 0: -18dBm, 1: -12dBm, 2: -6dBm, 3: 0dBm
 '   Any other value polls the chip and returns the current setting
     case power
         0..3:
@@ -165,8 +164,7 @@ PUB RFPower(power) | tmp
             readRegX (core#NRF24_RF_SETUP, 1, @tmp)
         OTHER:
             readRegX (core#NRF24_RF_SETUP, 1, @result)
-'            return result
-            result := (result >> core#FLD_RF_PWR) & %11
+            result := (result >> core#FLD_RF_PWR) & core#FLD_RF_PWR_BITS
             return result
 
     tmp &= core#FLD_RF_PWR_MASK
@@ -196,7 +194,8 @@ PUB RXPipePending
     result := (Status & core#FLD_RX_P_NO)
 
 PUB RXTX(role) | tmp
-' 1: PRX, 0: PTX
+' Set to Primary RX or TX
+'   Valid values: 0: TX, 1: RX
 '   Any other value polls the chip and returns the current setting
     case role
         0, 1:
