@@ -32,7 +32,8 @@ PUB Main
     dira[26] := 1
     Setup
 '    Sweep(1)
-    CW_Test  
+'    CW_Test  
+    Rate
     flash
 '    CW (5)
  '   repeat
@@ -48,6 +49,22 @@ PUB flash
     repeat
         !outa[26]
         time.MSleep (100)
+
+PUB Rate | tmp
+
+    ser.Str (string("Data rate = "))
+    ser.Dec (nrf24.Rate (-2))
+    ser.NewLine
+
+    nrf24.Rate (2000)
+    ser.Str (string("Data rate = "))
+    ser.Dec (nrf24.Rate (-2))
+    ser.NewLine
+
+    nrf24.Rate (250)
+    ser.Str (string("Data rate = "))
+    ser.Dec (nrf24.Rate (-2))
+    ser.NewLine
 
 PUB CW_Test | tmp
 ' Set pwr_up = 1 and prim_rx = 0 (CONFIG)

@@ -82,9 +82,11 @@ CON
         FLD_RF_PWR_BITS         = %11
         FLD_RF_PWR_MASK         = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_PWR)
         FLD_RF_DR_HIGH          = 3             ' RF Data rates
+        FLD_RF_DR_HIGH_MASK     = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_DR_HIGH)
         FLD_PLL_LOCK            = 4
         FLD_PLL_LOCK_MASK       = NRF24_RF_SETUP_MASK ^ (1 << FLD_PLL_LOCK)
         FLD_RF_DR_LOW           = 5
+        FLD_RF_DR_LOW_MASK      = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_DR_LOW)
                                                 ' Bit 6 reserved - set to 0
         FLD_CONT_WAVE           = 7
         FLD_CONT_WAVE_MASK      = NRF24_RF_SETUP_MASK ^ (1 << FLD_CONT_WAVE)
