@@ -152,27 +152,23 @@ PUB Rate(kbps) | tmp, lo, hi, tmp2, tmp3
 ' Set RF data rate in kbps
 '   Valid values: 250, 1000, 2000
 '   Any other value polls the chip and returns the current setting
-    case kbps := lookdown(kbps: 1000, 2000, 250)    '%00/1, %01/2, %10/3
-        1..2:
-            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
-            lo := %0 << core#FLD_RF_DR_LOW
-            hi := (kbps - 1) << core#FLD_RF_DR_HIGH
-        3:
-            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
-            lo := %1 << core#FLD_RF_DR_LOW
-            hi := %0 << core#FLD_RF_DR_HIGH
+    readRegX (core#NRF24_RF_SETUP, 1, @tmp)
+    case kbps
+        1000:
+            tmp &= core#FLD_RF_DR_HIGH_MASK
+            tmp &= core#FLD_RF_DR_LOW_MASK
+        2000:
+            tmp |= (1 << core#FLD_RF_DR_HIGH)
+            tmp &= core#FLD_RF_DR_LOW_MASK
+        250:
+            tmp &= core#FLD_RF_DR_HIGH_MASK
+            tmp |= (1 << core#FLD_RF_DR_LOW)
         OTHER:
             readRegX (core#NRF24_RF_SETUP, 1, @tmp)
-            tmp := (tmp >> core#FLD_RF_DR_LOW) & %1
-            tmp := (tmp << 1) | ((tmp >> core#FLD_RF_DR_HIGH) & %1)
-'            return lookup(tmp: 1000, 2000, 250)
-            return tmp
+            tmp := (tmp >> core#FLD_RF_DR_HIGH) & %101          'Only care about the RF_DR_x bits
+            result := lookupz(tmp: 1000, 2000, 0, 0, 250)
+            return result
 
-    tmp2 := tmp & core#FLD_RF_DR_LOW_MASK
-    tmp2 := (tmp | lo) & core#NRF24_RF_SETUP_MASK
-    tmp3 := tmp & core#FLD_RF_DR_HIGH_MASK
-    tmp3 := (tmp | hi) & core#NRF24_RF_SETUP_MASK
-    tmp := tmp2 | tmp3
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
 PUB RetrPackets

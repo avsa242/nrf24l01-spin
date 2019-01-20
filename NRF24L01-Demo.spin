@@ -53,16 +53,25 @@ PUB flash
 PUB Rate | tmp
 
     ser.Str (string("Data rate = "))
+'    ser.Hex (nrf24.Rate (-2), 2)
     ser.Dec (nrf24.Rate (-2))
     ser.NewLine
 
-    nrf24.Rate (2000)
+    nrf24.Rate (1000)'06
     ser.Str (string("Data rate = "))
+'    ser.Hex (nrf24.Rate (-2), 2)
     ser.Dec (nrf24.Rate (-2))
     ser.NewLine
 
-    nrf24.Rate (250)
+    nrf24.Rate (2000)'0E
     ser.Str (string("Data rate = "))
+'    ser.Hex (nrf24.Rate (-2), 2)
+    ser.Dec (nrf24.Rate (-2))
+    ser.NewLine
+
+    nrf24.Rate (250)'26
+    ser.Str (string("Data rate = "))
+'    ser.Hex (nrf24.Rate (-2), 2)
     ser.Dec (nrf24.Rate (-2))
     ser.NewLine
 
