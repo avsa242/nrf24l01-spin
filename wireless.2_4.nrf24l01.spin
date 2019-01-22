@@ -208,6 +208,12 @@ PUB RXFIFO_Empty
     readRegX (core#NRF24_FIFO_STATUS, 1, @result)'(reg, nr_bytes, buf_addr)
     result &= (1 << core#FLD_RXFIFO_EMPTY) * TRUE
 
+PUB RXFIFO_Full
+' Queries the FIFO_STATUS register for RX FIFO full flag
+'   Returns TRUE if full, FALSE if there're available locations in the RX FIFO
+    readRegX (core#NRF24_FIFO_STATUS, 1, @result)
+    result &= (1 << core#FLD_RXFIFO_FULL) * TRUE
+
 PUB RXPipePending
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
