@@ -94,14 +94,12 @@ PUB CW(enabled) | tmp
 ' Enable continuous carrier transmit (intended for testing only)
 '   Valid values: 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case ||enabled
         0, 1:
             enabled := ||enabled << core#FLD_CONT_WAVE
-            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
         OTHER:
-            readRegX (core#NRF24_RF_SETUP, 1, @result)
-            result := ((result >> core#FLD_CONT_WAVE) & %1) * TRUE
-            return result
+            return ((tmp >> core#FLD_CONT_WAVE) & %1) * TRUE
 
     tmp &= core#FLD_CONT_WAVE_MASK
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
@@ -118,14 +116,12 @@ PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
 '   Valid values: 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case ||enabled
         0, 1:
             enabled := ||enabled << core#FLD_PLL_LOCK
-            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
         OTHER:
-            readRegX (core#NRF24_RF_SETUP, 1, @result)
-            result := ((result >> core#FLD_PLL_LOCK) & %1) * TRUE
-            return result
+            return ((tmp >> core#FLD_PLL_LOCK) & %1) * TRUE
 
     tmp &= core#FLD_PLL_LOCK_MASK
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
@@ -135,14 +131,12 @@ PUB PowerUp(enabled) | tmp
 ' Power on or off
 '   Valid values: 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_CONFIG, 1, @tmp)
     case ||enabled
         0, 1:
             enabled := ||enabled << core#FLD_PWR_UP
-            readRegX (core#NRF24_CONFIG, 1, @tmp)
         OTHER:
-            readRegX (core#NRF24_CONFIG, 1, @result)
-            result := ((result >> core#FLD_PWR_UP) & %1) * TRUE
-            return result
+            return ((tmp >> core#FLD_PWR_UP) & %1) * TRUE
 
     tmp &= core#FLD_PWR_UP_MASK
     tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
@@ -164,7 +158,6 @@ PUB Rate(kbps) | tmp, lo, hi, tmp2, tmp3
             tmp &= core#FLD_RF_DR_HIGH_MASK
             tmp |= (1 << core#FLD_RF_DR_LOW)
         OTHER:
-            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
             tmp := (tmp >> core#FLD_RF_DR_HIGH) & %101          'Only care about the RF_DR_x bits
             result := lookupz(tmp: 1000, 2000, 0, 0, 250)
             return result
@@ -181,14 +174,12 @@ PUB RFPower(power) | tmp
 ' Set RF output power in TX mode
 '   Valid values: 0: -18dBm, 1: -12dBm, 2: -6dBm, 3: 0dBm
 '   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case power
         0..3:
             power := power << core#FLD_RF_PWR
-            readRegX (core#NRF24_RF_SETUP, 1, @tmp)
         OTHER:
-            readRegX (core#NRF24_RF_SETUP, 1, @result)
-            result := (result >> core#FLD_RF_PWR) & core#FLD_RF_PWR_BITS
-            return result
+            return (tmp >> core#FLD_RF_PWR) & core#FLD_RF_PWR_BITS
 
     tmp &= core#FLD_RF_PWR_MASK
     tmp := (tmp | power) & core#NRF24_RF_SETUP_MASK
@@ -220,14 +211,12 @@ PUB RXTX(role) | tmp
 ' Set to Primary RX or TX
 '   Valid values: 0: TX, 1: RX
 '   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_CONFIG, 1, @tmp)
     case role
         0, 1:
             role := role << core#FLD_PRIM_RX
-            readRegX (core#NRF24_CONFIG, 1, @tmp)
         OTHER:
-            readRegX (core#NRF24_CONFIG, 1, @result)
-            result := ((result >> core#FLD_PRIM_RX) & %1)
-            return result
+            return ((tmp >> core#FLD_PRIM_RX) & %1)
 
     tmp &= core#FLD_PRIM_RX_MASK
     tmp := (tmp | role) & core#NRF24_CONFIG_MASK

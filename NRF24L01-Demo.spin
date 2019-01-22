@@ -31,10 +31,10 @@ PUB Main
 
     dira[26] := 1
     Setup
-'    Sweep(1)
-'    CW_Test  
+    Sweep(1)
+    CW_Test  
     Rate
-    flash
+'    flash
 '    CW (5)
  '   repeat
 
@@ -42,7 +42,7 @@ PUB Main
     Read_TXPipe_Addr
     Channel
     RPD
-    repeat
+    flash
 
 PUB flash
 
@@ -53,25 +53,21 @@ PUB flash
 PUB Rate | tmp
 
     ser.Str (string("Data rate = "))
-'    ser.Hex (nrf24.Rate (-2), 2)
     ser.Dec (nrf24.Rate (-2))
     ser.NewLine
 
     nrf24.Rate (1000)'06
     ser.Str (string("Data rate = "))
-'    ser.Hex (nrf24.Rate (-2), 2)
     ser.Dec (nrf24.Rate (-2))
     ser.NewLine
 
     nrf24.Rate (2000)'0E
     ser.Str (string("Data rate = "))
-'    ser.Hex (nrf24.Rate (-2), 2)
     ser.Dec (nrf24.Rate (-2))
     ser.NewLine
 
     nrf24.Rate (250)'26
     ser.Str (string("Data rate = "))
-'    ser.Hex (nrf24.Rate (-2), 2)
     ser.Dec (nrf24.Rate (-2))
     ser.NewLine
 
