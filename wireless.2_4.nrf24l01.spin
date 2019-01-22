@@ -250,6 +250,12 @@ PUB TXFIFO_Full
 '   Returns: TRUE if full, FALSE if locations available in TX FIFO
     result := (Status & core#FLD_TX_FULL) * TRUE
 
+PUB TXReuse
+' Queries the FIFO_STATUS register for TX_REUSE flag
+'   Returns TRUE if re-using last transmitted payload, FALSE if not
+    readRegX (core#NRF24_FIFO_STATUS, 1, @result)
+    result &= (1 << core#FLD_TXFIFO_REUSE) * TRUE
+
 PUB Status
 ' Returns status of last SPI transaction
     readRegX (core#NRF24_STATUS, 1, @result)
