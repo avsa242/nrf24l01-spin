@@ -239,6 +239,12 @@ PUB TXAddr(buf_addr)
 ' NOTE: This buffer must be a minimum of 5 bytes
     readRegX (core#NRF24_TX_ADDR, 5, buf_addr)
 
+PUB TXFIFO_Empty
+' Queries the FIFO_STATUS register for TX FIFO empty flag
+'   Returns TRUE if empty, FALSE if there's data in TX FIFO
+    readRegX (core#NRF24_FIFO_STATUS, 1, @result)
+    result &= (1 << core#FLD_TXFIFO_EMPTY) * TRUE
+
 PUB TXFIFO_Full
 ' Returns TX FIFO full flag
 '   Returns: TRUE if full, FALSE if locations available in TX FIFO
