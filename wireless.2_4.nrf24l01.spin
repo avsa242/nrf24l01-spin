@@ -202,6 +202,12 @@ PUB RXAddr(pipe, buf_addr)
         return FALSE
     readRegX (core#NRF24_RX_ADDR_P0 + pipe, 5, buf_addr)
 
+PUB RXFIFO_Empty
+' Queries the FIFO_STATUS register for RX FIFO empty flag
+'   Returns TRUE if empty, FALSE if there's data in RX FIFO
+    readRegX (core#NRF24_FIFO_STATUS, 1, @result)'(reg, nr_bytes, buf_addr)
+    result &= (1 << core#FLD_RXFIFO_EMPTY) * TRUE
+
 PUB RXPipePending
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
