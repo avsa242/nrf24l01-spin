@@ -12,7 +12,7 @@
 
 CON
 
-    TPOR        = 100 'ms
+    TPOR        = 100_000 'us
     TRXSETTLE   = 130 'us
     TTXSETTLE   = 130 'us
     THCE        = 10  'us
@@ -58,7 +58,7 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
     if lookdown(CE_PIN: 0..31) and lookdown(CSN_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
         if okay := spi.start (core#CLK_DELAY, core#CPOL)
-            time.MSleep (100)
+            time.USleep (TPOR)
             _CE := CE_PIN
             _CSN := CSN_PIN
             _SCK := SCK_PIN
@@ -213,6 +213,18 @@ PUB RXFIFO_Full
 '   Returns TRUE if full, FALSE if there're available locations in the RX FIFO
     readRegX (core#NRF24_FIFO_STATUS, 1, @result)
     result &= (1 << core#FLD_RXFIFO_FULL) * TRUE
+
+PUB RXPayload(pipe) | tmp
+' Queries the RX_PW_Px register (where x is the pipe number 0 to 5 passed)
+'   Returns number of bytes in RX payload in data pipe (1..32 bytes, or 0 if pipe unused)
+'   Valid values: 0..5
+'   Any other value returns FALSE
+    case pipe
+        0..5:
+            readRegX (core#NRF24_RX_PW_P0 + pipe, 1, @result)
+            return (result & core#MASK_RX_PW_P0)
+        OTHER:
+            return FALSE
 
 PUB RXPipePending
 ' Returns pipe number of pending data available in FIFO
