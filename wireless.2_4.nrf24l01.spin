@@ -78,6 +78,21 @@ PUB CE(state)
 
     outa[_CE] := state
 
+PUB AddressWidth(bytes) | tmp
+' Set width, in bytes, of RX/TX address field
+'   Valid values: 3, 4, 5
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_SETUP_AW, 1, @tmp)
+    case bytes
+        3, 4, 5:
+            bytes := bytes-2
+        OTHER:
+            return (tmp & core#BITS_AW) + 2
+
+    tmp &= core#MASK_AW
+    tmp := (tmp | bytes) & core#NRF24_SETUP_AW_MASK
+    writeRegX (core#NRF24_SETUP_AW, 1, @tmp)
+
 PUB Channel(ch)
 ' Set/Get RF Channel
 '   Resulting frequency of set channel = 2400MHz + ch

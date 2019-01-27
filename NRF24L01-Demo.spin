@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    EN_RXADDR (1)
+    SETUP_AW (2)
+'    EN_RXADDR (1)
 '    ENAA (1)
 '    INTMASK (2)
 '    EN_CRC (2)
@@ -217,6 +218,15 @@ PUB INTMASK(reps) | mask
             nrf24.IntMask (mask)
             ser.Str (string("Interrupt Mask = "))
             ser.Bin (nrf24.IntMask (-2), 3)
+            ser.NewLine
+
+PUB SETUP_AW(reps) | bytes
+
+    repeat reps
+        repeat bytes from 3 to 5
+            nrf24.AddressWidth (bytes)
+            ser.Str (string("Address width = "))
+            ser.Dec (nrf24.AddressWidth (-2))
             ser.NewLine
 
 PUB Sweep(reps) | ch, list

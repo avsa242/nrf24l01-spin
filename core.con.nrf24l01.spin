@@ -73,8 +73,10 @@ CON
         MASK_EN_RXADDR          = NRF24_EN_RXADDR_MASK ^ (BITS_EN_RXADDR << FLD_ERX_P0)
 
     NRF24_SETUP_AW              = $03
+    NRF24_SETUP_AW_MASK         = $03
         FLD_AW                  = 0
         BITS_AW                 = %11
+        MASK_AW                 = NRF24_SETUP_AW_MASK ^ (BITS_AW << FLD_AW)
 
     NRF24_SETUP_RETR            = $04
         FLD_ARD                 = 4
