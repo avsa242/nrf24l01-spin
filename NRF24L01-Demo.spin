@@ -12,8 +12,10 @@
 
 CON
 
-    _clkmode = cfg#_clkmode
-    _xinfreq = cfg#_xinfreq
+    _clkmode    = cfg#_clkmode
+    _xinfreq    = cfg#_xinfreq
+
+    DEBUG_LED   = cfg#LED1
 
 OBJ
 
@@ -29,9 +31,10 @@ VAR
 
 PUB Main
 
-    dira[26] := 1
+    dira[DEBUG_LED] := 1
     Setup
-    Power
+    CRCO(2)
+'    Power
 '    Sweep(1)
 '    CW_Test
 '    Rate
@@ -48,7 +51,7 @@ PUB Main
 PUB flash
 
     repeat
-        !outa[26]
+        !outa[DEBUG_LED]
         time.MSleep (100)
 
 PUB Power | tmp
@@ -145,6 +148,19 @@ PUB CW_Test | tmp
     ser.Str (string("CE = "))
     ser.Dec (ina[0])
     ser.NewLine
+
+PUB CRCO(reps)
+
+    repeat reps
+        nrf24.CRCEncoding (1)
+        ser.Str (string("CRCO bytes = "))
+        ser.Dec (nrf24.CRCEncoding (-2))
+        ser.NewLine
+
+        nrf24.CRCEncoding (2)
+        ser.Str (string("CRCO bytes = "))
+        ser.Dec (nrf24.CRCEncoding (-2))
+        ser.NewLine
 
 PUB CW(reps) | cw_set, tmp
 

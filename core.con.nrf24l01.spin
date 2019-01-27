@@ -37,10 +37,11 @@ CON
     NRF24_CONFIG                = $00
     NRF24_CONFIG_MASK           = $7F
         FLD_PRIM_RX             = 0             ' Set TX/RX mode
-        FLD_PRIM_RX_MASK        = NRF24_CONFIG_MASK ^ (1 << FLD_PRIM_RX)
+        MASK_PRIM_RX            = NRF24_CONFIG_MASK ^ (1 << FLD_PRIM_RX)
         FLD_PWR_UP              = 1
-        FLD_PWR_UP_MASK         = NRF24_CONFIG_MASK ^ (1 << FLD_PWR_UP)
+        MASK_PWR_UP             = NRF24_CONFIG_MASK ^ (1 << FLD_PWR_UP)
         FLD_CRCO                = 2
+        MASK_CRCO               = NRF24_CONFIG_MASK ^ (1 << FLD_CRCO)
         FLD_EN_CRC              = 3
         FLD_MASK_MAX_RT         = 4
         FLD_MASK_TX_DS          = 5
@@ -64,49 +65,49 @@ CON
 
     NRF24_SETUP_AW              = $03
         FLD_AW                  = 0
-        MASK_AW                 = %11
+        BITS_AW                 = %11
 
     NRF24_SETUP_RETR            = $04
         FLD_ARD                 = 4
-        MASK_ARD                = %1111
+        BITS_ARD                = %1111
         FLD_ARC                 = 0
-        MASK_ARC                = %1111
+        BITS_ARC                = %1111
 
     NRF24_RF_CH                 = $05           ' RF Channel frequency. F0 = 2400 + RF_CH (MHz)
         FLD_RF_CH               = 0
-        MASK_RF_CH              = %1111111
+        BITS_RF_CH              = %1111111
 
     NRF24_RF_SETUP              = $06           'XXX UNEXPECTED POR VALUE ($00 - expected $0E)
     NRF24_RF_SETUP_MASK         = $BE
         FLD_RF_PWR              = 1             ' Power Amplifier
-        FLD_RF_PWR_BITS         = %11
-        FLD_RF_PWR_MASK         = NRF24_RF_SETUP_MASK ^ (FLD_RF_PWR_BITS << FLD_RF_PWR)
+        BITS_RF_PWR             = %11
+        MASK_RF_PWR             = NRF24_RF_SETUP_MASK ^ (BITS_RF_PWR << FLD_RF_PWR)
         FLD_RF_DR_HIGH          = 3             ' RF Data rates
-        FLD_RF_DR_HIGH_MASK     = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_DR_HIGH)
+        MASK_RF_DR_HIGH         = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_DR_HIGH)
         FLD_PLL_LOCK            = 4
-        FLD_PLL_LOCK_MASK       = NRF24_RF_SETUP_MASK ^ (1 << FLD_PLL_LOCK)
+        MASK_PLL_LOCK           = NRF24_RF_SETUP_MASK ^ (1 << FLD_PLL_LOCK)
         FLD_RF_DR_LOW           = 5
-        FLD_RF_DR_LOW_MASK      = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_DR_LOW)
+        MASK_RF_DR_LOW          = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_DR_LOW)
                                                 ' Bit 6 reserved - set to 0
         FLD_CONT_WAVE           = 7
-        FLD_CONT_WAVE_MASK      = NRF24_RF_SETUP_MASK ^ (1 << FLD_CONT_WAVE)
+        MASK_CONT_WAVE          = NRF24_RF_SETUP_MASK ^ (1 << FLD_CONT_WAVE)
 
     NRF24_STATUS                = $07
         FLD_TX_FULL             = 0
         FLD_RX_P_NO             = 1
-        MASK_RX_P_NO            = %111
+        BITS_RX_P_NO            = %111
         FLD_MAX_RT              = 4
-        MASK_MAX_RT             = %1
+        BITS_MAX_RT             = %1
         FLD_TX_DS               = 5
-        MASK_TX_DS              = %1
+        BITS_TX_DS              = %1
         FLD_RX_DR               = 6
-        MASK_RX_DR              = %1
+        BITS_RX_DR              = %1
 
     NRF24_OBSERVE_TX            = $08
         FLD_ARC_CNT             = 0            ' Retransmission count (current transaction)
-        MASK_ARC_CNT            = %1111
+        BITS_ARC_CNT            = %1111
         FLD_PLOS_CNT            = 4            ' Retransmission count (since last channel change)
-        MASK_PLOS_CNT           = %1111
+        BITS_PLOS_CNT           = %1111
 
     NRF24_RPD                   = $09           ' Received Power Detector (RPD). Bit 0: > -64dBm = 1, < -64dBm = 0
         FLD_RPD                 = 0
@@ -123,26 +124,25 @@ CON
         MASK_RX_ADDR_P5         = $FF
 
     NRF24_TX_ADDR               = $10
-'        MASK_TX_ADDR            = $FF_FF_FF_FF_FF
 
     NRF24_RX_PW_P0              = $11
         FLD_RX_PW_P0            = 0
-        MASK_RX_PW_P0           = %111111
+        BITS_RX_PW_P0           = %111111
     NRF24_RX_PW_P1              = $12
         FLD_RX_PW_P1            = 0
-        MASK_RX_PW_P1           = %111111
+        BITS_RX_PW_P1           = %111111
     NRF24_RX_PW_P2              = $13
         FLD_RX_PW_P2            = 0
-        MASK_RX_PW_P2           = %111111
+        BITS_RX_PW_P2           = %111111
     NRF24_RX_PW_P3              = $14
         FLD_RX_PW_P3            = 0
-        MASK_RX_PW_P3           = %111111
+        BITS_RX_PW_P3           = %111111
     NRF24_RX_PW_P4              = $15
         FLD_RX_PW_P4            = 0
-        MASK_RX_PW_P4           = %111111
+        BITS_RX_PW_P4           = %111111
     NRF24_RX_PW_P5              = $16
         FLD_RX_PW_P5            = 0
-        MASK_RX_PW_P5           = %111111
+        BITS_RX_PW_P5           = %111111
 
     NRF24_FIFO_STATUS           = $17
         FLD_RXFIFO_EMPTY        = 0

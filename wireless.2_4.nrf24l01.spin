@@ -90,6 +90,21 @@ PUB Channel(ch)
         OTHER:
             readRegX (core#NRF24_RF_CH, 1, @result)
 
+PUB CRCEncoding(bytes) | tmp
+' Choose CRC Encoding scheme, in bytes
+'   Valid values: 1, 2
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_CONFIG, 1, @tmp)
+    case bytes
+        1, 2:
+            bytes := (bytes-1) << core#FLD_CRCO
+        OTHER:
+            return ((tmp >> core#FLD_CRCO) & %1) + 1
+
+    tmp &= core#MASK_CRCO
+    tmp := (tmp | bytes) & core#NRF24_CONFIG_MASK
+    writeRegX (core#NRF24_CONFIG, 1, @tmp)
+
 PUB CW(enabled) | tmp
 ' Enable continuous carrier transmit (intended for testing only)
 '   Valid values: 0: Disable, TRUE or 1: Enable.
@@ -101,7 +116,7 @@ PUB CW(enabled) | tmp
         OTHER:
             return ((tmp >> core#FLD_CONT_WAVE) & %1) * TRUE
 
-    tmp &= core#FLD_CONT_WAVE_MASK
+    tmp &= core#MASK_CONT_WAVE
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
@@ -114,7 +129,7 @@ PUB DataReady(clear_intr) | tmp
         1:
             clear_intr := ||clear_intr << core#FLD_RX_DR
         OTHER:
-            tmp := ((tmp >> core#FLD_RX_DR) & core#MASK_RX_DR) * TRUE
+            tmp := ((tmp >> core#FLD_RX_DR) & core#BITS_RX_DR) * TRUE
 
 PUB DataSent(clear_intr) | tmp
 ' Query or clear Data Sent TX FIFO interrupt
@@ -125,14 +140,14 @@ PUB DataSent(clear_intr) | tmp
         1:
             clear_intr := ||clear_intr << core#FLD_TX_DS
         OTHER:
-            tmp := ((tmp >> core#FLD_TX_DS) & core#MASK_TX_DS) * TRUE
+            tmp := ((tmp >> core#FLD_TX_DS) & core#BITS_TX_DS) * TRUE
 
 PUB LostPackets
 ' Count lost packets
 '   Returns: Number of lost packets since last write to RF_CH reg.
 '   Max value is 15
     readRegX (core#NRF24_OBSERVE_TX, 1, @result)
-    result := (result >> core#FLD_PLOS_CNT) & core#MASK_PLOS_CNT
+    result := (result >> core#FLD_PLOS_CNT) & core#BITS_PLOS_CNT
 
 PUB MaxRetrans(clear_intr) | tmp
 ' Query or clear Maximum number of TX retransmits interrupt
@@ -143,7 +158,7 @@ PUB MaxRetrans(clear_intr) | tmp
         1:
             clear_intr := ||clear_intr << core#FLD_MAX_RT
         OTHER:
-            tmp := ((tmp >> core#FLD_MAX_RT) & core#MASK_MAX_RT) * TRUE
+            tmp := ((tmp >> core#FLD_MAX_RT) & core#BITS_MAX_RT) * TRUE
 
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
@@ -156,7 +171,7 @@ PUB PLL_Lock(enabled) | tmp
         OTHER:
             return ((tmp >> core#FLD_PLL_LOCK) & %1) * TRUE
 
-    tmp &= core#FLD_PLL_LOCK_MASK
+    tmp &= core#MASK_PLL_LOCK
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
@@ -171,7 +186,7 @@ PUB PowerUp(enabled) | tmp
         OTHER:
             return ((tmp >> core#FLD_PWR_UP) & %1) * TRUE
 
-    tmp &= core#FLD_PWR_UP_MASK
+    tmp &= core#MASK_PWR_UP
     tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
     writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
@@ -182,13 +197,13 @@ PUB Rate(kbps) | tmp, lo, hi, tmp2, tmp3
     readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case kbps
         1000:
-            tmp &= core#FLD_RF_DR_HIGH_MASK
-            tmp &= core#FLD_RF_DR_LOW_MASK
+            tmp &= core#MASK_RF_DR_HIGH
+            tmp &= core#MASK_RF_DR_LOW
         2000:
             tmp |= (1 << core#FLD_RF_DR_HIGH)
-            tmp &= core#FLD_RF_DR_LOW_MASK
+            tmp &= core#MASK_RF_DR_LOW
         250:
-            tmp &= core#FLD_RF_DR_HIGH_MASK
+            tmp &= core#MASK_RF_DR_HIGH
             tmp |= (1 << core#FLD_RF_DR_LOW)
         OTHER:
             tmp := (tmp >> core#FLD_RF_DR_HIGH) & %101          'Only care about the RF_DR_x bits
@@ -201,7 +216,7 @@ PUB RetrPackets
 ' Count retransmitted packets
 '   Returns: Number of packets retransmitted since the start of transmission of a new packet
     readRegX (core#NRF24_OBSERVE_TX, 1, @result)
-    result &= core#MASK_ARC_CNT
+    result &= core#BITS_ARC_CNT
 
 PUB RFPower(power) | tmp
 ' Set RF output power in TX mode, in dBm
@@ -213,10 +228,10 @@ PUB RFPower(power) | tmp
             power := lookdownz(power: -18, -12, -6, 0)
             power := power << core#FLD_RF_PWR
         OTHER:
-            tmp := (tmp >> core#FLD_RF_PWR) & core#FLD_RF_PWR_BITS
+            tmp := (tmp >> core#FLD_RF_PWR) & core#BITS_RF_PWR
             return lookupz(tmp: -18, -12, -6, 0)
 
-    tmp &= core#FLD_RF_PWR_MASK
+    tmp &= core#MASK_RF_PWR
     tmp := (tmp | power) & core#NRF24_RF_SETUP_MASK
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
@@ -257,7 +272,7 @@ PUB RXPayload(pipe) | tmp
     case pipe
         0..5:
             readRegX (core#NRF24_RX_PW_P0 + pipe, 1, @result)
-            return (result & core#MASK_RX_PW_P0)
+            return (result & core#BITS_RX_PW_P0)
         OTHER:
             return FALSE
 
@@ -277,7 +292,7 @@ PUB RXTX(role) | tmp
         OTHER:
             return ((tmp >> core#FLD_PRIM_RX) & %1)
 
-    tmp &= core#FLD_PRIM_RX_MASK
+    tmp &= core#MASK_PRIM_RX
     tmp := (tmp | role) & core#NRF24_CONFIG_MASK
     writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
