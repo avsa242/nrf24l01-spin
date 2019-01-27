@@ -105,6 +105,17 @@ PUB CW(enabled) | tmp
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
+PUB DataSent(clear_intr)
+' Query or clear Data Sent TX FIFO interrupt
+'   Valid values: 1 or TRUE: Clear interrupt flag
+'   Any other value queries the chip and returns TRUE if packet transmitted, FALSE otherwise
+    readRegX (core#NRF24_STATUS, 1, @tmp)
+    case ||clear_intr
+        1:
+            clear_intr := ||clear_intr << core#FLD_TX_DS
+        OTHER:
+            tmp := ((tmp >> core#FLD_TX_DS) & core#MASK_TX_DS) * TRUE
+
 PUB LostPackets
 ' Count lost packets
 '   Returns: Number of lost packets since last write to RF_CH reg.
@@ -113,14 +124,15 @@ PUB LostPackets
     result := (result >> core#FLD_PLOS_CNT) & core#MASK_PLOS_CNT
 
 PUB MaxRetrans(clear_intr) | tmp
-'
-'
+' Query or clear Maximum number of TX retransmits interrupt
+'   Valid values: 1 or TRUE: Clear interrupt flag
+'   Any other value returns TRUE when max number of retransmits reached, FALSE otherwise
     readRegX (core#NRF24_STATUS, 1, @tmp)
     case ||clear_intr
         1:
             clear_intr := ||clear_intr << core#FLD_MAX_RT
         OTHER:
-            tmp := (tmp >> core#FLD_MAX_RT) & core#MASK_MAX_RT
+            tmp := ((tmp >> core#FLD_MAX_RT) & core#MASK_MAX_RT) * TRUE
 
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)

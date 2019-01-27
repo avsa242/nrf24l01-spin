@@ -98,6 +98,7 @@ CON
         FLD_MAX_RT              = 4
         MASK_MAX_RT             = %1
         FLD_TX_DS               = 5
+        MASK_TX_DS              = %1
         FLD_RX_DR               = 6
 
     NRF24_OBSERVE_TX            = $08
