@@ -31,10 +31,11 @@ PUB Main
 
     dira[26] := 1
     Setup
-    Sweep(1)
-    CW_Test  
-    Rate
-'    flash
+    Power
+'    Sweep(1)
+'    CW_Test
+'    Rate
+    flash
 '    CW (5)
  '   repeat
 
@@ -49,6 +50,28 @@ PUB flash
     repeat
         !outa[26]
         time.MSleep (100)
+
+PUB Power | tmp
+
+    nrf24.RFPower (0)
+    ser.Str (string("RF Power = "))
+    ser.Dec (nrf24.RFPower (-2))
+    ser.NewLine
+
+    nrf24.RFPower (-6)
+    ser.Str (string("RF Power = "))
+    ser.Dec (nrf24.RFPower (-2))
+    ser.NewLine
+
+    nrf24.RFPower (-12)
+    ser.Str (string("RF Power = "))
+    ser.Dec (nrf24.RFPower (-2))
+    ser.NewLine
+
+    nrf24.RFPower (-18)
+    ser.Str (string("RF Power = "))
+    ser.Dec (nrf24.RFPower (-2))
+    ser.NewLine
 
 PUB Rate | tmp
 

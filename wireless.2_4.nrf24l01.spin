@@ -204,15 +204,17 @@ PUB RetrPackets
     result &= core#MASK_ARC_CNT
 
 PUB RFPower(power) | tmp
-' Set RF output power in TX mode
-'   Valid values: 0: -18dBm, 1: -12dBm, 2: -6dBm, 3: 0dBm
+' Set RF output power in TX mode, in dBm
+'   Valid values: -18, -12, -6, 0
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case power
-        0..3:
+        -18, -12, -6, 0:
+            power := lookdownz(power: -18, -12, -6, 0)
             power := power << core#FLD_RF_PWR
         OTHER:
-            return (tmp >> core#FLD_RF_PWR) & core#FLD_RF_PWR_BITS
+            tmp := (tmp >> core#FLD_RF_PWR) & core#FLD_RF_PWR_BITS
+            return lookupz(tmp: -18, -12, -6, 0)
 
     tmp &= core#FLD_RF_PWR_MASK
     tmp := (tmp | power) & core#NRF24_RF_SETUP_MASK

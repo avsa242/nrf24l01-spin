@@ -80,7 +80,7 @@ CON
     NRF24_RF_SETUP_MASK         = $BE
         FLD_RF_PWR              = 1             ' Power Amplifier
         FLD_RF_PWR_BITS         = %11
-        FLD_RF_PWR_MASK         = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_PWR)
+        FLD_RF_PWR_MASK         = NRF24_RF_SETUP_MASK ^ (FLD_RF_PWR_BITS << FLD_RF_PWR)
         FLD_RF_DR_HIGH          = 3             ' RF Data rates
         FLD_RF_DR_HIGH_MASK     = NRF24_RF_SETUP_MASK ^ (1 << FLD_RF_DR_HIGH)
         FLD_PLL_LOCK            = 4
