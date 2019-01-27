@@ -43,6 +43,7 @@ CON
         FLD_CRCO                = 2
         MASK_CRCO               = NRF24_CONFIG_MASK ^ (1 << FLD_CRCO)
         FLD_EN_CRC              = 3
+        MASK_EN_CRC             = NRF24_CONFIG_MASK ^ (1 << FLD_EN_CRC)
         FLD_MASK_MAX_RT         = 4
         FLD_MASK_TX_DS          = 5
         FLD_MASK_RX_DR          = 6

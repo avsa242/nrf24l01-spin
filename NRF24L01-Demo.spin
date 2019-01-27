@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    CRCO(2)
+    EN_CRC (2)
+'    CRCO(2)
 '    Power
 '    Sweep(1)
 '    CW_Test
@@ -212,6 +213,19 @@ PUB Channel | ch
     ser.Str (string("  status = "))
     ser.Hex (nrf24.Status, 8)
     ser.NewLine
+
+PUB EN_CRC(reps)
+
+    repeat reps
+        nrf24.EnableCRC (FALSE)
+        ser.Str (string("CRC Enabled = "))
+        ser.Dec ( nrf24.EnableCRC (-2))
+        ser.NewLine
+
+        nrf24.EnableCRC (TRUE)
+        ser.Str (string("CRC Enabled = "))
+        ser.Dec ( nrf24.EnableCRC (-2))
+        ser.NewLine
 
 PUB RPD
 

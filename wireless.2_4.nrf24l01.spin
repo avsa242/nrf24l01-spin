@@ -107,7 +107,7 @@ PUB CRCEncoding(bytes) | tmp
 
 PUB CW(enabled) | tmp
 ' Enable continuous carrier transmit (intended for testing only)
-'   Valid values: 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case ||enabled
@@ -142,6 +142,22 @@ PUB DataSent(clear_intr) | tmp
         OTHER:
             tmp := ((tmp >> core#FLD_TX_DS) & core#BITS_TX_DS) * TRUE
 
+PUB EnableCRC(enabled) | tmp
+' Enable CRC
+' NOTE: Forced on if any data pipe has AutoAck enabled
+'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_CONFIG, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_EN_CRC
+        OTHER:
+            return ((tmp >> core#FLD_EN_CRC) & %1) * TRUE
+
+    tmp &= core#MASK_EN_CRC
+    tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
+    writeRegX (core#NRF24_CONFIG, 1, @tmp)
+
 PUB LostPackets
 ' Count lost packets
 '   Returns: Number of lost packets since last write to RF_CH reg.
@@ -162,7 +178,7 @@ PUB MaxRetrans(clear_intr) | tmp
 
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
-'   Valid values: 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case ||enabled
@@ -177,7 +193,7 @@ PUB PLL_Lock(enabled) | tmp
 
 PUB PowerUp(enabled) | tmp
 ' Power on or off
-'   Valid values: 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_CONFIG, 1, @tmp)
     case ||enabled
