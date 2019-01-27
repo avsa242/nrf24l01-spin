@@ -105,7 +105,18 @@ PUB CW(enabled) | tmp
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
     writeRegX (core#NRF24_RF_SETUP, 1, @tmp)
 
-PUB DataSent(clear_intr)
+PUB DataReady(clear_intr) | tmp
+' Query or clear Data Ready RX FIFO interrupt
+'   Valid values: 1 or TRUE: Clear interrupt flag
+'   Any other value queries the chip and returns TRUE if new data in FIFO, FALSE otherwise
+    readRegX (core#NRF24_STATUS, 1, @tmp)
+    case ||clear_intr
+        1:
+            clear_intr := ||clear_intr << core#FLD_RX_DR
+        OTHER:
+            tmp := ((tmp >> core#FLD_RX_DR) & core#MASK_RX_DR) * TRUE
+
+PUB DataSent(clear_intr) | tmp
 ' Query or clear Data Sent TX FIFO interrupt
 '   Valid values: 1 or TRUE: Clear interrupt flag
 '   Any other value queries the chip and returns TRUE if packet transmitted, FALSE otherwise

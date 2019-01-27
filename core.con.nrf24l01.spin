@@ -100,6 +100,7 @@ CON
         FLD_TX_DS               = 5
         MASK_TX_DS              = %1
         FLD_RX_DR               = 6
+        MASK_RX_DR              = %1
 
     NRF24_OBSERVE_TX            = $08
         FLD_ARC_CNT             = 0            ' Retransmission count (current transaction)
