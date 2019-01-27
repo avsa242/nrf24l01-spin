@@ -158,6 +158,25 @@ PUB EnableCRC(enabled) | tmp
     tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
     writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
+PUB EnablePipe(mask) | tmp
+' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
+'   Data pipe:     5    0   5     0
+'                  |....|   |.....|
+'   Valid values: %000000..%1111111
+    readRegX (core#NRF24_EN_RXADDR, 1, @tmp)
+    case mask
+        %000000..%111111:
+'           Don't actually do anything if the values are in this range,
+'            since they're already actually valid. Commented line below
+'            shows what *would* be done:
+'            mask := (mask << core#FLD_ERX_P0)
+        OTHER:
+            return tmp & core#NRF24_EN_RXADDR_MASK
+
+    tmp &= core#MASK_EN_RXADDR
+    tmp := (tmp | mask) & core#NRF24_EN_RXADDR_MASK
+    writeRegX (core#NRF24_EN_RXADDR, 1, @tmp)
+
 PUB IntMask(mask) | tmp
 ' Control which events will trigger an interrupt on the IRQ pin, using a 3-bit mask
 '           Bits:  210   210
@@ -336,9 +355,10 @@ PUB RXTX(role) | tmp
     writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
 PUB EnableAuto_Ack(pipe_mask) | tmp
-' Enable Auto Acknowledgement function (Enhanced ShockBurst - (TM) NORDIC Semi.), using a 6-bit mask
+' Control which data pipes (0 through 5) the Auto Acknowledgement function (aka Enhanced ShockBurst - (TM) NORDIC Semi.)
+'  should be enabled on, using a 6-bit mask.
 '   Data Pipe:     5    0   5    0
-'                  |    |   |    |
+'                  |....|   |....|
 '   Valid values: %000000..%111111
 '   0 disables AA for the given pipe, 1 enables
 '   Example:
@@ -351,7 +371,7 @@ PUB EnableAuto_Ack(pipe_mask) | tmp
 '            since they're already actually valid. Commented line below
 '            shows what *would* be done:
 '            pipe_mask := (pipe_mask << core#FLD_ENAA_P0)
-        OTHER:                                      ' 1 disables the interrupt, 0 enables an active-low interrupt
+        OTHER:
             return tmp & core#NRF24_EN_AA_MASK
 
     tmp &= core#MASK_ENAA

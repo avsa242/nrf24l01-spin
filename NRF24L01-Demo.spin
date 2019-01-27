@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    ENAA (1)
+    EN_RXADDR (1)
+'    ENAA (1)
 '    INTMASK (2)
 '    EN_CRC (2)
 '    CRCO(2)
@@ -110,6 +111,21 @@ PUB ENAA(reps) | pipe_mask, col, row
             nrf24.EnableAuto_Ack (pipe_mask)
             ser.Position (col, row)
             ser.Bin (nrf24.EnableAuto_Ack (-2), 6)
+            col += 8
+            if col > 72
+                row++
+                col := 0
+
+PUB EN_RXADDR(reps) | mask, col, row
+
+    col := 0
+    row := 4
+    ser.Str (string("Enable data pipe mask: (%000000 to %111111)", ser#NL))
+    repeat reps
+        repeat mask from %000_000 to %111_111
+            nrf24.EnablePipe (mask)
+            ser.Position (col, row)
+            ser.Bin (nrf24.EnablePipe (-2), 6)
             col += 8
             if col > 72
                 row++

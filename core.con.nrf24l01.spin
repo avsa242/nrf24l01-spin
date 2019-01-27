@@ -50,7 +50,7 @@ CON
         BITS_INTS               = %111
         MASK_INTS               = NRF24_CONFIG_MASK ^ (BITS_INTS << FLD_MASK_MAX_RT)
 
-    NRF24_EN_AA                 = $01           ' Set $00 to disable ShockBurst
+    NRF24_EN_AA                 = $01
     NRF24_EN_AA_MASK            = $3F
         FLD_ENAA_P0             = 0
         FLD_ENAA_P1             = 1
@@ -59,16 +59,18 @@ CON
         FLD_ENAA_P4             = 4
         FLD_ENAA_P5             = 5
         BITS_ENAA               = %111111
-        MASK_ENAA               = NRF24_CONFIG_MASK ^ (BITS_ENAA << FLD_ENAA_P0)
-
+        MASK_ENAA               = NRF24_EN_AA_MASK ^ (BITS_ENAA << FLD_ENAA_P0)
 
     NRF24_EN_RXADDR             = $02
+    NRF24_EN_RXADDR_MASK        = $3F
         FLD_ERX_P0              = 0
         FLD_ERX_P1              = 1
         FLD_ERX_P2              = 2
         FLD_ERX_P3              = 3
         FLD_ERX_P4              = 4
         FLD_ERX_P5              = 5
+        BITS_EN_RXADDR          = %111111
+        MASK_EN_RXADDR          = NRF24_EN_RXADDR_MASK ^ (BITS_EN_RXADDR << FLD_ERX_P0)
 
     NRF24_SETUP_AW              = $03
         FLD_AW                  = 0
