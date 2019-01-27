@@ -112,6 +112,16 @@ PUB LostPackets
     readRegX (core#NRF24_OBSERVE_TX, 1, @result)
     result := (result >> core#FLD_PLOS_CNT) & core#MASK_PLOS_CNT
 
+PUB MaxRetrans(clear_intr) | tmp
+'
+'
+    readRegX (core#NRF24_STATUS, 1, @tmp)
+    case ||clear_intr
+        1:
+            clear_intr := ||clear_intr << core#FLD_MAX_RT
+        OTHER:
+            tmp := (tmp >> core#FLD_MAX_RT) & core#MASK_MAX_RT
+
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
 '   Valid values: 0: Disable, TRUE or 1: Enable.

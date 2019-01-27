@@ -96,6 +96,7 @@ CON
         FLD_RX_P_NO             = 1
         MASK_RX_P_NO            = %111
         FLD_MAX_RT              = 4
+        MASK_MAX_RT             = %1
         FLD_TX_DS               = 5
         FLD_RX_DR               = 6
 
