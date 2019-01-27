@@ -47,6 +47,8 @@ CON
         FLD_MASK_MAX_RT         = 4
         FLD_MASK_TX_DS          = 5
         FLD_MASK_RX_DR          = 6
+        BITS_INTS               = %111
+        MASK_INTS               = NRF24_CONFIG_MASK ^ (BITS_INTS << FLD_MASK_MAX_RT)
 
     NRF24_EN_AA                 = $01           ' Set $00 to disable ShockBurst
         FLD_ENAA_P0             = 0

@@ -158,6 +158,28 @@ PUB EnableCRC(enabled) | tmp
     tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
     writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
+PUB IntMask(mask) | tmp
+' Control which events will trigger an interrupt on the IRQ pin, using a 3-bit mask
+'           Bits:  210   210
+'                  |||   |||
+'   Valid values: %000..%111
+'       Bit:    Interrupt will be asserted on IRQ pin if:
+'       2       new data is ready in RX FIFO
+'       1       data is transmitted
+'       0       TX retransmits reach maximum
+'   Set a bit to 0 to disable the specific interrupt, 1 to enable
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_CONFIG, 1, @tmp)
+    case mask
+        %000..%111:
+            mask := !(mask << core#FLD_MASK_MAX_RT) 'Invert because the chip's internal logic is reversed, i.e.,
+        OTHER:                                      ' 1 disables the interrupt, 0 enables an active-low interrupt
+            return (tmp >> core#FLD_MASK_MAX_RT) & core#BITS_INTS
+
+    tmp &= core#MASK_INTS
+    tmp := (tmp | mask) & core#NRF24_CONFIG_MASK
+    writeRegX (core#NRF24_CONFIG, 1, @tmp)
+
 PUB LostPackets
 ' Count lost packets
 '   Returns: Number of lost packets since last write to RF_CH reg.
@@ -167,6 +189,7 @@ PUB LostPackets
 
 PUB MaxRetrans(clear_intr) | tmp
 ' Query or clear Maximum number of TX retransmits interrupt
+' NOTE: If this flag is set, it must be cleared to enable further communication.
 '   Valid values: 1 or TRUE: Clear interrupt flag
 '   Any other value returns TRUE when max number of retransmits reached, FALSE otherwise
     readRegX (core#NRF24_STATUS, 1, @tmp)

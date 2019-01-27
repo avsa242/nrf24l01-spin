@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    EN_CRC (2)
+    INTMASK (2)
+'    EN_CRC (2)
 '    CRCO(2)
 '    Power
 '    Sweep(1)
@@ -176,6 +177,15 @@ PUB CW(reps) | cw_set, tmp
         ser.Str (string("Current CW setting: "))
         ser.Dec (cw_set)
         time.Sleep (1)
+
+PUB INTMASK(reps) | mask
+
+    repeat reps
+        repeat mask from %000 to %111
+            nrf24.IntMask (mask)
+            ser.Str (string("Interrupt Mask = "))
+            ser.Bin (nrf24.IntMask (-2), 3)
+            ser.NewLine
 
 PUB Sweep(reps) | ch, list
 
