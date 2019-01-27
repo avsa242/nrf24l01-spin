@@ -335,6 +335,29 @@ PUB RXTX(role) | tmp
     tmp := (tmp | role) & core#NRF24_CONFIG_MASK
     writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
+PUB EnableAuto_Ack(pipe_mask) | tmp
+' Enable Auto Acknowledgement function (Enhanced ShockBurst - (TM) NORDIC Semi.), using a 6-bit mask
+'   Data Pipe:     5    0   5    0
+'                  |    |   |    |
+'   Valid values: %000000..%111111
+'   0 disables AA for the given pipe, 1 enables
+'   Example:
+'       EnableAuto_Ack(%001010)
+'           would enable AA for data pipes 1 and 3, and disable for all others
+    readRegX (core#NRF24_EN_AA, 1, @tmp)
+    case pipe_mask
+        %000000..%111111:
+'           Don't actually do anything if the values are in this range,
+'            since they're already actually valid. Commented line below
+'            shows what *would* be done:
+'            pipe_mask := (pipe_mask << core#FLD_ENAA_P0)
+        OTHER:                                      ' 1 disables the interrupt, 0 enables an active-low interrupt
+            return tmp & core#NRF24_EN_AA_MASK
+
+    tmp &= core#MASK_ENAA
+    tmp := (tmp | pipe_mask) & core#NRF24_EN_AA_MASK
+    writeRegX (core#NRF24_EN_AA, 1, @tmp)
+
 PUB TXAddr(buf_addr)
 ' Writes transmit address to buffer at address buf_addr
 ' NOTE: This buffer must be a minimum of 5 bytes
