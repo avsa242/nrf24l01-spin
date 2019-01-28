@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    EN_ACK_PAY (2)
+    EN_DYN_ACK (2)
+'    EN_ACK_PAY (2)
 '    EN_DPL (4)
 '    DYNPD (1)
 '    ARC(1)
@@ -177,6 +178,18 @@ PUB EN_DPL(reps)
         nrf24.EnableDynPayload (TRUE)
         ser.Str (string("Dynamic Payload Enabled = "))
         ser.Dec ( nrf24.EnableDynPayload (-2))
+        ser.NewLine
+
+PUB EN_DYN_ACK(reps)
+
+    repeat reps
+        nrf24.DynamicACK (FALSE)
+        ser.Str (string("Selective Auto Ack Enabled = "))
+        ser.Dec (nrf24.DynamicACK (-2))
+        ser.NewLine
+        nrf24.DynamicACK (TRUE)
+        ser.Str (string("Selective Auto Ack Enabled = "))
+        ser.Dec (nrf24.DynamicACK (-2))
         ser.NewLine
 
 PUB EN_RXADDR(reps) | mask, col, row

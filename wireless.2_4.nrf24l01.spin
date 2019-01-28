@@ -257,6 +257,23 @@ PUB EnablePipe(mask) | tmp
     tmp := (tmp | mask) & core#NRF24_EN_RXADDR_MASK
     writeRegX (core#NRF24_EN_RXADDR, 1, @tmp)
 
+PUB DynamicACK(enabled) | tmp
+' Enable selective auto-acknowledge feature
+' When enabled, the receive will not auto-acknowledge packets sent to it.
+' XXX expand
+'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_FEATURE, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_EN_DYN_ACK
+        OTHER:
+            return ((tmp >> core#FLD_EN_DYN_ACK) & core#BITS_EN_DYN_ACK) * TRUE
+
+    tmp &= core#MASK_EN_DYN_ACK
+    tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
+    writeRegX (core#NRF24_FEATURE, 1, @tmp)
+
 PUB DynamicPayload(mask) | tmp
 ' Control which data pipes (0 through 5) have dynamic payload length enabled, using a 6-bit mask
 '   Data pipe:     5    0   5     0
