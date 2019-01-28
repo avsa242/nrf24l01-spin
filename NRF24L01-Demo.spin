@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    SETUP_AW (2)
+    ARD(1)
+'    SETUP_AW (2)
 '    EN_RXADDR (1)
 '    ENAA (1)
 '    INTMASK (2)
@@ -101,6 +102,15 @@ PUB Rate | tmp
     ser.Str (string("Data rate = "))
     ser.Dec (nrf24.Rate (-2))
     ser.NewLine
+
+PUB ARD(reps) | delay_us
+
+    repeat reps
+        repeat delay_us from 250 to 4000 step 250
+            nrf24.AutoRetransmit (delay_us)
+            ser.Str (string("Auto Retransmit Delay = "))
+            ser.Dec (nrf24.AutoRetransmit (-2))
+            ser.NewLine
 
 PUB ENAA(reps) | pipe_mask, col, row
 

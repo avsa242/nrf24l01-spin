@@ -79,10 +79,14 @@ CON
         MASK_AW                 = NRF24_SETUP_AW_MASK ^ (BITS_AW << FLD_AW)
 
     NRF24_SETUP_RETR            = $04
+    NRF24_SETUP_RETR_MASK       = $FF
         FLD_ARD                 = 4
         BITS_ARD                = %1111
+        MASK_ARD                = NRF24_SETUP_RETR_MASK ^ (BITS_ARD << FLD_ARD)
+
         FLD_ARC                 = 0
         BITS_ARC                = %1111
+        MASK_ARC                = NRF24_SETUP_RETR_MASK ^ (BITS_ARC << FLD_ARC)
 
     NRF24_RF_CH                 = $05           ' RF Channel frequency. F0 = 2400 + RF_CH (MHz)
         FLD_RF_CH               = 0

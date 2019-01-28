@@ -93,6 +93,23 @@ PUB AddressWidth(bytes) | tmp
     tmp := (tmp | bytes) & core#NRF24_SETUP_AW_MASK
     writeRegX (core#NRF24_SETUP_AW, 1, @tmp)
 
+PUB AutoRetransmit(delay_us) | tmp
+' Setup of automatic retransmission - Auto Retransmit Delay, in microseconds
+' Delay defined from end of transmission to start of next transmission
+'   Valid values: 250..4000
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_SETUP_RETR, 1, @tmp)
+    case delay_us := lookdown(delay_us: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
+        1..16:
+            delay_us := (delay_us - 1) << core#FLD_ARD
+        OTHER:
+            tmp := ((tmp >> core#FLD_ARD) & core#BITS_ARD) + 1
+            return lookup(tmp: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
+
+    tmp &= core#MASK_ARD
+    tmp := (tmp | delay_us) & core#NRF24_SETUP_RETR_MASK
+    writeRegX (core#NRF24_SETUP_RETR, 1, @tmp)
+
 PUB Channel(ch)
 ' Set/Get RF Channel
 '   Resulting frequency of set channel = 2400MHz + ch
