@@ -1,11 +1,11 @@
 {
     --------------------------------------------
-    Filename:
-    Author:
-    Description:
-    Copyright (c) 20__
-    Started Month Day, Year
-    Updated Month Day, Year
+    Filename: NRF24L01-Demo.spin
+    Author: Jesse Burt
+    Description: Test harness for wireless.2_4.nrf24l01.spin driver
+    Copyright (c) 2019
+    Started Jan 6, 2019
+    Updated Jan 28, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    ARC(1)
+    DYNPD (1)
+'    ARC(1)
 '    ARD(1)
 '    SETUP_AW (2)
 '    EN_RXADDR (1)
@@ -121,6 +122,21 @@ PUB ARD(reps) | delay_us
             ser.Str (string("Auto Retransmit Delay = "))
             ser.Dec (nrf24.AutoRetransmitDelay (-2))
             ser.NewLine
+
+PUB DYNPD(reps) | pipe_mask, col, row
+
+    col := 0
+    row := 4
+    ser.Str (string("Dynamic Payload Length mask: (%000000 to %111111)", ser#NL))
+    repeat reps
+        repeat pipe_mask from %000_000 to %111_111
+            nrf24.DynamicPayload (pipe_mask)
+            ser.Position (col, row)
+            ser.Bin (nrf24.DynamicPayload (-2), 6)
+            col += 8
+            if col > 72
+                row++
+                col := 0
 
 PUB ENAA(reps) | pipe_mask, col, row
 

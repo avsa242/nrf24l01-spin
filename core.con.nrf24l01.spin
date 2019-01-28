@@ -5,7 +5,7 @@
     Description: nRF24L01+ Low-level constant definitions
     Copyright (c) 2019
     Started Jan 6, 2019
-    Updated Jan 6, 2019
+    Updated Jan 28, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -167,12 +167,15 @@ CON
         FLD_TXFIFO_REUSE        = 6
 
     NRF24_DYNPD                 = $1C
+    NRF24_DYNPD_MASK            = $3F
         FLD_DPL_P0              = 0
         FLD_DPL_P1              = 0
         FLD_DPL_P2              = 0
         FLD_DPL_P3              = 0
         FLD_DPL_P4              = 0
         FLD_DPL_P5              = 0
+        BITS_DPL                = %111111
+        MASK_DPL                = NRF24_DYNPD_MASK ^ (BITS_DPL << FLD_DPL_P0)
 
     NRF24_FEATURE               = $1D
         FLD_EN_DYN_ACK          = 0

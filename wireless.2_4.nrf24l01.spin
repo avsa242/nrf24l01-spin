@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2019
     Started Jan 6, 2019
-    Updated Jan 6, 2019
+    Updated Jan 28, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -224,6 +224,25 @@ PUB EnablePipe(mask) | tmp
     tmp &= core#MASK_EN_RXADDR
     tmp := (tmp | mask) & core#NRF24_EN_RXADDR_MASK
     writeRegX (core#NRF24_EN_RXADDR, 1, @tmp)
+
+PUB DynamicPayload(mask) | tmp
+' Control which data pipes (0 through 5) have dynamic payload length enabled, using a 6-bit mask
+'   Data pipe:     5    0   5     0
+'                  |....|   |.....|
+'   Valid values: %000000..%1111111
+    readRegX (core#NRF24_DYNPD, 1, @tmp)
+    case mask
+        %000000..%111111:
+'           Don't actually do anything if the values are in this range,
+'            since they're already actually valid. Commented line below
+'            shows what *would* be done:
+'            mask := (mask << core#FLD_ERX_P0)
+        OTHER:
+            return tmp & core#NRF24_DYNPD_MASK
+
+    tmp &= core#MASK_DPL
+    tmp := (tmp | mask) & core#NRF24_DYNPD_MASK
+    writeRegX (core#NRF24_DYNPD, 1, @tmp)
 
 PUB IntMask(mask) | tmp
 ' Control which events will trigger an interrupt on the IRQ pin, using a 3-bit mask
