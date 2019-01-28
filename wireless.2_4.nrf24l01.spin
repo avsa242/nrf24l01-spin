@@ -93,7 +93,7 @@ PUB AddressWidth(bytes) | tmp
     tmp := (tmp | bytes) & core#NRF24_SETUP_AW_MASK
     writeRegX (core#NRF24_SETUP_AW, 1, @tmp)
 
-PUB AutoRetransmit(delay_us) | tmp
+PUB AutoRetransmitDelay(delay_us) | tmp
 ' Setup of automatic retransmission - Auto Retransmit Delay, in microseconds
 ' Delay defined from end of transmission to start of next transmission
 '   Valid values: 250..4000
@@ -108,6 +108,22 @@ PUB AutoRetransmit(delay_us) | tmp
 
     tmp &= core#MASK_ARD
     tmp := (tmp | delay_us) & core#NRF24_SETUP_RETR_MASK
+    writeRegX (core#NRF24_SETUP_RETR, 1, @tmp)
+
+PUB AutoRetransmitCount(tries) | tmp
+' Setup of automatic retransmission - Auto Retransmit Count
+' Defines number of attempts to re-transmit on fail of Auto-Acknowledge
+'   Valid values: 0..15 (0 disables re-transmit)
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_SETUP_RETR, 1, @tmp)
+    case tries
+        0..15:
+'            tries := (tries << core#FLD_ARC) & core#MASK_ARC
+        OTHER:
+            return (tmp & core#BITS_ARC)
+
+    tmp &= core#MASK_ARC
+    tmp := (tmp | tries) & core#NRF24_SETUP_RETR_MASK
     writeRegX (core#NRF24_SETUP_RETR, 1, @tmp)
 
 PUB Channel(ch)
