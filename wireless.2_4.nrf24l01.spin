@@ -77,6 +77,7 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 PUB CE(state)
 
     outa[_CE] := state
+    time.USleep (THCE)
 
 PUB AddressWidth(bytes) | tmp
 ' Set width, in bytes, of RX/TX address field
@@ -520,7 +521,7 @@ PUB Status
 ' Returns status of last SPI transaction
     readRegX (core#NRF24_STATUS, 1, @result)
 
-PUB writeRegX(reg, nr_bytes, buf_addr) | tmp
+PRI writeRegX(reg, nr_bytes, buf_addr) | tmp
 ' Write reg to MOSI
     ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet says are for testing
         return FALSE                                                    ' only and will cause the chip to malfunction if written to.
@@ -538,7 +539,7 @@ PUB writeRegX(reg, nr_bytes, buf_addr) | tmp
             buf_addr := 0
     outa[_CSN] := 1
 
-PUB readRegX(reg, nr_bytes, buf_addr) | tmp
+PRI readRegX(reg, nr_bytes, buf_addr) | tmp
 ' Read reg from MISO
     ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet says are for testing
         return FALSE                                                    ' only and will cause the chip to malfunction if written to.
