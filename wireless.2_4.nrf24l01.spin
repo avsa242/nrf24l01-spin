@@ -206,6 +206,22 @@ PUB EnableCRC(enabled) | tmp
     tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
     writeRegX (core#NRF24_CONFIG, 1, @tmp)
 
+PUB EnableDynPayload(enabled) | tmp
+' Enable Dynamic Payload Length
+' NOTE: Must be enabled to use the DynamicPayload method.
+'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_FEATURE, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_EN_DPL
+        OTHER:
+            return ((tmp >> core#FLD_EN_DPL) & core#BITS_EN_DPL) * TRUE
+
+    tmp &= core#MASK_EN_DPL
+    tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
+    writeRegX (core#NRF24_FEATURE, 1, @tmp)
+
 PUB EnablePipe(mask) | tmp
 ' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
 '   Data pipe:     5    0   5     0

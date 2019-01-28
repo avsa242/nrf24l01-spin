@@ -178,9 +178,16 @@ CON
         MASK_DPL                = NRF24_DYNPD_MASK ^ (BITS_DPL << FLD_DPL_P0)
 
     NRF24_FEATURE               = $1D
+    NRF24_FEATURE_MASK          = $07
         FLD_EN_DYN_ACK          = 0
+        BITS_EN_DYN_ACK         = %1
+        MASK_EN_DYN_ACK         = NRF24_FEATURE_MASK ^ (BITS_EN_DYN_ACK << FLD_EN_DYN_ACK)
         FLD_EN_ACK_PAY          = 1
+        BITS_EN_ACK_PAY         = %1
+        MASK_EN_ACK_PAY         = NRF24_FEATURE_MASK ^ (BITS_EN_ACK_PAY << FLD_EN_ACK_PAY)
         FLD_EN_DPL              = 2
+        BITS_EN_DPL             = %1
+        MASK_EN_DPL             = NRF24_FEATURE_MASK ^ (BITS_EN_DPL << FLD_EN_DPL)
 
 PUB Null
 '' This is not a top-level object

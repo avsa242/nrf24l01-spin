@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    DYNPD (1)
+    EN_DPL (4)
+'    DYNPD (1)
 '    ARC(1)
 '    ARD(1)
 '    SETUP_AW (2)
@@ -152,6 +153,18 @@ PUB ENAA(reps) | pipe_mask, col, row
             if col > 72
                 row++
                 col := 0
+
+PUB EN_DPL(reps)
+
+    repeat reps
+        nrf24.EnableDynPayload (FALSE)
+        ser.Str (string("Dynamic Payload Enabled = "))
+        ser.Dec (nrf24.EnableDynPayload (-2))
+        ser.NewLine
+        nrf24.EnableDynPayload (TRUE)
+        ser.Str (string("Dynamic Payload Enabled = "))
+        ser.Dec ( nrf24.EnableDynPayload (-2))
+        ser.NewLine
 
 PUB EN_RXADDR(reps) | mask, col, row
 
