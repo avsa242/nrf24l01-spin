@@ -190,6 +190,22 @@ PUB DataSent(clear_intr) | tmp
         OTHER:
             tmp := ((tmp >> core#FLD_TX_DS) & core#BITS_TX_DS) * TRUE
 
+PUB EnableACK(enabled) | tmp
+' Enable payload with ACK
+' XXX Add timing notes/code from datasheet, p.63, note d
+'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Any other value polls the chip and returns the current setting
+    readRegX (core#NRF24_FEATURE, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_EN_ACK_PAY
+        OTHER:
+            return ((tmp >> core#FLD_EN_ACK_PAY) & core#BITS_EN_ACK_PAY) * TRUE
+
+    tmp &= core#MASK_EN_ACK_PAY
+    tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
+    writeRegX (core#NRF24_FEATURE, 1, @tmp)
+
 PUB EnableCRC(enabled) | tmp
 ' Enable CRC
 ' NOTE: Forced on if any data pipe has AutoAck enabled

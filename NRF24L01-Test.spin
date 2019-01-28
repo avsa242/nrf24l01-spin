@@ -33,7 +33,8 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    EN_DPL (4)
+    EN_ACK_PAY (2)
+'    EN_DPL (4)
 '    DYNPD (1)
 '    ARC(1)
 '    ARD(1)
@@ -153,6 +154,18 @@ PUB ENAA(reps) | pipe_mask, col, row
             if col > 72
                 row++
                 col := 0
+
+PUB EN_ACK_PAY(reps)
+
+    repeat reps
+        nrf24.EnableACK (FALSE)
+        ser.Str (string("Payload with ACK Enabled = "))
+        ser.Dec (nrf24.EnableACK (-2))
+        ser.NewLine
+        nrf24.EnableACK (TRUE)
+        ser.Str (string("Payload with ACK Enabled = "))
+        ser.Dec (nrf24.EnableACK (-2))
+        ser.NewLine
 
 PUB EN_DPL(reps)
 
