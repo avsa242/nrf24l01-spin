@@ -17,6 +17,11 @@ CON
 
     DEBUG_LED   = cfg#LED1
 
+    COL_REG     = 0
+    COL_SET     = 12
+    COL_READ    = 24
+    COL_PF      = 40
+
 OBJ
 
     cfg   : "core.con.boardcfg.flip"
@@ -33,336 +38,164 @@ PUB Main
 
     dira[DEBUG_LED] := 1
     Setup
-    EN_DYN_ACK (2)
-'    EN_ACK_PAY (2)
-'    EN_DPL (4)
-'    DYNPD (1)
-'    ARC(1)
-'    ARD(1)
-'    SETUP_AW (2)
-'    EN_RXADDR (1)
-'    ENAA (1)
-'    INTMASK (2)
-'    EN_CRC (2)
-'    CRCO(2)
-'    Power
-'    Sweep(1)
-'    CW_Test
-'    Rate
-    flash
-'    CW (5)
- '   repeat
-
-    Read_RXPipe_Addr
-    Read_TXPipe_Addr
-    Channel
-    RPD
+    ser.NewLine
+{
+    RF_PWR (1)
+    RF_DR (1)
+    ARC (1)
+    ARD (1)
+    DYNPD (1)
+    ENAA (1)
+    EN_ACK_PAY (1)
+    EN_DPL (1)
+    EN_DYN_ACK (1)
+    EN_RXADDR (1)
+    CRCO (1)
+    CW (1)
+    INTMASK (1)
+    SETUP_AW (1)
+    RF_CH (1)
+    EN_CRC (1)
+    RPD (1)
+}
     flash
 
-PUB flash
-
-    repeat
-        !outa[DEBUG_LED]
-        time.MSleep (100)
-
-PUB Power | tmp
-
-    nrf24.RFPower (0)
-    ser.Str (string("RF Power = "))
-    ser.Dec (nrf24.RFPower (-2))
-    ser.NewLine
-
-    nrf24.RFPower (-6)
-    ser.Str (string("RF Power = "))
-    ser.Dec (nrf24.RFPower (-2))
-    ser.NewLine
-
-    nrf24.RFPower (-12)
-    ser.Str (string("RF Power = "))
-    ser.Dec (nrf24.RFPower (-2))
-    ser.NewLine
-
-    nrf24.RFPower (-18)
-    ser.Str (string("RF Power = "))
-    ser.Dec (nrf24.RFPower (-2))
-    ser.NewLine
-
-PUB Rate | tmp
-
-    ser.Str (string("Data rate = "))
-    ser.Dec (nrf24.Rate (-2))
-    ser.NewLine
-
-    nrf24.Rate (1000)'06
-    ser.Str (string("Data rate = "))
-    ser.Dec (nrf24.Rate (-2))
-    ser.NewLine
-
-    nrf24.Rate (2000)'0E
-    ser.Str (string("Data rate = "))
-    ser.Dec (nrf24.Rate (-2))
-    ser.NewLine
-
-    nrf24.Rate (250)'26
-    ser.Str (string("Data rate = "))
-    ser.Dec (nrf24.Rate (-2))
-    ser.NewLine
-
-PUB ARC(reps) | tries
+PUB RF_PWR(reps) | tmp, read
 
     repeat reps
-        repeat tries from 0 to 15
-            nrf24.AutoRetransmitCount (tries)
-            ser.Str (string("Auto Retransmit Count = "))
-            ser.Dec (nrf24.AutoRetransmitCount (-2))
-            ser.NewLine
+        repeat tmp from -18 to 0 step 6
+            nrf24.RFPower (tmp)
+            read := nrf24.RFPower (-2)
+            Message (string("RF_PWR"), tmp, read)
 
-PUB ARD(reps) | delay_us
-
-    repeat reps
-        repeat delay_us from 250 to 4000 step 250
-            nrf24.AutoRetransmitDelay (delay_us)
-            ser.Str (string("Auto Retransmit Delay = "))
-            ser.Dec (nrf24.AutoRetransmitDelay (-2))
-            ser.NewLine
-
-PUB DYNPD(reps) | pipe_mask, col, row
-
-    col := 0
-    row := 4
-    ser.Str (string("Dynamic Payload Length mask: (%000000 to %111111)", ser#NL))
-    repeat reps
-        repeat pipe_mask from %000_000 to %111_111
-            nrf24.DynamicPayload (pipe_mask)
-            ser.Position (col, row)
-            ser.Bin (nrf24.DynamicPayload (-2), 6)
-            col += 8
-            if col > 72
-                row++
-                col := 0
-
-PUB ENAA(reps) | pipe_mask, col, row
-
-    col := 0
-    row := 4
-    ser.Str (string("Auto acknowledgement mask: (%000000 to %111111)", ser#NL))
-    repeat reps
-        repeat pipe_mask from %000_000 to %111_111
-            nrf24.EnableAuto_Ack (pipe_mask)
-            ser.Position (col, row)
-            ser.Bin (nrf24.EnableAuto_Ack (-2), 6)
-            col += 8
-            if col > 72
-                row++
-                col := 0
-
-PUB EN_ACK_PAY(reps)
+PUB RF_DR(reps) | tmp, read
 
     repeat reps
-        nrf24.EnableACK (FALSE)
-        ser.Str (string("Payload with ACK Enabled = "))
-        ser.Dec (nrf24.EnableACK (-2))
-        ser.NewLine
-        nrf24.EnableACK (TRUE)
-        ser.Str (string("Payload with ACK Enabled = "))
-        ser.Dec (nrf24.EnableACK (-2))
-        ser.NewLine
+        repeat tmp from 0 to 2
+            nrf24.Rate (lookupz(tmp: 250, 1000, 2000))
+            read := nrf24.Rate (-2)
+            Message (string("RF_DR"), lookupz(tmp: 250, 1000, 2000), read)
 
-PUB EN_DPL(reps)
+PUB ARC(reps) | tmp, read
 
     repeat reps
-        nrf24.EnableDynPayload (FALSE)
-        ser.Str (string("Dynamic Payload Enabled = "))
-        ser.Dec (nrf24.EnableDynPayload (-2))
-        ser.NewLine
-        nrf24.EnableDynPayload (TRUE)
-        ser.Str (string("Dynamic Payload Enabled = "))
-        ser.Dec ( nrf24.EnableDynPayload (-2))
-        ser.NewLine
+        repeat tmp from 0 to 15
+            nrf24.AutoRetransmitCount (tmp)
+            read := nrf24.AutoRetransmitCount (-2)
+            Message (string("ARC"), tmp, read)
 
-PUB EN_DYN_ACK(reps)
+PUB ARD(reps) | tmp, read
 
     repeat reps
-        nrf24.DynamicACK (FALSE)
-        ser.Str (string("Selective Auto Ack Enabled = "))
-        ser.Dec (nrf24.DynamicACK (-2))
-        ser.NewLine
-        nrf24.DynamicACK (TRUE)
-        ser.Str (string("Selective Auto Ack Enabled = "))
-        ser.Dec (nrf24.DynamicACK (-2))
-        ser.NewLine
+        repeat tmp from 250 to 4000 step 250
+            nrf24.AutoRetransmitDelay (tmp)
+            read := nrf24.AutoRetransmitDelay (-2)
+            Message (string("ARD"), tmp, read)
 
-PUB EN_RXADDR(reps) | mask, col, row
-
-    col := 0
-    row := 4
-    ser.Str (string("Enable data pipe mask: (%000000 to %111111)", ser#NL))
-    repeat reps
-        repeat mask from %000_000 to %111_111
-            nrf24.EnablePipe (mask)
-            ser.Position (col, row)
-            ser.Bin (nrf24.EnablePipe (-2), 6)
-            col += 8
-            if col > 72
-                row++
-                col := 0
-
-PUB CW_Test | tmp
-' Set pwr_up = 1 and prim_rx = 0 (CONFIG)
-' wait 1.5ms
-' CONT_WAVE = 1
-' PLL_LOCK = 1
-' RF_PWR = x
-' Set CH
-' High (CE)
-
-    nrf24.PowerUp (TRUE)
-    ser.Str (string("PowerUp = "))
-    ser.Dec (nrf24.PowerUp (-2))
-    ser.NewLine
-
-    nrf24.RXTX (0)
-    ser.Str (string("RX/TX = "))
-    ser.Dec (nrf24.RXTX (-2))
-    ser.NewLine
-
-    time.USleep (1500)
-
-    nrf24.CW (TRUE)
-    ser.Str (string("CW = "))
-    ser.Dec (nrf24.CW (-2))
-    ser.NewLine
-
-    nrf24.PLL_Lock (TRUE)
-    ser.Str (string("PLL_LOCK = "))
-    ser.Dec (nrf24.PLL_Lock (-2))
-    ser.NewLine
-
-    nrf24.RFPower (%00)
-    ser.Str (string("RF Power = "))
-    ser.Dec (nrf24.RFPower (-2))
-    ser.NewLine
-
-    nrf24.Channel (2)
-    ser.Str (string("CH = "))
-    ser.Dec (nrf24.Channel (-2))
-    ser.NewLine
-
-    nrf24.CE (1)
-    ser.Str (string("CE = "))
-    ser.Dec (ina[0])
-    ser.NewLine
-
-    repeat until ser.CharIn == 13
-    nrf24.CE (0)
-    ser.Str (string("CE = "))
-    ser.Dec (ina[0])
-    ser.NewLine
-
-PUB CRCO(reps)
+PUB DYNPD(reps) | tmp, read
 
     repeat reps
-        nrf24.CRCEncoding (1)
-        ser.Str (string("CRCO bytes = "))
-        ser.Dec (nrf24.CRCEncoding (-2))
-        ser.NewLine
+        repeat tmp from %000_000 to %111_111
+            nrf24.DynamicPayload (tmp)
+            read := nrf24.DynamicPayload (-2)
+            Message (string("DYNPD"), tmp, read)
 
-        nrf24.CRCEncoding (2)
-        ser.Str (string("CRCO bytes = "))
-        ser.Dec (nrf24.CRCEncoding (-2))
-        ser.NewLine
-
-PUB CW(reps) | cw_set, tmp
-
-    repeat tmp from 1 to reps
-        cw_set := nrf24.CW (2)
-        case cw_set
-            FALSE:
-                nrf24.CW (TRUE)
-            TRUE:
-                nrf24.CW (FALSE)
-        ser.Position (0, 2+tmp)
-        ser.Str (string("Current CW setting: "))
-        ser.Dec (cw_set)
-        time.Sleep (1)
-
-PUB INTMASK(reps) | mask
+PUB ENAA(reps) | tmp, read
 
     repeat reps
-        repeat mask from %000 to %111
-            nrf24.IntMask (mask)
-            ser.Str (string("Interrupt Mask = "))
-            ser.Bin (nrf24.IntMask (-2), 3)
-            ser.NewLine
+        repeat tmp from %000_000 to %111_111
+            nrf24.EnableAuto_Ack (tmp)
+            read := nrf24.EnableAuto_Ack (-2)
+            Message (string("ENAA"), tmp, read)
 
-PUB SETUP_AW(reps) | bytes
-
-    repeat reps
-        repeat bytes from 3 to 5
-            nrf24.AddressWidth (bytes)
-            ser.Str (string("Address width = "))
-            ser.Dec (nrf24.AddressWidth (-2))
-            ser.NewLine
-
-PUB Sweep(reps) | ch, list
+PUB EN_ACK_PAY(reps) | tmp, read
 
     repeat reps
-        repeat ch from 0 to 127
-            ser.Position (0, 2)
-            ser.Str (string("Scanning channel "))
-            ser.Str (int.DecPadded (ch, 3))
-            nrf24.Channel (ch)
-            if nrf24.RPD
-                list++
-                ser.Position (0, list + 4)
-                ser.Str (int.DecPadded (ch, 3))
-            time.MSleep (100)
+        repeat tmp from 0 to -1
+            nrf24.EnableACK (tmp)
+            read := nrf24.EnableACK (-2)
+            Message (string("EN_ACK_PAY"), tmp, read)
 
-PUB Channel | ch
-
-    ser.Str (string("RF Channel = "))
-    ser.Dec (ch := nrf24.Channel (-1))
-    ser.Str (string(" ("))
-    ser.Dec (2400+ch)
-    ser.Str (string("MHz)"))
-    ser.Str (string("  status = "))
-    ser.Hex (nrf24.Status, 8)
-    ser.NewLine
-
-    ch := 62
-    ser.Str (string("Set RF Channel = "))
-    ser.Dec (ch)
-    nrf24.Channel (ch)
-    ser.Str (string(" ("))
-    ser.Dec (2400+ch)
-    ser.Str (string("MHz). Readback channel = "))
-    ser.Dec (nrf24.Channel (-1))
-    ser.Str (string("  status = "))
-    ser.Hex (nrf24.Status, 8)
-    ser.NewLine
-
-PUB EN_CRC(reps)
+PUB EN_DPL(reps) | tmp, read
 
     repeat reps
-        nrf24.EnableCRC (FALSE)
-        ser.Str (string("CRC Enabled = "))
-        ser.Dec ( nrf24.EnableCRC (-2))
-        ser.NewLine
+        repeat tmp from 0 to -1
+            nrf24.EnableDynPayload (tmp)
+            read := nrf24.EnableDynPayload (-2)
+            Message (string("EN_DPL"), tmp, read)
 
-        nrf24.EnableCRC (TRUE)
-        ser.Str (string("CRC Enabled = "))
-        ser.Dec ( nrf24.EnableCRC (-2))
-        ser.NewLine
+PUB EN_DYN_ACK(reps) | tmp, read
 
-PUB RPD
+    repeat reps
+        repeat tmp from 0 to -1
+            nrf24.DynamicACK (tmp)
+            read := nrf24.DynamicACK (-2)
+            Message (string("EN_DYN_ACK"), tmp, read)
 
-    ser.Str (string("Received Power Detector = "))
-    ser.Dec (nrf24.RPD)
-    ser.Str (string("  status = "))
-    ser.Hex (nrf24.Status, 8)
-    ser.NewLine
+PUB EN_RXADDR(reps) | tmp, read
 
-PUB Read_RXPipe_Addr | pipe, addr[2], tmp, status
+    repeat reps
+        repeat tmp from %000_000 to %111_111
+            nrf24.EnablePipe (tmp)
+            read := nrf24.EnablePipe (-2)
+            Message (string("EN_RXADDR"), tmp, read)
+
+PUB CRCO(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from 1 to 2
+            nrf24.CRCEncoding (tmp)
+            read := nrf24.CRCEncoding (-2)
+            Message (string("CRCO"), tmp, read)
+
+PUB CW(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from 0 to -1
+            nrf24.CW (tmp)
+            read := nrf24.CW (-2)
+            Message (string("CW"), tmp, read)
+
+PUB INTMASK(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from %000 to %111
+            nrf24.IntMask (tmp)
+            read := nrf24.IntMask (-2)
+            Message (string("INTMASK"), tmp, read)
+
+PUB SETUP_AW(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from 3 to 5
+            nrf24.AddressWidth (tmp)
+            read := nrf24.AddressWidth (-2)
+            Message (string("SETUP_AW"), tmp, read)
+
+PUB RF_CH(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from 0 to 127
+            nrf24.Channel (tmp)
+            read := nrf24.Channel (-2)
+            Message (string("RF_CH"), tmp, read)
+
+PUB EN_CRC(reps) | tmp, read
+
+    repeat reps
+        repeat tmp from 0 to -1
+            nrf24.EnableCRC (tmp)
+            read := nrf24.EnableCRC (-2)
+            Message (string("EN_CRC"), tmp, read)
+
+PUB RPD(reps) | tmp, read
+
+    repeat reps
+        tmp := nrf24.RPD
+        read := nrf24.RPD
+        Message (string("RPD"), tmp, read)
+
+PUB RX_ADDR | pipe, addr[2], tmp, status
 
     repeat pipe from 0 to 5
         nrf24.RXAddr (pipe, @addr)
@@ -377,7 +210,7 @@ PUB Read_RXPipe_Addr | pipe, addr[2], tmp, status
         ser.NewLine
     ser.NewLine
 
-PUB Read_TXPipe_Addr | addr[2], tmp
+PUB TX_ADDR| addr[2], tmp
 
     nrf24.TXAddr (@addr)
     ser.Str (string("TX address = "))
@@ -386,7 +219,44 @@ PUB Read_TXPipe_Addr | addr[2], tmp
     ser.Str (string("  status = "))
     ser.Hex (nrf24.Status, 8)
     ser.NewLine
-    
+
+PUB TrueFalse(num)
+
+    case num
+        0: ser.Str (string("FALSE"))
+        -1: ser.Str (string("TRUE"))
+        OTHER: ser.Str (string("???"))
+
+PUB Message(field, arg1, arg2)
+
+    ser.PositionX ( COL_REG)
+    ser.Str (field)
+
+    ser.PositionX ( COL_SET)
+    ser.Str (string("SET: "))
+    ser.Dec (arg1)
+
+    ser.PositionX ( COL_READ)
+    ser.Str (string("   READ: "))
+    ser.Dec (arg2)
+
+    ser.PositionX (COL_PF)
+    PassFail (arg1 == arg2)
+    ser.NewLine
+
+PUB PassFail(num)
+
+    case num
+        0: ser.Str (string("FAIL"))
+        -1: ser.Str (string("PASS"))
+        OTHER: ser.Str (string("???"))
+
+PUB flash
+
+    repeat
+        !outa[DEBUG_LED]
+        time.MSleep (100)
+
 PUB Setup
 
     repeat until _ser_cog := ser.Start (115_200)

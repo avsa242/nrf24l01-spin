@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2019
     Started Jan 6, 2019
-    Updated Jan 28, 2019
+    Updated Jan 29, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -310,7 +310,7 @@ PUB IntMask(mask) | tmp
         %000..%111:
             mask := !(mask << core#FLD_MASK_MAX_RT) 'Invert because the chip's internal logic is reversed, i.e.,
         OTHER:                                      ' 1 disables the interrupt, 0 enables an active-low interrupt
-            return (tmp >> core#FLD_MASK_MAX_RT) & core#BITS_INTS
+            return !(tmp >> core#FLD_MASK_MAX_RT) & core#BITS_INTS
 
     tmp &= core#MASK_INTS
     tmp := (tmp | mask) & core#NRF24_CONFIG_MASK
