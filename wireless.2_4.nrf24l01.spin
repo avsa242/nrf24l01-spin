@@ -178,7 +178,7 @@ PUB CW(enabled) | tmp
 
 PUB DataReady(clear_intr) | tmp
 ' Query or clear Data Ready RX FIFO interrupt
-'   Valid values: 1 or TRUE: Clear interrupt flag
+'   Valid values: TRUE (-1 or 1): Clear interrupt flag
 '   Any other value queries the chip and returns TRUE if new data in FIFO, FALSE otherwise
     readRegX (core#NRF24_STATUS, 1, @tmp)
     case ||clear_intr
@@ -193,7 +193,7 @@ PUB DataReady(clear_intr) | tmp
 
 PUB DataSent(clear_intr) | tmp
 ' Query or clear Data Sent TX FIFO interrupt
-'   Valid values: 1 or TRUE: Clear interrupt flag
+'   Valid values: TRUE (-1 or 1): Clear interrupt flag
 '   Any other value queries the chip and returns TRUE if packet transmitted, FALSE otherwise
     readRegX (core#NRF24_STATUS, 1, @tmp)
     case ||clear_intr
@@ -201,6 +201,10 @@ PUB DataSent(clear_intr) | tmp
             clear_intr := ||clear_intr << core#FLD_TX_DS
         OTHER:
             tmp := ((tmp >> core#FLD_TX_DS) & core#BITS_TX_DS) * TRUE
+
+    tmp &= core#MASK_TX_DS
+    tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
+    writeRegX (core#NRF24_STATUS, 1, @tmp)
 
 PUB EnableACK(enabled) | tmp
 ' Enable payload with ACK
