@@ -5,7 +5,7 @@
     Description: Test harness for wireless.2_4.nrf24l01.spin driver
     Copyright (c) 2019
     Started Jan 6, 2019
-    Updated Jan 28, 2019
+    Updated Mar 17, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -14,8 +14,6 @@ CON
 
     _clkmode    = cfg#_clkmode
     _xinfreq    = cfg#_xinfreq
-
-    DEBUG_LED   = cfg#LED1
 
     COL_REG     = 0
     COL_SET     = 12
@@ -32,14 +30,13 @@ OBJ
 
 VAR
 
-    byte _ser_cog, _nrf_cog
+    byte _ser_cog
 
 PUB Main
 
-    dira[DEBUG_LED] := 1
     Setup
     ser.NewLine
-{
+
     RF_PWR (1)
     RF_DR (1)
     ARC (1)
@@ -57,8 +54,8 @@ PUB Main
     RF_CH (1)
     EN_CRC (1)
     RPD (1)
-}
-    flash
+
+    Flash (cfg#LED1)
 
 PUB RF_PWR(reps) | tmp, read
 
@@ -251,19 +248,24 @@ PUB PassFail(num)
         -1: ser.Str (string("PASS"))
         OTHER: ser.Str (string("???"))
 
-PUB flash
-
-    repeat
-        !outa[DEBUG_LED]
-        time.MSleep (100)
-
 PUB Setup
 
     repeat until _ser_cog := ser.Start (115_200)
     ser.Clear
     ser.Str(string("Serial terminal started", ser#NL))
-    repeat until _nrf_cog := nrf24.Startx (0, 1, 2, 3, 4)'(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
-    ser.Str(string("nRF24L01+ driver started", ser#NL))
+    if nrf24.Startx (0, 1, 2, 3, 4)'(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
+        ser.Str(string("nRF24L01+ driver started", ser#NL))
+    else
+        ser.Str(string("nRF24L01+ driver failed to start - halting", ser#NL))
+        nrf24.Stop
+        time.MSleep (500)
+
+PUB Flash(led_pin)
+
+    dira[led_pin] := 1
+    repeat
+        !outa[led_pin]
+        time.MSleep (100)
 
 DAT
 {

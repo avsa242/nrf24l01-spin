@@ -5,7 +5,7 @@
     Description: nRF24L01+ Low-level constant definitions
     Copyright (c) 2019
     Started Jan 6, 2019
-    Updated Jan 28, 2019
+    Updated Mar 17, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -108,15 +108,17 @@ CON
         MASK_CONT_WAVE          = NRF24_RF_SETUP_MASK ^ (1 << FLD_CONT_WAVE)
 
     NRF24_STATUS                = $07
+    NRF24_STATUS_MASK           = $7F
         FLD_TX_FULL             = 0
         FLD_RX_P_NO             = 1
-        BITS_RX_P_NO            = %111
         FLD_MAX_RT              = 4
-        BITS_MAX_RT             = %1
         FLD_TX_DS               = 5
-        BITS_TX_DS              = %1
         FLD_RX_DR               = 6
+        BITS_RX_P_NO            = %111
+        BITS_MAX_RT             = %1
+        BITS_TX_DS              = %1
         BITS_RX_DR              = %1
+        MASK_RX_DR              = NRF24_STATUS_MASK ^ (BITS_RX_DR << FLD_RX_DR)
 
     NRF24_OBSERVE_TX            = $08
         FLD_ARC_CNT             = 0            ' Retransmission count (current transaction)

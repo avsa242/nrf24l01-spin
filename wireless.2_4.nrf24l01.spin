@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2019
     Started Jan 6, 2019
-    Updated Jan 29, 2019
+    Updated Mar 17, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -74,6 +74,14 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
     return FALSE                                                'If we got here, something went wrong
 
+PUB Stop
+
+    outa[_CSN] := 0
+    outa[_CE] := 0
+    dira[_CSN] := 0
+    dira[_CE] := 0
+    spi.stop
+
 PUB CE(state)
 
     outa[_CE] := state
@@ -119,7 +127,6 @@ PUB AutoRetransmitCount(tries) | tmp
     readRegX (core#NRF24_SETUP_RETR, 1, @tmp)
     case tries
         0..15:
-'            tries := (tries << core#FLD_ARC) & core#MASK_ARC
         OTHER:
             return (tmp & core#BITS_ARC)
 
@@ -179,6 +186,10 @@ PUB DataReady(clear_intr) | tmp
             clear_intr := ||clear_intr << core#FLD_RX_DR
         OTHER:
             tmp := ((tmp >> core#FLD_RX_DR) & core#BITS_RX_DR) * TRUE
+
+    tmp &= core#MASK_RX_DR
+    tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
+    writeRegX (core#NRF24_STATUS, 1, @tmp)
 
 PUB DataSent(clear_intr) | tmp
 ' Query or clear Data Sent TX FIFO interrupt
