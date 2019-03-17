@@ -163,7 +163,7 @@ PUB CRCEncoding(bytes) | tmp
 
 PUB CW(enabled) | tmp
 ' Enable continuous carrier transmit (intended for testing only)
-'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case ||enabled
@@ -209,7 +209,7 @@ PUB DataSent(clear_intr) | tmp
 PUB EnableACK(enabled) | tmp
 ' Enable payload with ACK
 ' XXX Add timing notes/code from datasheet, p.63, note d
-'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_FEATURE, 1, @tmp)
     case ||enabled
@@ -225,7 +225,7 @@ PUB EnableACK(enabled) | tmp
 PUB EnableCRC(enabled) | tmp
 ' Enable CRC
 ' NOTE: Forced on if any data pipe has AutoAck enabled
-'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_CONFIG, 1, @tmp)
     case ||enabled
@@ -241,7 +241,7 @@ PUB EnableCRC(enabled) | tmp
 PUB EnableDynPayload(enabled) | tmp
 ' Enable Dynamic Payload Length
 ' NOTE: Must be enabled to use the DynamicPayload method.
-'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_FEATURE, 1, @tmp)
     case ||enabled
@@ -277,7 +277,7 @@ PUB DynamicACK(enabled) | tmp
 ' Enable selective auto-acknowledge feature
 ' When enabled, the receive will not auto-acknowledge packets sent to it.
 ' XXX expand
-'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_FEATURE, 1, @tmp)
     case ||enabled
@@ -352,7 +352,7 @@ PUB MaxRetrans(clear_intr) | tmp
 
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
-'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_RF_SETUP, 1, @tmp)
     case ||enabled
@@ -367,7 +367,7 @@ PUB PLL_Lock(enabled) | tmp
 
 PUB PowerUp(enabled) | tmp
 ' Power on or off
-'   Valid values: FALSE or 0: Disable, TRUE or 1: Enable.
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     readRegX (core#NRF24_CONFIG, 1, @tmp)
     case ||enabled
