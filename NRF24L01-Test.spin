@@ -2,7 +2,7 @@
     --------------------------------------------
     Filename: NRF24L01-Demo.spin
     Author: Jesse Burt
-    Description: Test harness for wireless.2_4.nrf24l01.spin driver
+    Description: Test harness for the NRF24L01+ driver
     Copyright (c) 2019
     Started Jan 6, 2019
     Updated Mar 17, 2019
@@ -25,7 +25,7 @@ OBJ
     cfg   : "core.con.boardcfg.flip"
     ser   : "com.serial.terminal"
     time  : "time"
-    nrf24 : "wireless.2_4.nrf24l01"
+    nrf24 : "com.wireless.nrf24l01"
     int   : "string.integer"
 
 VAR
