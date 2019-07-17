@@ -67,7 +67,8 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
             _SCK := SCK_PIN
             _MOSI := MOSI_PIN
             _MISO := MISO_PIN
-            time.MSleep(100)
+            time.MSleep(core#TPOR)
+            time.MSleep(core#TPD2STBY)
 
             outa[_CE] := 0
             dira[_CE] := 1
