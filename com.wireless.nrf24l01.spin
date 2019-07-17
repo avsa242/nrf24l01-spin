@@ -50,7 +50,7 @@ VAR
 
 OBJ
 
-    spi:    "SPI_Asm"
+    spi:    "com.spi.4w"
     core:   "core.con.nrf24l01"
     time:   "time"
 

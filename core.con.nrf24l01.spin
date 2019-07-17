@@ -5,7 +5,7 @@
     Description: nRF24L01+ Low-level constant definitions
     Copyright (c) 2019
     Started Jan 6, 2019
-    Updated May 29, 2019
+    Updated Jul 17, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -18,6 +18,10 @@ CON
     MISO_BITORDER               = 0             'MSBPRE
     CE_TX                       = 0
     CE_RX                       = 1
+
+' Timings
+    TPOR                        = 100
+    TPD2STBY                    = 5             ' Maximum
 
 ' NRF24L01+ Commands
     NRF24_R_REG                 = %000_00000
