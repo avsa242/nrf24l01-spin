@@ -22,6 +22,9 @@ CON
     RF_PWR__12  = %01           ' -12dBm
     RF_PWR__18  = %00           ' -18dBm
 
+    ROLE_TX     = 0
+    ROLE_RX     = 1
+
 ' Recommended states:
 ' Power down:
 '   PWR_UP = 1: XO Start (wait Tpd2stby) transition to Standby I
@@ -273,6 +276,14 @@ PUB EnablePipe(mask) | tmp
     tmp := (tmp | mask) & core#NRF24_EN_RXADDR_MASK
     writeRegX (core#NRF24_EN_RXADDR, 1, @tmp)
 
+PUB FlushRX
+
+    writeRegX(core#NRF24_FLUSH_RX, 0, 0)
+
+PUB FlushTX
+
+    writeRegX(core#NRF24_FLUSH_TX, 0, 0)
+
 PUB DynamicACK(enabled) | tmp
 ' Enable selective auto-acknowledge feature
 ' When enabled, the receive will not auto-acknowledge packets sent to it.
@@ -442,6 +453,10 @@ PUB RXAddr(pipe, buf_addr)
         return FALSE
     readRegX (core#NRF24_RX_ADDR_P0 + pipe, 5, buf_addr)
 
+PUB RXData(nr_bytes, buff_addr) | tmp
+
+    readRegX (core#NRF24_R_RX_PAYLOAD, nr_bytes, @buff_addr)
+
 PUB RXFIFO_Empty
 ' Queries the FIFO_STATUS register for RX FIFO empty flag
 '   Returns TRUE if empty, FALSE if there's data in RX FIFO
@@ -515,6 +530,14 @@ PUB TXAddr(buf_addr)
 ' NOTE: This buffer must be a minimum of 5 bytes
     readRegX (core#NRF24_TX_ADDR, 5, buf_addr)
 
+PUB TXData(nr_bytes, buff_addr) | cmd_packet, tmp
+
+    case nr_bytes
+        1..32:
+            writeRegX(core#NRF24_W_TX_PAYLOAD, nr_bytes, buff_addr)
+        OTHER:
+            return FALSE
+
 PUB TXFIFO_Empty
 ' Queries the FIFO_STATUS register for TX FIFO empty flag
 '   Returns TRUE if empty, FALSE if there's data in TX FIFO
@@ -540,36 +563,66 @@ PRI writeRegX(reg, nr_bytes, buf_addr) | tmp
 ' Write reg to MOSI
     ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet says are for testing
         return FALSE                                                    ' only and will cause the chip to malfunction if written to.
-
-    outa[_CSN] := 0
-    case nr_bytes
-        0:
-            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_W_REG|reg)     'Simple command
-        1..5:
-            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_W_REG|reg)     'Command w/nr_bytes data bytes following
+'XXX Check flow w.r.t. CS - previously possible cases where it was never brought back high before returning
+    case reg
+        core#NRF24_W_TX_PAYLOAD:
+            outa[_CSN] := 0
+            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
             repeat tmp from 0 to nr_bytes-1
                 spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
+            outa[_CSN] := 1
+
+        core#NRF24_FLUSH_TX:
+            outa[_CSN] := 0
+            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            outa[_CSN] := 1
+
+        core#NRF24_FLUSH_RX:
+            outa[_CSN] := 0
+            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            outa[_CSN] := 1
+
         OTHER:
-            result := FALSE
-            buf_addr := 0
-    outa[_CSN] := 1
+            case nr_bytes
+                0:
+                    outa[_CSN] := 0
+                    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_W_REG|reg)     'Simple command
+                    outa[_CSN] := 1
+                1..5:
+                    outa[_CSN] := 0
+                    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_W_REG|reg)     'Command w/nr_bytes data bytes following
+                    repeat tmp from 0 to nr_bytes-1
+                        spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
+                    outa[_CSN] := 1
+
+                OTHER:
+                    result := FALSE
+                    buf_addr := 0
 
 PRI readRegX(reg, nr_bytes, buf_addr) | tmp
 ' Read reg from MISO
     ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet says are for testing
         return FALSE                                                    ' only and will cause the chip to malfunction if written to.
 
-    outa[_CSN] := 0
-    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_R_REG | reg)              'Which register to query
-
-    case nr_bytes
-        1..5:
+    case reg
+        core#NRF24_R_RX_PAYLOAD:
+            outa[_CSN] := 0
+            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
             repeat tmp from 0 to nr_bytes-1
                 byte[buf_addr][tmp] := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)
+            outa[_CSN] := 1
         OTHER:
-            result := FALSE
-            buf_addr := 0
-    outa[_CSN] := 1
+
+            case nr_bytes
+                1..5:
+                    outa[_CSN] := 0
+                    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_R_REG | reg)              'Which register to query
+                    repeat tmp from 0 to nr_bytes-1
+                        byte[buf_addr][tmp] := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)
+                    outa[_CSN] := 1
+                OTHER:
+                    result := FALSE
+                    buf_addr := 0
 
 DAT
 {

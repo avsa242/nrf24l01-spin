@@ -20,22 +20,32 @@ CON
     COL_READ    = 24
     COL_PF      = 40
 
+    CE_PIN      = 23
+    CSN_PIN     = 19
+    SCK_PIN     = 22
+    MOSI_PIN    = 18
+    MISO_PIN    = 21
+
+    LED         = cfg#LED1
+
 OBJ
 
     cfg   : "core.con.boardcfg.flip"
-    ser   : "com.serial.terminal"
+    ser   : "com.serial.terminal.ansi"
     time  : "time"
     nrf24 : "com.wireless.nrf24l01"
     int   : "string.integer"
 
 VAR
 
-    byte _ser_cog
+    long _fails, _expanded
+    byte _ser_cog, _row
 
 PUB Main
 
     Setup
     ser.NewLine
+    _row := 1
 
     RF_PWR (1)
     RF_DR (1)
@@ -55,10 +65,11 @@ PUB Main
     EN_CRC (1)
     RPD (1)
 
-    Flash (cfg#LED1)
+    Flash (cfg#LED1, 100)
 
 PUB RF_PWR(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from -18 to 0 step 6
             nrf24.RFPower (tmp)
@@ -67,6 +78,7 @@ PUB RF_PWR(reps) | tmp, read
 
 PUB RF_DR(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to 2
             nrf24.Rate (lookupz(tmp: 250, 1000, 2000))
@@ -75,6 +87,7 @@ PUB RF_DR(reps) | tmp, read
 
 PUB ARC(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to 15
             nrf24.AutoRetransmitCount (tmp)
@@ -83,6 +96,7 @@ PUB ARC(reps) | tmp, read
 
 PUB ARD(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 250 to 4000 step 250
             nrf24.AutoRetransmitDelay (tmp)
@@ -91,6 +105,7 @@ PUB ARD(reps) | tmp, read
 
 PUB DYNPD(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from %000_000 to %111_111
             nrf24.DynamicPayload (tmp)
@@ -99,6 +114,7 @@ PUB DYNPD(reps) | tmp, read
 
 PUB ENAA(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from %000_000 to %111_111
             nrf24.EnableAuto_Ack (tmp)
@@ -107,6 +123,7 @@ PUB ENAA(reps) | tmp, read
 
 PUB EN_ACK_PAY(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to -1
             nrf24.EnableACK (tmp)
@@ -115,6 +132,7 @@ PUB EN_ACK_PAY(reps) | tmp, read
 
 PUB EN_DPL(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to -1
             nrf24.EnableDynPayload (tmp)
@@ -123,6 +141,7 @@ PUB EN_DPL(reps) | tmp, read
 
 PUB EN_DYN_ACK(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to -1
             nrf24.DynamicACK (tmp)
@@ -131,6 +150,7 @@ PUB EN_DYN_ACK(reps) | tmp, read
 
 PUB EN_RXADDR(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from %000_000 to %111_111
             nrf24.EnablePipe (tmp)
@@ -139,6 +159,7 @@ PUB EN_RXADDR(reps) | tmp, read
 
 PUB CRCO(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 1 to 2
             nrf24.CRCEncoding (tmp)
@@ -147,6 +168,7 @@ PUB CRCO(reps) | tmp, read
 
 PUB CW(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to -1
             nrf24.CW (tmp)
@@ -155,6 +177,7 @@ PUB CW(reps) | tmp, read
 
 PUB INTMASK(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from %000 to %111
             nrf24.IntMask (tmp)
@@ -163,6 +186,7 @@ PUB INTMASK(reps) | tmp, read
 
 PUB SETUP_AW(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 3 to 5
             nrf24.AddressWidth (tmp)
@@ -171,6 +195,7 @@ PUB SETUP_AW(reps) | tmp, read
 
 PUB RF_CH(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to 127
             nrf24.Channel (tmp)
@@ -179,6 +204,7 @@ PUB RF_CH(reps) | tmp, read
 
 PUB EN_CRC(reps) | tmp, read
 
+    _row++
     repeat reps
         repeat tmp from 0 to -1
             nrf24.EnableCRC (tmp)
@@ -187,6 +213,7 @@ PUB EN_CRC(reps) | tmp, read
 
 PUB RPD(reps) | tmp, read
 
+    _row++
     repeat reps
         tmp := nrf24.RPD
         read := nrf24.RPD
@@ -194,6 +221,7 @@ PUB RPD(reps) | tmp, read
 
 PUB RX_ADDR | pipe, addr[2], tmp, status
 
+    _row++
     repeat pipe from 0 to 5
         nrf24.RXAddr (pipe, @addr)
         status := nrf24.Status
@@ -209,6 +237,7 @@ PUB RX_ADDR | pipe, addr[2], tmp, status
 
 PUB TX_ADDR| addr[2], tmp
 
+    _row++
     nrf24.TXAddr (@addr)
     ser.Str (string("TX address = "))
     repeat tmp from 0 to 4
@@ -226,20 +255,40 @@ PUB TrueFalse(num)
 
 PUB Message(field, arg1, arg2)
 
-    ser.PositionX ( COL_REG)
-    ser.Str (field)
+   case _expanded
+        TRUE:
+            ser.PositionX (COL_REG)
+            ser.Str (field)
 
-    ser.PositionX ( COL_SET)
-    ser.Str (string("SET: "))
-    ser.Dec (arg1)
+            ser.PositionX (COL_SET)
+            ser.Str (string("SET: "))
+            ser.Dec (arg1)
 
-    ser.PositionX ( COL_READ)
-    ser.Str (string("   READ: "))
-    ser.Dec (arg2)
+            ser.PositionX (COL_READ)
+            ser.Str (string("READ: "))
+            ser.Dec (arg2)
+            ser.Chars (32, 3)
+            ser.PositionX (COL_PF)
+            PassFail (arg1 == arg2)
+            ser.NewLine
 
-    ser.PositionX (COL_PF)
-    PassFail (arg1 == arg2)
-    ser.NewLine
+        FALSE:
+            ser.Position (COL_REG, _row)
+            ser.Str (field)
+
+            ser.Position (COL_SET, _row)
+            ser.Str (string("SET: "))
+            ser.Dec (arg1)
+
+            ser.Position (COL_READ, _row)
+            ser.Str (string("READ: "))
+            ser.Dec (arg2)
+
+            ser.Position (COL_PF, _row)
+            PassFail (arg1 == arg2)
+            ser.NewLine
+        OTHER:
+            ser.Str (string("DEADBEEF"))
 
 PUB PassFail(num)
 
@@ -252,20 +301,21 @@ PUB Setup
 
     repeat until _ser_cog := ser.Start (115_200)
     ser.Clear
-    ser.Str(string("Serial terminal started", ser#NL))
-    if nrf24.Startx (0, 1, 2, 3, 4)'(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
-        ser.Str(string("nRF24L01+ driver started", ser#NL))
+    ser.Str(string("Serial terminal started", ser#NL, ser#LF))
+    if nrf24.Startx (CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)'0, 1, 2, 3, 4)'(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
+        ser.Str(string("nRF24L01+ driver started", ser#NL, ser#LF))
     else
-        ser.Str(string("nRF24L01+ driver failed to start - halting", ser#NL))
+        ser.Str(string("nRF24L01+ driver failed to start - halting", ser#NL, ser#LF))
         nrf24.Stop
         time.MSleep (500)
+        Flash(LED, 500)
 
-PUB Flash(led_pin)
+PUB Flash(led_pin, delay_ms)
 
     dira[led_pin] := 1
     repeat
         !outa[led_pin]
-        time.MSleep (100)
+        time.MSleep (delay_ms)
 
 DAT
 {
