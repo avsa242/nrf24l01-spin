@@ -1,6 +1,6 @@
 {
     --------------------------------------------
-    Filename: NRF24L01-Demo.spin
+    Filename: NRF24L01-Test.spin
     Author: Jesse Burt
     Description: Test harness for the NRF24L01+ driver
     Copyright (c) 2019
@@ -20,11 +20,11 @@ CON
     COL_READ    = 24
     COL_PF      = 40
 
-    CE_PIN      = 23
-    CSN_PIN     = 19
-    SCK_PIN     = 22
-    MOSI_PIN    = 18
-    MISO_PIN    = 21
+    CE_PIN      = 0'23
+    CSN_PIN     = 1'19
+    SCK_PIN     = 2'22
+    MOSI_PIN    = 3'18
+    MISO_PIN    = 4'21
 
     LED         = cfg#LED1
 
