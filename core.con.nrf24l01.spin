@@ -26,15 +26,15 @@ CON
 ' NRF24L01+ Commands
     NRF24_R_REG                 = %000_00000
     NRF24_W_REG                 = %001_00000
-    NRF24_R_RX_PAYLOAD          = %0110_0001
-    NRF24_W_TX_PAYLOAD          = %1010_0000
-    NRF24_FLUSH_TX              = %1110_0001
-    NRF24_FLUSH_RX              = %1110_0010
-    NRF24_REUSE_TX_PL           = %1110_0011
-    NRF24_R_RX_PL_WID           = %0110_0000
-    NRF24_W_ACK_PAYLOAD         = %10101_000
-    NRF24_W_TX_PAYLOAD_NOACK    = %1011_0000
-    NRF24_NOP                   = %1111_1111
+    NRF24_R_RX_PAYLOAD          = $61           ' %0110_0001
+    NRF24_W_TX_PAYLOAD          = $A0           ' %1010_0000
+    NRF24_FLUSH_TX              = $E1           ' %1110_0001
+    NRF24_FLUSH_RX              = $E2           ' %1110_0010
+    NRF24_REUSE_TX_PL           = $E3           ' %1110_0011
+    NRF24_R_RX_PL_WID           = $60           ' %0110_0000
+    NRF24_W_ACK_PAYLOAD         = $A8           ' %10101_000
+    NRF24_W_TX_PAYLOAD_NOACK    = $B0           ' %1011_0000
+    NRF24_NOP                   = $FF           ' %1111_1111
 
 
 ' Register definitions (individual fields set in/read from registers are indented)

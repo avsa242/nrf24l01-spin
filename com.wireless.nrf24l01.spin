@@ -563,7 +563,7 @@ PUB Status
 
 PRI writeRegX(reg, nr_bytes, buf_addr) | tmp
 ' Write reg to MOSI
-    ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet says are for testing
+    ifnot lookdown(reg: $00..$17, $1C..$1D, $A0)                             'Validate reg - there are a few the datasheet says are for testing
         return FALSE                                                    ' only and will cause the chip to malfunction if written to.
 'XXX Check flow w.r.t. CS - previously possible cases where it was never brought back high before returning
     case reg
