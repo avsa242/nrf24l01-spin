@@ -446,14 +446,35 @@ PUB RPD
     readRegX (core#NRF24_RPD, 8, @result)
     result *= TRUE
 
-PUB RXAddr(pipe, buf_addr)
-' Return address for data pipe 0 to 5 into buffer at address buf_addr
-' NOTE: This buffer must be a minimum of 5 bytes
-' Out-of-range values for pipe fill the buffer with (5) 0's and return FALSE
-    ifnot lookdown(pipe: 0..5)
-        bytefill(buf_addr, 0, 5)
-        return FALSE
-    readRegX (core#NRF24_RX_ADDR_P0 + pipe, 5, buf_addr)
+PUB RXAddr(pipe, buff_addr) | tmp[2], i, addr_test
+' Set receive address of pipe number 'pipe' from buffer at address buff_addr
+'   Valid values:
+'       pipe: 0..5
+'           Any other value is ignored
+'       buff_addr:
+'           For pipes 0 and 1, must be a buffer at least 5 bytes long, $00..$FF
+'           For pipes 2..5, must be a buffer at least 1 byte long, $01..$FF
+'   Setting buff_addr to all 0's polls the chip and returns the current address for the given pipe number
+    tmp := 0
+    addr_test := 0
+    case pipe
+        0, 1:
+            readRegX (core#NRF24_RX_ADDR_P0 + pipe, 5, @tmp)
+            repeat i from 0 to 5
+                addr_test := addr_test + byte[buff_addr][i]
+            if addr_test == 0
+                bytemove(buff_addr, @tmp, 5)
+                return
+            else
+                writeRegX (core#NRF24_RX_ADDR_P0 + pipe, 5, buff_addr)
+        2..5:
+            readRegX (core#NRF24_RX_ADDR_P0 + pipe, 1, @tmp)
+            if byte[buff_addr][0] == 0
+                bytemove(buff_addr, @tmp, 1)
+            else
+                writeRegX (core#NRF24_RX_ADDR_P0 + pipe, 1, buff_addr)
+        OTHER:
+            return
 
 PUB RXData(nr_bytes, buff_addr) | tmp
 
