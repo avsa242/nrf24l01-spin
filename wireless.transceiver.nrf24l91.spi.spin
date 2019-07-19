@@ -1,11 +1,11 @@
 {
     --------------------------------------------
-    Filename: com.wireless.nrf24l01.spin
+    Filename: wireless.transceiver.nrf24l01.spi.spin
     Author: Jesse Burt
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2019
     Started Jan 6, 2019
-    Updated May 29, 2019
+    Updated Jul 19, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
