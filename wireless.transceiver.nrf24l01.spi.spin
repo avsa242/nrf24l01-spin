@@ -548,10 +548,20 @@ PUB EnableAuto_Ack(pipe_mask) | tmp
     tmp := (tmp | pipe_mask) & core#NRF24_EN_AA_MASK
     writeRegX (core#NRF24_EN_AA, 1, @tmp)
 
-PUB TXAddr(buf_addr)
-' Writes transmit address to buffer at address buf_addr
-' NOTE: This buffer must be a minimum of 5 bytes
-    readRegX (core#NRF24_TX_ADDR, 5, buf_addr)
+PUB TXAddr(buff_addr) | tmp[2], i, addr_test
+' Set transmit address
+'   Valid values: Bytes $00..$FF
+'   Setting buff_addr to all 0's polls the chip and returns the current address
+' NOTE: Buffer at buff_addr must be a minimum of 5 bytes
+    readRegX (core#NRF24_TX_ADDR, 5, @tmp)
+
+    repeat i from 0 to 5
+        addr_test := addr_test + byte[buff_addr][i]
+    if addr_test == 0
+        bytemove(buff_addr, @tmp, 5)
+        return
+    else
+        writeRegX (core#NRF24_TX_ADDR, 5, buff_addr)
 
 PUB TXData(nr_bytes, buff_addr) | cmd_packet, tmp
 
