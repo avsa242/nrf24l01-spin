@@ -460,7 +460,7 @@ PUB RXAddr(pipe, buff_addr) | tmp[2], i, addr_test
     case pipe
         0, 1:
             readRegX (core#NRF24_RX_ADDR_P0 + pipe, 5, @tmp)
-            repeat i from 0 to 5
+            repeat i from 0 to 4
                 addr_test := addr_test + byte[buff_addr][i]
             if addr_test == 0
                 bytemove(buff_addr, @tmp, 5)
@@ -553,9 +553,11 @@ PUB TXAddr(buff_addr) | tmp[2], i, addr_test
 '   Valid values: Bytes $00..$FF
 '   Setting buff_addr to all 0's polls the chip and returns the current address
 ' NOTE: Buffer at buff_addr must be a minimum of 5 bytes
+    tmp := 0
+    addr_test := 0
     readRegX (core#NRF24_TX_ADDR, 5, @tmp)
 
-    repeat i from 0 to 5
+    repeat i from 0 to 4
         addr_test := addr_test + byte[buff_addr][i]
     if addr_test == 0
         bytemove(buff_addr, @tmp, 5)
