@@ -492,15 +492,27 @@ PUB RXFIFO_Full
     readRegX (core#NRF24_FIFO_STATUS, 1, @result)
     result &= (1 << core#FLD_RXFIFO_FULL) * TRUE
 
-PUB RXPayload(pipe) | tmp
-' Queries the RX_PW_Px register (where x is the pipe number 0 to 5 passed)
-'   Returns number of bytes in RX payload in data pipe (1..32 bytes, or 0 if pipe unused)
-'   Valid values: 0..5
-'   Any other value returns FALSE
+PUB RXPayload(pipe, width) | tmp
+' Set length of static payload, in bytes
+'   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
+'   Valid values:
+'       pipe: 0..5
+'       width: 0..32
+'   Any other value for pipe is ignored
+'   Any other value for width polls the chip and returns the current setting
+'   NOTE: Setting a width of 0 effectively disables the pipe
+    tmp := 0
     case pipe
         0..5:
-            readRegX (core#NRF24_RX_PW_P0 + pipe, 1, @result)
-            return (result & core#BITS_RX_PW_P0)
+            readRegX (core#NRF24_RX_PW_P0 + pipe, 1, @tmp)
+            case width
+                0..32:
+                    writeRegX(core#NRF24_RX_PW_P0 + pipe, 1, @width)
+                    return width
+                OTHER:
+                    result := tmp & core#BITS_RX_PW_P0
+                    return result
+
         OTHER:
             return FALSE
 
