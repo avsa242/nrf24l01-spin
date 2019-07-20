@@ -199,7 +199,7 @@ PUB DataReady(clear_intr) | tmp
 PUB DataSent(clear_intr) | tmp
 ' Query or clear Data Sent TX FIFO interrupt
 '   Valid values: TRUE (-1 or 1): Clear interrupt flag
-'   Any other value queries the chip and returns TRUE if packet transmitted, FALSE otherwise
+'   Any other value polls the chip and returns TRUE if packet transmitted, FALSE otherwise
     readRegX (core#NRF24_STATUS, 1, @tmp)
     case ||clear_intr
         1:
@@ -556,9 +556,7 @@ PUB EnableAuto_Ack(pipe_mask) | tmp
         OTHER:
             return tmp & core#NRF24_EN_AA_MASK
 
-    tmp &= core#MASK_ENAA
-    tmp := (tmp | pipe_mask) & core#NRF24_EN_AA_MASK
-    writeRegX (core#NRF24_EN_AA, 1, @tmp)
+    writeRegX (core#NRF24_EN_AA, 1, @pipe_mask)
 
 PUB TXAddr(buff_addr) | tmp[2], i, addr_test
 ' Set transmit address
