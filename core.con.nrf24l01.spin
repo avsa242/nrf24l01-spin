@@ -122,6 +122,7 @@ CON
         BITS_MAX_RT             = %1
         BITS_TX_DS              = %1
         BITS_RX_DR              = %1
+        MASK_MAX_RT             = NRF24_STATUS_MASK ^ (BITS_MAX_RT << FLD_MAX_RT)
         MASK_RX_DR              = NRF24_STATUS_MASK ^ (BITS_RX_DR << FLD_RX_DR)
         MASK_TX_DS              = NRF24_STATUS_MASK ^ (BITS_TX_DS << FLD_TX_DS)
 

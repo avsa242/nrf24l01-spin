@@ -20,18 +20,18 @@ CON
     COL_READ    = 24
     COL_PF      = 40
 
-    CE_PIN      = 23
-    CSN_PIN     = 19
-    SCK_PIN     = 22
-    MOSI_PIN    = 18
-    MISO_PIN    = 21
+    CE_PIN      = 0
+    CSN_PIN     = 1
+    SCK_PIN     = 2
+    MOSI_PIN    = 3
+    MISO_PIN    = 4
 
     LED         = cfg#LED1
 
 OBJ
 
     cfg   : "core.con.boardcfg.flip"
-    ser   : "com.serial.terminal.ansi"
+    ser   : "com.serial.terminal"
     time  : "time"
     nrf24 : "wireless.transceiver.nrf24l01.spi"
     int   : "string.integer"

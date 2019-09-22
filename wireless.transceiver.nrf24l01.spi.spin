@@ -61,7 +61,7 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
     if lookdown(CE_PIN: 0..31) and lookdown(CSN_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
         if okay := spi.start (core#CLK_DELAY, core#CPOL)
-            time.USleep (TPOR)
+            time.USleep (TPOR)  'XXX remove
             _CE := CE_PIN
             _CSN := CSN_PIN
             _SCK := SCK_PIN
@@ -359,9 +359,13 @@ PUB MaxRetrans(clear_intr) | tmp
     readRegX (core#NRF24_STATUS, 1, @tmp)
     case ||clear_intr
         1:
-            clear_intr := ||clear_intr << core#FLD_MAX_RT
+            clear_intr := %1 << core#FLD_MAX_RT
         OTHER:
             tmp := ((tmp >> core#FLD_MAX_RT) & core#BITS_MAX_RT) * TRUE
+
+    tmp &= core#MASK_MAX_RT
+    tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
+    writeRegX (core#NRF24_STATUS, 1, @tmp)
 
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
@@ -443,7 +447,7 @@ PUB RPD
 '   Returns:
 '   FALSE/0: No Carrier
 '   TRUE/-1: Carrier Detected
-    readRegX (core#NRF24_RPD, 8, @result)
+    readRegX (core#NRF24_RPD, 1, @result)
     result *= TRUE
 
 PUB RXAddr(pipe, buff_addr) | tmp[2], i, addr_test
@@ -478,19 +482,20 @@ PUB RXAddr(pipe, buff_addr) | tmp[2], i, addr_test
 
 PUB RXData(nr_bytes, buff_addr) | tmp
 
-    readRegX (core#NRF24_R_RX_PAYLOAD, nr_bytes, @buff_addr)
+    readRegX (core#NRF24_R_RX_PAYLOAD, nr_bytes, buff_addr)
 
 PUB RXFIFO_Empty
 ' Queries the FIFO_STATUS register for RX FIFO empty flag
 '   Returns TRUE if empty, FALSE if there's data in RX FIFO
-    readRegX (core#NRF24_FIFO_STATUS, 1, @result)'(reg, nr_bytes, buf_addr)
-    result &= (1 << core#FLD_RXFIFO_EMPTY) * TRUE
+    readRegX (core#NRF24_FIFO_STATUS, 1, @result)
+    return (result & %1) * TRUE
 
 PUB RXFIFO_Full
 ' Queries the FIFO_STATUS register for RX FIFO full flag
 '   Returns TRUE if full, FALSE if there're available locations in the RX FIFO
     readRegX (core#NRF24_FIFO_STATUS, 1, @result)
-    result &= (1 << core#FLD_RXFIFO_FULL) * TRUE
+    result >>= core#FLD_RXFIFO_FULL
+    result &= %1
 
 PUB RXPayload(pipe, width) | tmp
 ' Set length of static payload, in bytes
@@ -604,12 +609,19 @@ PUB Status
 ' Returns status of last SPI transaction
     readRegX (core#NRF24_STATUS, 1, @result)
 
-PRI writeRegX(reg, nr_bytes, buf_addr) | tmp
+PUB writeRegX(reg, nr_bytes, buf_addr) | tmp
 ' Write reg to MOSI
-    ifnot lookdown(reg: $00..$17, $1C..$1D, $A0, $E1..$E3)                             'Validate reg - there are a few the datasheet says are for testing
-        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
+'    ifnot lookdown(reg: $00..$17, $1C..$1D, $A0, $E1..$E3)                             'Validate reg - there are a few the datasheet says are for testing
+'        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
 'XXX Check flow w.r.t. CS - previously possible cases where it was never brought back high before returning
-    case reg
+    reg |= core#NRF24_W_REG
+    outa[_CSN] := 0
+    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+    repeat tmp from 0 to nr_bytes-1
+        spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
+    outa[_CSN] := 1
+
+{    case reg
         core#NRF24_W_TX_PAYLOAD:
             outa[_CSN] := 0
             spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
@@ -643,19 +655,26 @@ PRI writeRegX(reg, nr_bytes, buf_addr) | tmp
                 OTHER:
                     result := FALSE
                     buf_addr := 0
-
-PRI readRegX(reg, nr_bytes, buf_addr) | tmp
+}
+PUB readRegX(reg, nr_bytes, buf_addr) | tmp
 ' Read reg from MISO
-    ifnot lookdown(reg: $00..$17, $1C..$1D)                             'Validate reg - there are a few the datasheet says are for testing
-        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
+'    ifnot lookdown(reg: $00..$17, $1C..$1D, $61)                             'Validate reg - there are a few the datasheet says are for testing
+'        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
 
     case reg
+        core#NRF24_RPD:
+            outa[_CSN] := 0
+            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            byte[buf_addr][0] := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)
+            outa[_CSN] := 1
+
         core#NRF24_R_RX_PAYLOAD:
             outa[_CSN] := 0
             spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
             repeat tmp from 0 to nr_bytes-1
                 byte[buf_addr][tmp] := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)
             outa[_CSN] := 1
+
         OTHER:
 
             case nr_bytes
