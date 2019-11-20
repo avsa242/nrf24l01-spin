@@ -145,6 +145,23 @@ PUB Channel(number)
         OTHER:
             readReg (core#NRF24_RF_CH, 1, @result)
 
+PUB CRCCheckEnabled(enabled) | tmp
+' Enable CRC
+' NOTE: Forced on if any data pipe has AutoAck enabled
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Any other value polls the chip and returns the current setting
+    readReg (core#NRF24_CONFIG, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_EN_CRC
+        OTHER:
+            result := ((tmp >> core#FLD_EN_CRC) & %1) * TRUE
+            return
+
+    tmp &= core#MASK_EN_CRC
+    tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
+    writeReg (core#NRF24_CONFIG, 1, @tmp)
+
 PUB CRCEncoding(bytes) | tmp
 ' Choose CRC Encoding scheme, in bytes
 '   Valid values: 1, 2
@@ -225,23 +242,6 @@ PUB EnableACK(enabled) | tmp
     tmp &= core#MASK_EN_ACK_PAY
     tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
     writeReg (core#NRF24_FEATURE, 1, @tmp)
-
-PUB EnableCRC(enabled) | tmp
-' Enable CRC
-' NOTE: Forced on if any data pipe has AutoAck enabled
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
-'   Any other value polls the chip and returns the current setting
-    readReg (core#NRF24_CONFIG, 1, @tmp)
-    case ||enabled
-        0, 1:
-            enabled := ||enabled << core#FLD_EN_CRC
-        OTHER:
-            result := ((tmp >> core#FLD_EN_CRC) & %1) * TRUE
-            return
-
-    tmp &= core#MASK_EN_CRC
-    tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
-    writeReg (core#NRF24_CONFIG, 1, @tmp)
 
 PUB EnableDynPayload(enabled) | tmp
 ' Enable Dynamic Payload Length
