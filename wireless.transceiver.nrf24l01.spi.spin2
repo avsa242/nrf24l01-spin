@@ -373,6 +373,12 @@ PUB MaxRetrans(clear_intr) | tmp
     tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
     writeReg (core#NRF24_STATUS, 1, @tmp)
 
+PUB NodeAddress(addr_ptr)
+' Set node address
+'   NOTE: This sets the address for pipe 0 as well as the transmit address
+    RXAddr(0, @addr_ptr)
+    TXAddr(@addr_ptr)
+
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
