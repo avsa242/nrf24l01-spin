@@ -529,6 +529,10 @@ PUB RXFIFO_Full
     result >>= core#FLD_RXFIFO_FULL
     result &= %1
 
+PUB RXMode
+' Change chip state to RX (receive)
+    RXTX(ROLE_RX)
+
 PUB RXPayload(pipe, width) | tmp
 ' Set length of static payload, in bytes
 '   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
@@ -596,6 +600,10 @@ PUB EnableAuto_Ack(pipe_mask) | tmp
             return
 
     writeReg (core#NRF24_EN_AA, 1, @pipe_mask)
+
+PUB Sleep
+' Power down chip
+    PowerUp(FALSE)
 
 PUB TXAddr(buff_addr) | tmp[2], i, addr_test
 ' Set transmit address
