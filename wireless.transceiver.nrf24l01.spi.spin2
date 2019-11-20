@@ -162,7 +162,7 @@ PUB CRCCheckEnabled(enabled) | tmp
     tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
     writeReg (core#NRF24_CONFIG, 1, @tmp)
 
-PUB CRCEncoding(bytes) | tmp
+PUB CRCLength(bytes) | tmp
 ' Choose CRC Encoding scheme, in bytes
 '   Valid values: 1, 2
 '   Any other value polls the chip and returns the current setting
