@@ -379,6 +379,11 @@ PUB NodeAddress(addr_ptr)
     RXAddr(0, @addr_ptr)
     TXAddr(@addr_ptr)
 
+PUB PayloadLen(length)
+' Set payload length
+'   NOTE: Affects pipe 0 only. Use RXPayload to affect other pipes.
+    RXPayload(0, length)
+
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
@@ -464,6 +469,17 @@ PUB RPD
 '   TRUE/-1: Carrier Detected
     readReg (core#NRF24_RPD, 1, @result)
     result *= TRUE
+
+PUB RSSI
+' RSSI (emulated)
+'   Returns:
+'       -64: Carrier detected
+'       -255 No carrier
+    case RPD
+        TRUE:
+            return -64
+        FALSE:
+            return -255
 
 PUB RXAddr(pipe, buff_addr) | tmp[2], i, addr_test
 ' Set receive address of pipe number 'pipe' from buffer at address buff_addr
