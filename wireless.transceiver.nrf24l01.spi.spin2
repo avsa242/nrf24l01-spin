@@ -444,24 +444,6 @@ PUB RetrPackets
     readReg (core#NRF24_OBSERVE_TX, 1, @result)
     result &= core#BITS_ARC_CNT
 
-PUB RFPower(power) | tmp
-' Set RF output power in TX mode, in dBm
-'   Valid values: -18, -12, -6, 0
-'   Any other value polls the chip and returns the current setting
-    readReg (core#NRF24_RF_SETUP, 1, @tmp)
-    case power
-        -18, -12, -6, 0:
-            power := lookdownz(power: -18, -12, -6, 0)
-            power := power << core#FLD_RF_PWR
-        OTHER:
-            tmp := (tmp >> core#FLD_RF_PWR) & core#BITS_RF_PWR
-            result := lookupz(tmp: -18, -12, -6, 0)
-            return
-
-    tmp &= core#MASK_RF_PWR
-    tmp := (tmp | power) & core#NRF24_RF_SETUP_MASK
-    writeReg (core#NRF24_RF_SETUP, 1, @tmp)
-
 PUB RPD
 ' Received Power Detector
 '   Returns:
@@ -645,6 +627,24 @@ PUB TXFIFO_Full
 PUB TX
 ' Change chip state to TX (transmit)
     RXTX(ROLE_TX)
+
+PUB TXPower(power) | tmp
+' Set RF output power in TX mode, in dBm
+'   Valid values: -18, -12, -6, 0
+'   Any other value polls the chip and returns the current setting
+    readReg (core#NRF24_RF_SETUP, 1, @tmp)
+    case power
+        -18, -12, -6, 0:
+            power := lookdownz(power: -18, -12, -6, 0)
+            power := power << core#FLD_RF_PWR
+        OTHER:
+            tmp := (tmp >> core#FLD_RF_PWR) & core#BITS_RF_PWR
+            result := lookupz(tmp: -18, -12, -6, 0)
+            return
+
+    tmp &= core#MASK_RF_PWR
+    tmp := (tmp | power) & core#NRF24_RF_SETUP_MASK
+    writeReg (core#NRF24_RF_SETUP, 1, @tmp)
 
 PUB TXReuse
 ' Queries the FIFO_STATUS register for TX_REUSE flag
