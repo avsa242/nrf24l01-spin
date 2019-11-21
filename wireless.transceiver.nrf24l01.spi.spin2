@@ -628,7 +628,7 @@ PUB TX
 ' Change chip state to TX (transmit)
     RXTX(ROLE_TX)
 
-PUB TXPower(power) | tmp
+PUB TXPower(dBm) | tmp
 ' Set RF output power in TX mode, in dBm
 '   Valid values: -18, -12, -6, 0
 '   Any other value polls the chip and returns the current setting
