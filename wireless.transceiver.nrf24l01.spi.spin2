@@ -133,11 +133,19 @@ PUB AutoRetransmitCount(tries) | tmp
     tmp := (tmp | tries) & core#NRF24_SETUP_RETR_MASK
     writeReg (core#NRF24_SETUP_RETR, 1, @tmp)
 
-PUB Channel(number)
-' Set/Get RF Channel
-'   Resulting frequency of set channel = 2400MHz + ch
-'       e.g., if ch is 35, Frequency is 2435MHz
-'   Valid values: 0..127 sets channel
+PUB CarrierFreq(MHz)
+' Set carrier frequency, in MHz
+'   Valid values: 2400..2527
+'   Any other value polls the chip and returns the current setting
+    case MHz
+        2400..2527:
+            Channel(MHz-2400)
+        OTHER:
+            return 2400 + Channel
+
+PUB Channel(number=-2)
+' Set RF channel
+'   Valid values: 0..127
 '   Any other value polls the chip and returns the current setting
     case number
         0..127:
