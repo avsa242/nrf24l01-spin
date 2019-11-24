@@ -375,9 +375,29 @@ PUB PacketsRetransmitted
     readReg (core#NRF24_OBSERVE_TX, 1, @result)
     result &= core#BITS_ARC_CNT
 
-PUB PayloadLen(length, pipe_nr=0)
-' Set payload length
-    RXPayloadLen(pipe_nr, length)
+PUB PayloadLen(width=-2, pipe_nr=0) | tmp
+' Set length of static payload, in bytes
+'   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
+'   Valid values:
+'       pipe: 0..5 (default 0)
+'       width: 0..32
+'   Any other value for pipe is ignored
+'   Any other value for width polls the chip and returns the current setting
+'   NOTE: Setting a width of 0 effectively disables the pipe
+    tmp := 0
+    case pipe_nr
+        0..5:
+            readReg (core#NRF24_RX_PW_P0 + pipe_nr, 1, @tmp)
+            case width
+                0..32:
+                    writeReg (core#NRF24_RX_PW_P0 + pipe_nr, 1, @width)
+                    return width
+                OTHER:
+                    result := tmp & core#BITS_RX_PW_P0
+                    return result
+
+        OTHER:
+            return FALSE
 
 PUB PayloadReady(clear_intr=-2) | tmp
 ' Query or clear Data Ready RX FIFO interrupt
@@ -553,34 +573,10 @@ PUB RXPayload(nr_bytes, buff_addr) | tmp
         OTHER:
             return FALSE
 
-PUB RXPayloadLen(pipe, width) | tmp
-' Set length of static payload, in bytes
-'   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
-'   Valid values:
-'       pipe: 0..5
-'       width: 0..32
-'   Any other value for pipe is ignored
-'   Any other value for width polls the chip and returns the current setting
-'   NOTE: Setting a width of 0 effectively disables the pipe
-    tmp := 0
-    case pipe
-        0..5:
-            readReg (core#NRF24_RX_PW_P0 + pipe, 1, @tmp)
-            case width
-                0..32:
-                    writeReg (core#NRF24_RX_PW_P0 + pipe, 1, @width)
-                    return width
-                OTHER:
-                    result := tmp & core#BITS_RX_PW_P0
-                    return result
-
-        OTHER:
-            return FALSE
-
 PUB RXPipePending
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
-    result := (Status & core#FLD_RX_P_NO)
+    result := (Status >> core#FLD_RX_P_NO) & core#BITS_RX_P_NO
 
 PUB RXTX(role=-2) | tmp
 ' Set to Primary RX or TX
