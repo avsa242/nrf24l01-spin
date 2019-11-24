@@ -519,7 +519,7 @@ PUB RXFIFO_Full
     result >>= core#FLD_RXFIFO_FULL
     result &= %1
 
-PUB RXMode
+PUB RX
 ' Change chip state to RX (receive)
     RXTX(ROLE_RX)
 
