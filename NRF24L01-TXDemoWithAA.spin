@@ -4,9 +4,9 @@
     Author: Jesse Burt
     Description: nRF24L01+ Transmit demo that uses the radio's
         auto-acknowledge function (Enhanced ShockBurst - (TM) Nordic Semi)
-    Copyright (c) 2019
+    Copyright (c) 2020
     Started Nov 23, 2019
-    Updated Nov 24, 2019
+    Updated Jan 25, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -62,7 +62,8 @@ PUB Transmit | count, tmp, addr[2], to_node, i, max_retrans, pkts_retrans, lost_
     nrf24.AddressWidth(5)
     bytefill(@addr, 0, 8)
     repeat i from 4 to 0
-        addr.byte[i] := $E7
+        addr.byte[i] := $E7                                 ' Set the first 4 octets of the address
+    addr.byte[0] := $E7                                     '   and the last can be different (for pipes 2..5)
     nrf24.NodeAddress (@addr)                               ' Set TX and RX address to the same
                                                             ' (RX pipe is used for receipt of Auto-Acknowledgement)
 
@@ -114,14 +115,14 @@ PUB Transmit | count, tmp, addr[2], to_node, i, max_retrans, pkts_retrans, lost_
             nrf24.MaxRetransReached(CLEAR)                  '   clear the interrupt so we can continue to TX
 
         if lost_pkts => 15                                  ' If number of packets lost exceeds 15
-            nrf24.Channel(CHANNEL)                          '   set the channel to reset the counter
+            nrf24.Channel(CHANNEL)                          '   clear the interrupt so we can continue to TX
 
         if countdown == 20                                  ' Transmit, if it's the start of the countdown
             tmp := int.DecZeroed(count++, 4)                ' Tack a counter onto the
             bytemove(@_fifo.byte[6], tmp, 4)                '   end of the payload
             ser.position(0, 10)
-            ser.str(string("Sending "))
-            ser.Hexdump(@_fifo, 0, _pktlen, 11, 0, 11)
+            ser.str(string("Sending"))
+            ser.Hexdump(@_fifo, 0, _pktlen, _pktlen, 0, 11)
             nrf24.TXPayload (_pktlen, @_fifo, FALSE)        ' Transmit _fifo contents immediately
 
         time.MSleep(50)                                     ' Don't abuse the airwaves - wait between packets

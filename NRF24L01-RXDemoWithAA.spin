@@ -121,7 +121,7 @@ PUB Receive | tmp, from_node, addr[2], i, count, recv_pipe
         repeat                                              ' Wait to proceed
             ser.Position(0, 5)                              ' .
             ser.str(string("RSSI: "))                       ' .
-            ser.dec(nrf24.RSSI)                             ' .
+            ser.str(int.DecPadded(nrf24.RSSI, 4))           ' .
             ser.newline                                     ' .
             ser.str(string("Packets received: "))           ' .
             ser.dec(count)                                  ' .

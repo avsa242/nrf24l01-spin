@@ -30,11 +30,11 @@ CON
     SER_TX          = cfg#SER_TX
     SER_BAUD        = 2_000_000
 
-    CS_PIN          = 37
-    SCK_PIN         = 34
-    MOSI_PIN        = 32
-    MISO_PIN        = 33
-    CE_PIN          = 36
+    CS_PIN          = 45
+    SCK_PIN         = 42
+    MOSI_PIN        = 40
+    MISO_PIN        = 41
+    CE_PIN          = 44
     SCK_FREQ        = 5_000_000
 
     CLEAR           = 1
@@ -125,7 +125,7 @@ PUB Receive | tmp, from_node, addr[2], i, count, recv_pipe
         bytefill (@_fifo, $00, 64)                          ' Clear RX local buffer
         repeat                                              ' Wait to proceed
             ser.Position(0, 5)
-            ser.PrintF("RSSI: %d  \nPackets received: %d", nrf24.RSSI, count)
+            ser.PrintF("RSSI: %s  \nPackets received: %d", int.DecPadded(nrf24.RSSI, 4), count)
         until nrf24.PayloadReady                            ' until we've received at least _pktlen bytes
 
         recv_pipe := nrf24.RXPipePending                    ' In which pipe is the received data waiting?
