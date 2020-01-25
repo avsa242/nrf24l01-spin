@@ -432,10 +432,9 @@ PUB PayloadSent(clear_intr) | tmp
 
 PUB PipesEnabled(mask) | tmp
 ' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
-'   Data pipe:     5    0   5     0
-'                  |....|   |.....|
-'   Valid values: %000000..%1111111
-
+'   Data pipe:     5    0   5    0
+'                  |....|   |....|
+'   Valid values: %000000..%111111
     case mask
         %000000..%111111:
 '           Don't actually do anything if the values are in this range,
