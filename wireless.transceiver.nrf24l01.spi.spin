@@ -3,9 +3,9 @@
     Filename: wireless.transceiver.nrf24l01.spi.spin
     Author: Jesse Burt
     Description: Driver for Nordic Semi. nRF24L01+
-    Copyright (c) 2019
+    Copyright (c) 2020
     Started Jan 6, 2019
-    Updated Jul 19, 2019
+    Updated Jan 24, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -17,14 +17,12 @@ CON
     TTXSETTLE   = 130 'us
     THCE        = 10  'us
 
-    RF_PWR_0    = %11           ' 0dBm
-    RF_PWR__6   = %10           ' -6dBm
-    RF_PWR__12  = %01           ' -12dBm
-    RF_PWR__18  = %00           ' -18dBm
-
     ROLE_TX     = 0
     ROLE_RX     = 1
 
+' RXAddr and TXAddr constants
+    READ        = 0
+    WRITE       = 1
 ' Recommended states:
 ' Power down:
 '   PWR_UP = 1: XO Start (wait Tpd2stby) transition to Standby I
@@ -50,10 +48,10 @@ VAR
 
 OBJ
 
-    spi : "com.spi.4w"
-    core: "core.con.nrf24l01"
-    time: "time"
-    io  : "io"
+    spi     : "com.spi.4w"
+    core    : "core.con.nrf24l01"
+    time    : "time"
+    io      : "io"
 
 PUB Null
 ''This is not a top-level object
@@ -83,7 +81,7 @@ PUB Stop
 
     io.High(_CSN)
     io.Low(_CE)
-    spi.stop
+    spi.Stop
 
 PUB CE(state)
 
@@ -99,11 +97,31 @@ PUB AddressWidth(bytes) | tmp
         3, 4, 5:
             bytes := bytes-2
         OTHER:
-            return (tmp & core#BITS_AW) + 2
+            result := (tmp & core#BITS_AW) + 2
+            return
 
     tmp &= core#MASK_AW
     tmp := (tmp | bytes) & core#NRF24_SETUP_AW_MASK
     writeReg (core#NRF24_SETUP_AW, 1, @tmp)
+
+PUB AutoAckEnabledPipes(pipe_mask) | tmp
+' Enable the Auto Acknowledgement function (aka Enhanced ShockBurst - (TM) NORDIC Semi.)
+'   per set data pipe mask:
+'   Data Pipe:     5    0   5    0
+'                  |....|   |....|
+'   Valid values: %000000..%111111
+'   0 disables AA for the given pipe, 1 enables
+'   Example:
+'       AutoAckEnabledPipes(%001010)
+'           would enable AA for data pipes 1 and 3, and disable for all others
+    readReg (core#NRF24_EN_AA, 1, @tmp)
+    case pipe_mask
+        %000000..%111111:
+        OTHER:
+            result := tmp & core#NRF24_EN_AA_MASK
+            return
+
+    writeReg (core#NRF24_EN_AA, 1, @pipe_mask)
 
 PUB AutoRetransmitDelay(delay_us) | tmp
 ' Setup of automatic retransmission - Auto Retransmit Delay, in microseconds
@@ -116,8 +134,8 @@ PUB AutoRetransmitDelay(delay_us) | tmp
             delay_us := (delay_us - 1) << core#FLD_ARD
         OTHER:
             tmp := ((tmp >> core#FLD_ARD) & core#BITS_ARD) + 1
-            return lookup(tmp: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
-
+            result := lookup(tmp: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
+            return
     tmp &= core#MASK_ARD
     tmp := (tmp | delay_us) & core#NRF24_SETUP_RETR_MASK
     writeReg (core#NRF24_SETUP_RETR, 1, @tmp)
@@ -131,101 +149,33 @@ PUB AutoRetransmitCount(tries) | tmp
     case tries
         0..15:
         OTHER:
-            return (tmp & core#BITS_ARC)
-
+            result := (tmp & core#BITS_ARC)
+            return
     tmp &= core#MASK_ARC
     tmp := (tmp | tries) & core#NRF24_SETUP_RETR_MASK
     writeReg (core#NRF24_SETUP_RETR, 1, @tmp)
 
-PUB Channel(ch)
-' Set/Get RF Channel
-'   Resulting frequency of set channel = 2400MHz + ch
-'       e.g., if ch is 35, Frequency is 2435MHz
-'   Valid values: 0..127 sets channel
+PUB CarrierFreq(MHz)
+' Set carrier frequency, in MHz
+'   Valid values: 2400..2527
 '   Any other value polls the chip and returns the current setting
-    case ch
+    case MHz
+        2400..2527:
+            Channel(MHz-2400)
+        OTHER:
+            return 2400 + Channel(-2)
+
+PUB Channel(number)
+' Set RF channel
+'   Valid values: 0..127
+'   Any other value polls the chip and returns the current setting
+    case number
         0..127:
-            writeReg (core#NRF24_RF_CH, 1, @ch)
+            writeReg (core#NRF24_RF_CH, 1, @number)
         OTHER:
             readReg (core#NRF24_RF_CH, 1, @result)
 
-PUB CRCEncoding(bytes) | tmp
-' Choose CRC Encoding scheme, in bytes
-'   Valid values: 1, 2
-'   Any other value polls the chip and returns the current setting
-    readReg (core#NRF24_CONFIG, 1, @tmp)
-    case bytes
-        1, 2:
-            bytes := (bytes-1) << core#FLD_CRCO
-        OTHER:
-            return ((tmp >> core#FLD_CRCO) & %1) + 1
-
-    tmp &= core#MASK_CRCO
-    tmp := (tmp | bytes) & core#NRF24_CONFIG_MASK
-    writeReg (core#NRF24_CONFIG, 1, @tmp)
-
-PUB CW(enabled) | tmp
-' Enable continuous carrier transmit (intended for testing only)
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
-'   Any other value polls the chip and returns the current setting
-    readReg (core#NRF24_RF_SETUP, 1, @tmp)
-    case ||enabled
-        0, 1:
-            enabled := ||enabled << core#FLD_CONT_WAVE
-        OTHER:
-            return ((tmp >> core#FLD_CONT_WAVE) & %1) * TRUE
-
-    tmp &= core#MASK_CONT_WAVE
-    tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
-    writeReg (core#NRF24_RF_SETUP, 1, @tmp)
-
-PUB DataReady(clear_intr) | tmp
-' Query or clear Data Ready RX FIFO interrupt
-'   Valid values: TRUE (-1 or 1): Clear interrupt flag
-'   Any other value queries the chip and returns TRUE if new data in FIFO, FALSE otherwise
-    readReg (core#NRF24_STATUS, 1, @tmp)
-    case ||clear_intr
-        1:
-            clear_intr := ||clear_intr << core#FLD_RX_DR
-        OTHER:
-            tmp := ((tmp >> core#FLD_RX_DR) & core#BITS_RX_DR) * TRUE
-
-    tmp &= core#MASK_RX_DR
-    tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
-    writeReg (core#NRF24_STATUS, 1, @tmp)
-
-PUB DataSent(clear_intr) | tmp
-' Query or clear Data Sent TX FIFO interrupt
-'   Valid values: TRUE (-1 or 1): Clear interrupt flag
-'   Any other value polls the chip and returns TRUE if packet transmitted, FALSE otherwise
-    readReg (core#NRF24_STATUS, 1, @tmp)
-    case ||clear_intr
-        1:
-            clear_intr := ||clear_intr << core#FLD_TX_DS
-        OTHER:
-            tmp := ((tmp >> core#FLD_TX_DS) & core#BITS_TX_DS) * TRUE
-
-    tmp &= core#MASK_TX_DS
-    tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
-    writeReg (core#NRF24_STATUS, 1, @tmp)
-
-PUB EnableACK(enabled) | tmp
-' Enable payload with ACK
-' XXX Add timing notes/code from datasheet, p.63, note d
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
-'   Any other value polls the chip and returns the current setting
-    readReg (core#NRF24_FEATURE, 1, @tmp)
-    case ||enabled
-        0, 1:
-            enabled := ||enabled << core#FLD_EN_ACK_PAY
-        OTHER:
-            return ((tmp >> core#FLD_EN_ACK_PAY) & core#BITS_EN_ACK_PAY) * TRUE
-
-    tmp &= core#MASK_EN_ACK_PAY
-    tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
-    writeReg (core#NRF24_FEATURE, 1, @tmp)
-
-PUB EnableCRC(enabled) | tmp
+PUB CRCCheckEnabled(enabled) | tmp
 ' Enable CRC
 ' NOTE: Forced on if any data pipe has AutoAck enabled
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
@@ -235,54 +185,50 @@ PUB EnableCRC(enabled) | tmp
         0, 1:
             enabled := ||enabled << core#FLD_EN_CRC
         OTHER:
-            return ((tmp >> core#FLD_EN_CRC) & %1) * TRUE
+            result := ((tmp >> core#FLD_EN_CRC) & %1) * TRUE
+            return
 
     tmp &= core#MASK_EN_CRC
     tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
     writeReg (core#NRF24_CONFIG, 1, @tmp)
 
-PUB EnableDynPayload(enabled) | tmp
-' Enable Dynamic Payload Length
-' NOTE: Must be enabled to use the DynamicPayload method.
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+PUB CRCLength(bytes) | tmp
+' Choose CRC Encoding scheme, in bytes
+'   Valid values: 1, 2
 '   Any other value polls the chip and returns the current setting
-    readReg (core#NRF24_FEATURE, 1, @tmp)
-    case ||enabled
-        0, 1:
-            enabled := ||enabled << core#FLD_EN_DPL
+    readReg (core#NRF24_CONFIG, 1, @tmp)
+    case bytes
+        1, 2:
+            bytes := (bytes-1) << core#FLD_CRCO
         OTHER:
-            return ((tmp >> core#FLD_EN_DPL) & core#BITS_EN_DPL) * TRUE
+            result := ((tmp >> core#FLD_CRCO) & %1) + 1
+            return
 
-    tmp &= core#MASK_EN_DPL
-    tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
-    writeReg (core#NRF24_FEATURE, 1, @tmp)
+    tmp &= core#MASK_CRCO
+    tmp := (tmp | bytes) & core#NRF24_CONFIG_MASK
+    writeReg (core#NRF24_CONFIG, 1, @tmp)
 
-PUB EnablePipe(mask) | tmp
-' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
-'   Data pipe:     5    0   5     0
-'                  |....|   |.....|
-'   Valid values: %000000..%1111111
-    readReg (core#NRF24_EN_RXADDR, 1, @tmp)
-    case mask
-        %000000..%111111:
-'           Don't actually do anything if the values are in this range,
-'            since they're already actually valid. Commented line below
-'            shows what *would* be done:
-'            mask := (mask << core#FLD_ERX_P0)
+PUB DataRate(kbps) | tmp
+' Set RF data rate in kbps
+'   Valid values: 250, 1000, 2000
+'   Any other value polls the chip and returns the current setting
+    readReg (core#NRF24_RF_SETUP, 1, @tmp)
+    case kbps
+        1000:
+            tmp &= core#MASK_RF_DR_HIGH
+            tmp &= core#MASK_RF_DR_LOW
+        2000:
+            tmp |= (1 << core#FLD_RF_DR_HIGH)
+            tmp &= core#MASK_RF_DR_LOW
+        250:
+            tmp &= core#MASK_RF_DR_HIGH
+            tmp |= (1 << core#FLD_RF_DR_LOW)
         OTHER:
-            return tmp & core#NRF24_EN_RXADDR_MASK
+            tmp := (tmp >> core#FLD_RF_DR_HIGH) & %101          'Only care about the RF_DR_x bits
+            result := lookupz(tmp: 1000, 2000, 0, 0, 250)
+            return
 
-    tmp &= core#MASK_EN_RXADDR
-    tmp := (tmp | mask) & core#NRF24_EN_RXADDR_MASK
-    writeReg (core#NRF24_EN_RXADDR, 1, @tmp)
-
-PUB FlushRX
-
-    writeReg(core#NRF24_FLUSH_RX, 0, 0)
-
-PUB FlushTX
-
-    writeReg(core#NRF24_FLUSH_TX, 0, 0)
+    writeReg (core#NRF24_RF_SETUP, 1, @tmp)
 
 PUB DynamicACK(enabled) | tmp
 ' Enable selective auto-acknowledge feature
@@ -295,7 +241,8 @@ PUB DynamicACK(enabled) | tmp
         0, 1:
             enabled := ||enabled << core#FLD_EN_DYN_ACK
         OTHER:
-            return ((tmp >> core#FLD_EN_DYN_ACK) & core#BITS_EN_DYN_ACK) * TRUE
+            result := ((tmp >> core#FLD_EN_DYN_ACK) & core#BITS_EN_DYN_ACK) * TRUE
+            return
 
     tmp &= core#MASK_EN_DYN_ACK
     tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
@@ -314,11 +261,58 @@ PUB DynamicPayload(mask) | tmp
 '            shows what *would* be done:
 '            mask := (mask << core#FLD_ERX_P0)
         OTHER:
-            return tmp & core#NRF24_DYNPD_MASK
+            result := tmp & core#NRF24_DYNPD_MASK
+            return
 
     tmp &= core#MASK_DPL
     tmp := (tmp | mask) & core#NRF24_DYNPD_MASK
     writeReg (core#NRF24_DYNPD, 1, @tmp)
+
+PUB DynPayloadEnabled(enabled) | tmp
+' Enable Dynamic Payload Length
+' NOTE: Must be enabled to use the DynamicPayload method.
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Any other value polls the chip and returns the current setting
+    readReg (core#NRF24_FEATURE, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_EN_DPL
+        OTHER:
+            result := ((tmp >> core#FLD_EN_DPL) & core#BITS_EN_DPL) * TRUE
+            return
+
+    tmp &= core#MASK_EN_DPL
+    tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
+    writeReg (core#NRF24_FEATURE, 1, @tmp)
+
+PUB EnableACK(enabled) | tmp
+' Enable payload with ACK
+' XXX Add timing notes/code from datasheet, p.63, note d
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Any other value polls the chip and returns the current setting
+    readReg (core#NRF24_FEATURE, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_EN_ACK_PAY
+        OTHER:
+            result := ((tmp >> core#FLD_EN_ACK_PAY) & core#BITS_EN_ACK_PAY) * TRUE
+            return
+
+    tmp &= core#MASK_EN_ACK_PAY
+    tmp := (tmp | enabled) & core#NRF24_FEATURE_MASK
+    writeReg (core#NRF24_FEATURE, 1, @tmp)
+
+PUB FlushRX
+
+    writeReg (core#NRF24_FLUSH_RX, 0, 0)
+
+PUB FlushTX
+
+    writeReg (core#NRF24_FLUSH_TX, 0, 0)
+
+PUB Idle
+
+    CE(0)
 
 PUB IntMask(mask) | tmp
 ' Control which events will trigger an interrupt on the IRQ pin, using a 3-bit mask
@@ -336,7 +330,8 @@ PUB IntMask(mask) | tmp
         %000..%111:
             mask := !(mask << core#FLD_MASK_MAX_RT) 'Invert because the chip's internal logic is reversed, i.e.,
         OTHER:                                      ' 1 disables the interrupt, 0 enables an active-low interrupt
-            return !(tmp >> core#FLD_MASK_MAX_RT) & core#BITS_INTS
+            result := !(tmp >> core#FLD_MASK_MAX_RT) & core#BITS_INTS
+            return
 
     tmp &= core#MASK_INTS
     tmp := (tmp | mask) & core#NRF24_CONFIG_MASK
@@ -344,26 +339,116 @@ PUB IntMask(mask) | tmp
 
 PUB LostPackets
 ' Count lost packets
-'   Returns: Number of lost packets since last write to RF_CH reg.
+'   Returns: Number of lost packets since last channel/carrier freq set
 '   Max value is 15
+'   NOTE: To reset, re-set the Channel or CarrierFreq
     readReg (core#NRF24_OBSERVE_TX, 1, @result)
     result := (result >> core#FLD_PLOS_CNT) & core#BITS_PLOS_CNT
 
-PUB MaxRetrans(clear_intr) | tmp
+PUB MaxRetransReached(clear_intr) | tmp
 ' Query or clear Maximum number of TX retransmits interrupt
 ' NOTE: If this flag is set, it must be cleared to enable further communication.
-'   Valid values: 1 or TRUE: Clear interrupt flag
+'   Valid values: TRUE (-1 or 1): Clear interrupt flag
 '   Any other value returns TRUE when max number of retransmits reached, FALSE otherwise
     readReg (core#NRF24_STATUS, 1, @tmp)
     case ||clear_intr
         1:
             clear_intr := %1 << core#FLD_MAX_RT
         OTHER:
-            tmp := ((tmp >> core#FLD_MAX_RT) & core#BITS_MAX_RT) * TRUE
+            result := ((tmp >> core#FLD_MAX_RT) & core#BITS_MAX_RT) * TRUE
+            return
 
     tmp &= core#MASK_MAX_RT
     tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
     writeReg (core#NRF24_STATUS, 1, @tmp)
+
+PUB NodeAddress(addr_ptr)
+' Set node address
+'   NOTE: This sets the address for Receive pipe 0 as well as the Transmit address
+    RXAddr(addr_ptr, 0, WRITE)
+    TXAddr(addr_ptr, WRITE)
+
+PUB PacketsRetransmitted
+' Count retransmitted packets
+'   Returns: Number of packets retransmitted since the start of transmission of a new packet
+    readReg (core#NRF24_OBSERVE_TX, 1, @result)
+    result &= core#BITS_ARC_CNT
+
+PUB PayloadLen(width, pipe_nr) | tmp
+' Set length of static payload, in bytes
+'   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
+'   Valid values:
+'       pipe: 0..5 (default 0)
+'       width: 0..32
+'   Any other value for pipe is ignored
+'   Any other value for width polls the chip and returns the current setting
+'   NOTE: Setting a width of 0 effectively disables the pipe
+    tmp := 0
+    case pipe_nr
+        0..5:
+            readReg (core#NRF24_RX_PW_P0 + pipe_nr, 1, @tmp)
+            case width
+                0..32:
+                    writeReg (core#NRF24_RX_PW_P0 + pipe_nr, 1, @width)
+                    return width
+                OTHER:
+                    result := tmp & core#BITS_RX_PW_P0
+                    return result
+
+        OTHER:
+            return FALSE
+
+PUB PayloadReady(clear_intr) | tmp
+' Query or clear Data Ready RX FIFO interrupt
+'   Valid values: TRUE (-1 or 1): Clear interrupt flag
+'   Any other value queries the chip and returns TRUE if new data in FIFO, FALSE otherwise
+    readReg (core#NRF24_STATUS, 1, @tmp)
+    case ||clear_intr
+        1:
+            clear_intr := ||clear_intr << core#FLD_RX_DR
+        OTHER:
+            result := ((tmp >> core#FLD_RX_DR) & core#BITS_RX_DR) * TRUE
+            return
+
+    tmp &= core#MASK_RX_DR
+    tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
+    writeReg (core#NRF24_STATUS, 1, @tmp)
+
+PUB PayloadSent(clear_intr) | tmp
+' Query or clear Data Sent TX FIFO interrupt
+'   Valid values: TRUE (-1 or 1): Clear interrupt flag
+'   Any other value polls the chip and returns TRUE if packet transmitted, FALSE otherwise
+    readReg (core#NRF24_STATUS, 1, @tmp)
+    case ||clear_intr
+        1:
+            clear_intr := ||clear_intr << core#FLD_TX_DS
+        OTHER:
+            result := ((tmp >> core#FLD_TX_DS) & core#BITS_TX_DS) * TRUE
+            return
+
+    tmp &= core#MASK_TX_DS
+    tmp := (tmp | clear_intr) & core#NRF24_STATUS_MASK
+    writeReg (core#NRF24_STATUS, 1, @tmp)
+
+PUB PipesEnabled(mask) | tmp
+' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
+'   Data pipe:     5    0   5     0
+'                  |....|   |.....|
+'   Valid values: %000000..%1111111
+
+    case mask
+        %000000..%111111:
+'           Don't actually do anything if the values are in this range,
+'            since they're already actually valid. Commented line below
+'            shows what *would* be done:
+'            mask := (mask << core#FLD_ERX_P0)
+        OTHER:
+            result := tmp & core#NRF24_EN_RXADDR_MASK
+            return
+
+    tmp &= core#MASK_EN_RXADDR
+    tmp := (tmp | mask) & core#NRF24_EN_RXADDR_MASK
+    writeReg (core#NRF24_EN_RXADDR, 1, @tmp)
 
 PUB PLL_Lock(enabled) | tmp
 ' Force PLL Lock signal (intended for testing only)
@@ -374,7 +459,8 @@ PUB PLL_Lock(enabled) | tmp
         0, 1:
             enabled := ||enabled << core#FLD_PLL_LOCK
         OTHER:
-            return ((tmp >> core#FLD_PLL_LOCK) & %1) * TRUE
+            result := ((tmp >> core#FLD_PLL_LOCK) & %1) * TRUE
+            return
 
     tmp &= core#MASK_PLL_LOCK
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
@@ -389,140 +475,107 @@ PUB PowerUp(enabled) | tmp
         0, 1:
             enabled := ||enabled << core#FLD_PWR_UP
         OTHER:
-            return ((tmp >> core#FLD_PWR_UP) & %1) * TRUE
+            result := ((tmp >> core#FLD_PWR_UP) & %1) * TRUE
+            return
 
     tmp &= core#MASK_PWR_UP
     tmp := (tmp | enabled) & core#NRF24_CONFIG_MASK
     writeReg (core#NRF24_CONFIG, 1, @tmp)
-
-PUB Rate(kbps) | tmp, lo, hi, tmp2, tmp3
-' Set RF data rate in kbps
-'   Valid values: 250, 1000, 2000
-'   Any other value polls the chip and returns the current setting
-    readReg (core#NRF24_RF_SETUP, 1, @tmp)
-    case kbps
-        1000:
-            tmp &= core#MASK_RF_DR_HIGH
-            tmp &= core#MASK_RF_DR_LOW
-        2000:
-            tmp |= (1 << core#FLD_RF_DR_HIGH)
-            tmp &= core#MASK_RF_DR_LOW
-        250:
-            tmp &= core#MASK_RF_DR_HIGH
-            tmp |= (1 << core#FLD_RF_DR_LOW)
-        OTHER:
-            tmp := (tmp >> core#FLD_RF_DR_HIGH) & %101          'Only care about the RF_DR_x bits
-            result := lookupz(tmp: 1000, 2000, 0, 0, 250)
-            return result
-
-    writeReg (core#NRF24_RF_SETUP, 1, @tmp)
-
-PUB RetrPackets
-' Count retransmitted packets
-'   Returns: Number of packets retransmitted since the start of transmission of a new packet
-    readReg (core#NRF24_OBSERVE_TX, 1, @result)
-    result &= core#BITS_ARC_CNT
-
-PUB RFPower(power) | tmp
-' Set RF output power in TX mode, in dBm
-'   Valid values: -18, -12, -6, 0
-'   Any other value polls the chip and returns the current setting
-    readReg (core#NRF24_RF_SETUP, 1, @tmp)
-    case power
-        -18, -12, -6, 0:
-            power := lookdownz(power: -18, -12, -6, 0)
-            power := power << core#FLD_RF_PWR
-        OTHER:
-            tmp := (tmp >> core#FLD_RF_PWR) & core#BITS_RF_PWR
-            return lookupz(tmp: -18, -12, -6, 0)
-
-    tmp &= core#MASK_RF_PWR
-    tmp := (tmp | power) & core#NRF24_RF_SETUP_MASK
-    writeReg (core#NRF24_RF_SETUP, 1, @tmp)
 
 PUB RPD
 ' Received Power Detector
 '   Returns:
 '   FALSE/0: No Carrier
 '   TRUE/-1: Carrier Detected
+    result := $00
     readReg (core#NRF24_RPD, 1, @result)
     result *= TRUE
 
-PUB RXAddr(pipe, buff_addr) | tmp[2], i, addr_test
+PUB RSSI
+' RSSI (emulated)
+'   Returns:
+'       -64: Carrier detected
+'       -255 No carrier
+    case RPD
+        TRUE:
+            return -64
+        FALSE:
+            return -255
+
+PUB RX(idle_state)
+' Change chip state to RX (receive)
+'   Valid values:
+'       idle:
+'           FALSE(0): Remain in active RX state, ready to receive packets
+'           Any other value: Change to RX state, but immediately enter a lower-power Idle/Standby state
+    RXTX(ROLE_RX)
+    if idle_state
+        Idle
+    else
+        CE(1)
+
+PUB RXAddr(buff_addr, pipe, rw) | tmp[2]
 ' Set receive address of pipe number 'pipe' from buffer at address buff_addr
 '   Valid values:
+'       buff_addr:
+'           Address of buffer containing nRF24L01+ address to transmit to
+'           For pipes 0 and 1, must be a buffer at least 5 bytes long
+'           For pipes 2..5, must be a buffer at least 1 byte long
 '       pipe: 0..5
 '           Any other value is ignored
-'       buff_addr:
-'           For pipes 0 and 1, must be a buffer at least 5 bytes long, $00..$FF
-'           For pipes 2..5, must be a buffer at least 1 byte long, $01..$FF
-'   Setting buff_addr to all 0's polls the chip and returns the current address for the given pipe number
-    tmp := 0
-    addr_test := 0
+'       rw:
+'           0: Read current address
+'           1: Write new address
+'           Any other value reads current address
+    bytefill(@tmp, $00, 8)
     case pipe
         0, 1:
             readReg (core#NRF24_RX_ADDR_P0 + pipe, 5, @tmp)
-            repeat i from 0 to 4
-                addr_test := addr_test + byte[buff_addr][i]
-            if addr_test == 0
-                bytemove(buff_addr, @tmp, 5)
-                return
-            else
-                writeReg (core#NRF24_RX_ADDR_P0 + pipe, 5, buff_addr)
-        2..5:
-            readReg (core#NRF24_RX_ADDR_P0 + pipe, 1, @tmp)
-            if byte[buff_addr][0] == 0
-                bytemove(buff_addr, @tmp, 1)
-            else
-                writeReg (core#NRF24_RX_ADDR_P0 + pipe, 1, buff_addr)
-        OTHER:
+                case rw
+                    1:
+                        writeReg (core#NRF24_RX_ADDR_P0 + pipe, 5, buff_addr)
+                    OTHER:
+                        bytemove(buff_addr, @tmp, 5)
+                        return
+        2..5:                                                                   ' Pipes 2..5 are limited to
+            readReg (core#NRF24_RX_ADDR_P0 + pipe, 1, @tmp)                     '  1 unique address byte
+                case rw                                                         '  (hardware limitation)
+                    1:
+                        writeReg (core#NRF24_RX_ADDR_P0 + pipe, 1, buff_addr)
+                    OTHER:
+                        bytemove(buff_addr, @tmp, 1)
+                        return
+        OTHER:                                                                  ' Invalid pipe
             return
 
-PUB RXData(nr_bytes, buff_addr) | tmp
-
-    readReg (core#NRF24_R_RX_PAYLOAD, nr_bytes, buff_addr)
-
-PUB RXFIFO_Empty
+PUB RXFIFOEmpty
 ' Queries the FIFO_STATUS register for RX FIFO empty flag
 '   Returns TRUE if empty, FALSE if there's data in RX FIFO
     readReg (core#NRF24_FIFO_STATUS, 1, @result)
     return (result & %1) * TRUE
 
-PUB RXFIFO_Full
+PUB RXFIFOFull
 ' Queries the FIFO_STATUS register for RX FIFO full flag
 '   Returns TRUE if full, FALSE if there're available locations in the RX FIFO
     readReg (core#NRF24_FIFO_STATUS, 1, @result)
     result >>= core#FLD_RXFIFO_FULL
     result &= %1
 
-PUB RXPayload(pipe, width) | tmp
-' Set length of static payload, in bytes
-'   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
+PUB RXPayload(nr_bytes, buff_addr) | tmp
+' Receive payload stored in FIFO
 '   Valid values:
-'       pipe: 0..5
-'       width: 0..32
-'   Any other value for pipe is ignored
-'   Any other value for width polls the chip and returns the current setting
-'   NOTE: Setting a width of 0 effectively disables the pipe
-    tmp := 0
-    case pipe
-        0..5:
-            readReg (core#NRF24_RX_PW_P0 + pipe, 1, @tmp)
-            case width
-                0..32:
-                    writeReg(core#NRF24_RX_PW_P0 + pipe, 1, @width)
-                    return width
-                OTHER:
-                    result := tmp & core#BITS_RX_PW_P0
-                    return result
-
+'       nr_bytes: 1..32 (Any other value is ignored)
+'   Any other value is ignored
+    case nr_bytes
+        1..32:
+            readReg (core#NRF24_R_RX_PAYLOAD, nr_bytes, buff_addr)
         OTHER:
             return FALSE
 
 PUB RXPipePending
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
-    result := (Status & core#FLD_RX_P_NO)
+    result := (Status >> core#FLD_RX_P_NO) & core#BITS_RX_P_NO
 
 PUB RXTX(role) | tmp
 ' Set to Primary RX or TX
@@ -533,56 +586,67 @@ PUB RXTX(role) | tmp
         0, 1:
             role := role << core#FLD_PRIM_RX
         OTHER:
-            return ((tmp >> core#FLD_PRIM_RX) & %1)
+            result := ((tmp >> core#FLD_PRIM_RX) & %1)
+            return
 
     tmp &= core#MASK_PRIM_RX
     tmp := (tmp | role) & core#NRF24_CONFIG_MASK
     writeReg (core#NRF24_CONFIG, 1, @tmp)
 
-PUB EnableAuto_Ack(pipe_mask) | tmp
-' Control which data pipes (0 through 5) the Auto Acknowledgement function (aka Enhanced ShockBurst - (TM) NORDIC Semi.)
-'  should be enabled on, using a 6-bit mask.
-'   Data Pipe:     5    0   5    0
-'                  |....|   |....|
-'   Valid values: %000000..%111111
-'   0 disables AA for the given pipe, 1 enables
-'   Example:
-'       EnableAuto_Ack(%001010)
-'           would enable AA for data pipes 1 and 3, and disable for all others
-    readReg (core#NRF24_EN_AA, 1, @tmp)
-    case pipe_mask
-        %000000..%111111:
-'           Don't actually do anything if the values are in this range,
-'            since they're already actually valid. Commented line below
-'            shows what *would* be done:
-'            pipe_mask := (pipe_mask << core#FLD_ENAA_P0)
+PUB Sleep
+' Power down chip
+    PowerUp(FALSE)
+
+PUB TESTCW(enabled) | tmp
+' Enable continuous carrier transmit (intended for testing only)
+'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Any other value polls the chip and returns the current setting
+    readReg (core#NRF24_RF_SETUP, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_CONT_WAVE
         OTHER:
-            return tmp & core#NRF24_EN_AA_MASK
+            result := ((tmp >> core#FLD_CONT_WAVE) & %1) * TRUE
+            return
 
-    writeReg (core#NRF24_EN_AA, 1, @pipe_mask)
+    tmp &= core#MASK_CONT_WAVE
+    tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
+    writeReg (core#NRF24_RF_SETUP, 1, @tmp)
 
-PUB TXAddr(buff_addr) | tmp[2], i, addr_test
+PUB TXAddr(buff_addr, rw) | tmp[2]
 ' Set transmit address
-'   Valid values: Bytes $00..$FF
-'   Setting buff_addr to all 0's polls the chip and returns the current address
+'   Valid values:
+'       buff_addr:
+'           Address of buffer containing nRF24L01+ address to transmit to
+'       rw:
+'           0: Read current address
+'           1: Write new address
+'           Any other value reads current address
 ' NOTE: Buffer at buff_addr must be a minimum of 5 bytes
-    tmp := 0
-    addr_test := 0
+    bytefill(@tmp, $00, 8)
     readReg (core#NRF24_TX_ADDR, 5, @tmp)
 
-    repeat i from 0 to 4
-        addr_test := addr_test + byte[buff_addr][i]
-    if addr_test == 0
-        bytemove(buff_addr, @tmp, 5)
-        return
-    else
-        writeReg (core#NRF24_TX_ADDR, 5, buff_addr)
+    case rw
+        1:
+        OTHER:
+            bytemove(buff_addr, @tmp, 5)
+            return
 
-PUB TXData(nr_bytes, buff_addr) | cmd_packet, tmp
+    writeReg (core#NRF24_TX_ADDR, 5, buff_addr)
 
+PUB TXPayload(nr_bytes, buff_addr, deferred) | cmd_packet, tmp
+' Queue payload to be transmitted
+'   Valid values:
+'       nr_bytes: 1..32 (Any other value is ignored)
+'       deferred:
+'           FALSE(0): Transmit immediately after queuing data
+'           Any other value: Queue data only, don't transmit
     case nr_bytes
         1..32:
-            writeReg(core#NRF24_W_TX_PAYLOAD, nr_bytes, buff_addr)
+            writeReg (core#NRF24_W_TX_PAYLOAD, nr_bytes, buff_addr)
+            ifnot deferred                                          ' Transmit immediately
+                CE(1)                                               '   unless deferred is nonzero
+                CE(0)
         OTHER:
             return FALSE
 
@@ -597,6 +661,28 @@ PUB TXFIFO_Full
 '   Returns: TRUE if full, FALSE if locations available in TX FIFO
     result := (Status & core#FLD_TX_FULL) * TRUE
 
+PUB TX
+' Change chip state to TX (transmit)
+    RXTX(ROLE_TX)
+
+PUB TXPower(dBm) | tmp
+' Set RF output power in TX mode, in dBm
+'   Valid values: -18, -12, -6, 0
+'   Any other value polls the chip and returns the current setting
+    readReg (core#NRF24_RF_SETUP, 1, @tmp)
+    case dBm
+        -18, -12, -6, 0:
+            dBm := lookdownz(dBm: -18, -12, -6, 0)
+            dBm := dBm << core#FLD_RF_PWR
+        OTHER:
+            tmp := (tmp >> core#FLD_RF_PWR) & core#BITS_RF_PWR
+            result := lookupz(tmp: -18, -12, -6, 0)
+            return
+
+    tmp &= core#MASK_RF_PWR
+    tmp := (tmp | dBm) & core#NRF24_RF_SETUP_MASK
+    writeReg (core#NRF24_RF_SETUP, 1, @tmp)
+
 PUB TXReuse
 ' Queries the FIFO_STATUS register for TX_REUSE flag
 '   Returns TRUE if re-using last transmitted payload, FALSE if not
@@ -607,83 +693,77 @@ PUB Status
 ' Returns status of last SPI transaction
     readReg (core#NRF24_STATUS, 1, @result)
 
-PUB writeReg(reg, nr_bytes, buf_addr) | tmp
+PRI writeReg (reg, nr_bytes, buff_addr) | tmp
 ' Write reg to MOSI
-'    ifnot lookdown(reg: $00..$17, $1C..$1D, $A0, $E1..$E3)                             'Validate reg - there are a few the datasheet says are for testing
-'        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
-'XXX Check flow w.r.t. CS - previously possible cases where it was never brought back high before returning
-    reg |= core#NRF24_W_REG
-    io.Low(_CSN)
-    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-    repeat tmp from 0 to nr_bytes-1
-        spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
-    io.High(_CSN)
+    ifnot lookdown(reg: $00..$17, $1C..$1D, $A0, $E1..$E3)              'Validate reg - there are a few the datasheet says are for testing
+        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
 
-{    case reg
+    reg |= core#NRF24_W_REG
+    case reg    'XXX clean this up a little; remove some redundancy with the lookdown table above
         core#NRF24_W_TX_PAYLOAD:
-            outa[_CSN] := 0
-            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            io.Low(_CSN)
+            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
             repeat tmp from 0 to nr_bytes-1
-                spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
-            outa[_CSN] := 1
+                spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buff_addr][tmp])
+            io.High(_CSN)
 
         core#NRF24_FLUSH_TX:
-            outa[_CSN] := 0
-            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            outa[_CSN] := 1
+            io.Low(_CSN)
+            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            io.High(_CSN)
 
         core#NRF24_FLUSH_RX:
-            outa[_CSN] := 0
-            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            outa[_CSN] := 1
+            io.Low(_CSN)
+            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            io.High(_CSN)
 
         OTHER:
             case nr_bytes
                 0:
-                    outa[_CSN] := 0
-                    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_W_REG|reg)     'Simple command
-                    outa[_CSN] := 1
+                    io.Low(_CSN)
+                    spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg) 'Simple command
+                    io.High(_CSN)
                 1..5:
-                    outa[_CSN] := 0
-                    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_W_REG|reg)     'Command w/nr_bytes data bytes following
+                    io.Low(_CSN)
+                    spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg) 'Command w/nr_bytes data bytes following
                     repeat tmp from 0 to nr_bytes-1
-                        spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][tmp])
-                    outa[_CSN] := 1
+                        spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buff_addr][tmp])
+                    io.High(_CSN)
 
                 OTHER:
                     result := FALSE
-                    buf_addr := 0
-}
-PUB readReg(reg, nr_bytes, buf_addr) | tmp
-' Read reg from MISO
-'    ifnot lookdown(reg: $00..$17, $1C..$1D, $61)                             'Validate reg - there are a few the datasheet says are for testing
-'        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
+                    buff_addr := 0
 
-    case reg
+PRI readReg (reg, nr_bytes, buff_addr) | tmp
+' Read reg from MISO
+    ifnot lookdown(reg: $00..$17, $1C..$1D, $61)                        'Validate reg - there are a few the datasheet says are for testing
+        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
+
+    case reg    'XXX clean this up a little; remove some redundancy with the lookdown table above
         core#NRF24_RPD:
             io.Low(_CSN)
-            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            byte[buf_addr][0] := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)
+            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            byte[buff_addr][0] := spi.ShiftIn (_MISO, _SCK, core#MISO_BITORDER, 8)
             io.High(_CSN)
 
         core#NRF24_R_RX_PAYLOAD:
             io.Low(_CSN)
-            spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
             repeat tmp from 0 to nr_bytes-1
-                byte[buf_addr][tmp] := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)
+                byte[buff_addr][tmp] := spi.ShiftIn (_MISO, _SCK, core#MISO_BITORDER, 8)
             io.High(_CSN)
         OTHER:
 
             case nr_bytes
                 1..5:
                     io.Low(_CSN)
-                    spi.SHIFTOUT (_MOSI, _SCK, core#MOSI_BITORDER, 8, core#NRF24_R_REG | reg)              'Which register to query
+                    spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg) ' Which register to query
                     repeat tmp from 0 to nr_bytes-1
-                        byte[buf_addr][tmp] := spi.SHIFTIN (_MISO, _SCK, core#MISO_BITORDER, 8)
+                        byte[buff_addr][tmp] := spi.ShiftIn (_MISO, _SCK, core#MISO_BITORDER, 8)
                     io.High(_CSN)
                 OTHER:
                     result := FALSE
-                    buf_addr := 0
+                    buff_addr := 0
 
 DAT
 {

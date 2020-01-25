@@ -70,7 +70,7 @@ PUB Start(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): okay
             time.MSleep(core#TPD2STBY)
 
             io.Low(_CE)
-            io.Output(_C)
+            io.Output(_CE)
             io.High(_CSN)
             io.Output(_CSN)
             return okay
@@ -79,10 +79,8 @@ PUB Start(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): okay
 
 PUB Stop
 
-    io.Low(_CE)
-    io.Output(_C)
     io.High(_CSN)
-    io.Output(_CSN)
+    io.Low(_CE)
 
 PUB CE(state)
 
