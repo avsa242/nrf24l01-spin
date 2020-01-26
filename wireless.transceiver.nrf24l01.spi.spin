@@ -640,6 +640,21 @@ PUB TXAddr(buff_addr, rw) | tmp[2]
 
     writeReg (core#NRF24_TX_ADDR, 5, buff_addr)
 
+PUB TXFIFOEmpty
+' Queries the FIFO_STATUS register for TX FIFO empty flag
+'   Returns TRUE if empty, FALSE if there's data in TX FIFO
+    readReg (core#NRF24_FIFO_STATUS, 1, @result)
+    result &= (1 << core#FLD_TXFIFO_EMPTY) * TRUE
+
+PUB TXFIFOFull
+' Returns TX FIFO full flag
+'   Returns: TRUE if full, FALSE if locations available in TX FIFO
+    result := (Status & core#FLD_TX_FULL) * TRUE
+
+PUB TXMode
+' Change chip state to TX (transmit)
+    RXTX(ROLE_TX)
+
 PUB TXPayload(nr_bytes, buff_addr, deferred) | cmd_packet, tmp
 ' Queue payload to be transmitted
 '   Valid values:
@@ -655,21 +670,6 @@ PUB TXPayload(nr_bytes, buff_addr, deferred) | cmd_packet, tmp
                 CE(0)
         OTHER:
             return FALSE
-
-PUB TXFIFOEmpty
-' Queries the FIFO_STATUS register for TX FIFO empty flag
-'   Returns TRUE if empty, FALSE if there's data in TX FIFO
-    readReg (core#NRF24_FIFO_STATUS, 1, @result)
-    result &= (1 << core#FLD_TXFIFO_EMPTY) * TRUE
-
-PUB TXFIFOFull
-' Returns TX FIFO full flag
-'   Returns: TRUE if full, FALSE if locations available in TX FIFO
-    result := (Status & core#FLD_TX_FULL) * TRUE
-
-PUB TXMode
-' Change chip state to TX (transmit)
-    RXTX(ROLE_TX)
 
 PUB TXPower(dBm) | tmp
 ' Set RF output power in TX mode, in dBm
@@ -695,7 +695,7 @@ PUB TXReuse
     readReg (core#NRF24_FIFO_STATUS, 1, @result)
     result &= (1 << core#FLD_TXFIFO_REUSE) * TRUE
 
-PUB Status
+PRI Status
 ' Returns status of last SPI transaction
     readReg (core#NRF24_STATUS, 1, @result)
 
