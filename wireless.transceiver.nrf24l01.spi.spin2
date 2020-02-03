@@ -37,7 +37,7 @@ OBJ
 PUB Null
 ''This is not a top-level object
 
-PUB Start(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): okay
+PUB Start(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): okay | tmp[2], i
 
     if lookdown(CE_PIN: 0..63) and lookdown(CSN_PIN: 0..63) and lookdown(SCK_PIN: 0..63) and lookdown(MOSI_PIN: 0..63) and lookdown(MISO_PIN: 0..63)
         if okay := spi.start (MOSI_PIN, MISO_PIN, SCK_PIN, SCK_HZ, core#CPOL)
