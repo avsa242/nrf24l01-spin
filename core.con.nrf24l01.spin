@@ -20,7 +20,10 @@ CON
     CE_RX                       = 1
 
 ' Timings
-    TPOR                        = 100
+    TPOR                        = 100_000       ' uSec
+    TRXSETTLE                   = 130           '
+    TTXSETTLE                   = 130           '
+    THCE                        = 10            '
     TPD2STBY                    = 5             ' Maximum
 
 ' NRF24L01+ Commands
