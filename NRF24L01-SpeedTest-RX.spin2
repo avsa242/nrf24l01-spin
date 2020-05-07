@@ -1,6 +1,6 @@
 {
     --------------------------------------------
-    Filename: NRF24Speedtest-RX.spin2
+    Filename: NRF24L01-Speedtest-RX.spin2
     Author: Jesse Burt
     Description: Speed test for nRF24L01+ modules (P2 version)
         RX Mode

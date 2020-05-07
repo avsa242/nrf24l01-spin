@@ -1,8 +1,8 @@
 {
     --------------------------------------------
-    Filename: NRF24Speedtest-TX.spin2
+    Filename: NRF24L01-Speedtest-TX.spin
     Author: Jesse Burt
-    Description: Speed test for nRF24L01+ modules (P2 version)
+    Description: Speed test for nRF24L01+ modules
         TX Mode
     Copyright (c) 2020
     Started Apr 30, 2020
@@ -10,43 +10,36 @@
     See end of file for terms of use.
     --------------------------------------------
 }
+
 CON
 
-    XTALFREQ        = 20_000_000
-    XDIV            = 2
-    XMUL            = 16
-    XDIVP           = 1
-    XOSC            = %10
-    XSEL            = %11
-    XPPPP           = ((XDIVP>>1) + 15) & $F
-    CLOCKFREQ       = XTALFREQ / XDIV * XMUL / XDIVP
-    SETFREQ         = 1<<24 + (XDIV-1)<<18 + (XMUL-1)<<8 + XPPPP<<4 + XOSC<<2
-    ENAFREQ         = SETFREQ + XSEL
+    _clkmode    = cfg#_clkmode
+    _xinfreq    = cfg#_xinfreq
 
-' - User-modifiable constants -
-    LED             = cfg#LED1
-    SER_RX          = cfg#SER_RX
-    SER_TX          = cfg#SER_TX
-    SER_BAUD        = 2_000_000
+' User-modifiable constants
+    LED         = cfg#LED1
+    SER_RX      = 31
+    SER_TX      = 30
+    SER_BAUD    = 115_200
 
-    MOSI_PIN        = 48
-    MISO_PIN        = 49
-    SCK_PIN         = 50
-    CE_PIN          = 52
-    CS_PIN          = 53
-    SCK_FREQ        = 10_000_000
+    CE_PIN      = 0
+    CS_PIN      = 1
+    SCK_PIN     = 2
+    MOSI_PIN    = 3
+    MISO_PIN    = 5
 
-    PKTLEN          = 32
-    CHANNEL         = 2
-    CLEAR           = -1
+    PKTLEN      = 32
+
+    CLEAR       = 1
+    CHANNEL     = 2
 
 OBJ
 
-    cfg     : "core.con.boardcfg.p2eval"
+    cfg     : "core.con.boardcfg.demoboard"
     ser     : "com.serial.terminal.ansi"
     time    : "time"
     io      : "io"
-    nrf24   : "wireless.transceiver.nrf24l01.spi.spin2"
+    nrf24   : "wireless.transceiver.nrf24l01.spi"
 
 VAR
 
@@ -81,12 +74,12 @@ PUB TXSetup | addr[2], i
 
 PUB Setup
 
-    repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
-    time.msleep(30)
-    ser.clear
-    ser.printf("Serial terminal started (P2 @ %dMHz)\n", clockfreq/1_000_000)
+    repeat until _ser_cog := ser.Start (115_200)
+    time.MSleep(30)
+    ser.Clear
+    ser.Str(string("Serial terminal started", ser#CR, ser#LF))
 
-    if _nrf24_cog := nrf24.Start (CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
+    if _nrf24_cog := nrf24.Startx (CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
         ser.str(string("NRF24L01+ driver started", ser#CR, ser#LF))
     else
         ser.str(string("NRF24L01+ driver failed to start - halting", ser#CR, ser#LF))
@@ -94,7 +87,7 @@ PUB Setup
 
     TXSetup
 
-#include "lib.utility.spin2"
+#include "lib.utility.spin"
 
 DAT
 {
