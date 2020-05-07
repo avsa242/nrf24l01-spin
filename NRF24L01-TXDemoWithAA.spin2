@@ -34,7 +34,7 @@ CON
     MOSI_PIN        = 40
     MISO_PIN        = 41
     CE_PIN          = 44
-    SCK_FREQ        = 5_000_000                                                                                  
+    SCK_FREQ        = 10_000_000
 
     CLEAR           = 1
     CHANNEL         = 2

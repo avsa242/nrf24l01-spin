@@ -29,7 +29,7 @@ VAR
 
 OBJ
 
-    spi     : "com.spi.bitbang"
+    spi     : "com.spi.bitbang-fast"
     core    : "core.con.nrf24l01"
     time    : "time"
     io      : "io"

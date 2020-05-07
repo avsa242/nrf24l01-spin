@@ -41,6 +41,6 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 
 - [x] Create some simple demos
 - [ ] Add a few presets in the driver, besides just the factory defaults, Defaults()
-- [ ] Add a speed test
+- [x] Add a speed test
 - [ ] Enhance the test harness to include verification
 
