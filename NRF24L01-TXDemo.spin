@@ -5,7 +5,7 @@
     Description: nRF24L01+ Transmit demo (no ShockBurst/Auto Acknowledgement)
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated Feb 3, 2020
+    Updated May 7, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -20,11 +20,11 @@ CON
     SER_TX          = 30
     SER_BAUD        = 115_200
 
-    CE_PIN          = 5
-    CSN_PIN         = 4
-    SCK_PIN         = 1
-    MOSI_PIN        = 2
-    MISO_PIN        = 0
+    CE_PIN          = 0
+    CSN_PIN         = 1
+    SCK_PIN         = 2
+    MOSI_PIN        = 3
+    MISO_PIN        = 5
 
     CLEAR           = 1
     CHANNEL         = 2
@@ -57,10 +57,10 @@ PUB Transmit | addr[2], count, i, tmp
 
     _payloadlen := 8                                        ' Payload length. MUST match the RX side for
     nrf24.PayloadLen (_payloadlen, 0)                       '   successful transmission
-
+    nrf24.DataRate(2000)
     nrf24.TXMode                                            ' Set to Transmit mode
-    nrf24.PowerUp (TRUE)
-    nrf24.TXPower (-18)                                     ' Set transmit power: -18, -12, -6, 0 (dBm)
+    nrf24.Powered (TRUE)
+    nrf24.TXPower (0)                                       ' Set transmit power: -18, -12, -6, 0 (dBm)
     nrf24.Channel (2)                                       ' Set transmit channel. MUST match the RX side for
                                                             '   successful transmission
 

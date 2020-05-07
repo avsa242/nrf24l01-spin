@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2020
     Started Jan 6, 2019
-    Updated Feb 3, 2020
+    Updated May 7, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -29,7 +29,7 @@ VAR
 
 OBJ
 
-    spi     : "com.spi.4w"
+    spi     : "com.spi.bitbang"
     core    : "core.con.nrf24l01"
     time    : "time"
     io      : "io"
@@ -40,7 +40,7 @@ PUB Null
 PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay | tmp[2], i
 
     if lookdown(CE_PIN: 0..31) and lookdown(CSN_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
-        if okay := spi.start (core#CLK_DELAY, core#CPOL)
+        if okay := spi.start (CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
             _CE := CE_PIN
             _CSN := CSN_PIN
             _SCK := SCK_PIN
@@ -51,8 +51,6 @@ PUB Startx(CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay | tmp[2], i
 
             io.Low(_CE)
             io.Output(_CE)
-            io.High(_CSN)
-            io.Output(_CSN)
 
             Defaults                                            ' The nRF24L01+ has no RESET pin or function,
                                                                 '   so set defaults
@@ -79,7 +77,7 @@ PUB Defaults | tmp[2]
     CRCLength(1)
     Sleep
     TXMode
-    AutoAckEnabledPipes(%000000)
+    AutoAckEnabledPipes(%111111)
     PipesEnabled(%000011)
     AddressWidth(5)
     AutoRetransmitDelay(250)
@@ -511,7 +509,7 @@ PUB PLL_Lock(enabled) | tmp
     tmp := (tmp | enabled) & core#NRF24_RF_SETUP_MASK
     writeReg (core#NRF24_RF_SETUP, 1, @tmp)
 
-PUB PowerUp(enabled) | tmp
+PUB Powered(enabled) | tmp
 ' Power on or off
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
@@ -633,7 +631,7 @@ PUB RXTX(role) | tmp
 
 PUB Sleep
 ' Power down chip
-    PowerUp(FALSE)
+    Powered(FALSE)
 
 PUB TESTCW(enabled) | tmp
 ' Enable continuous carrier transmit (intended for testing only)
@@ -739,35 +737,20 @@ PRI writeReg (reg, nr_bytes, buff_addr) | tmp
     reg |= core#NRF24_W_REG
     case reg    'XXX clean this up a little; remove some redundancy with the lookdown table above
         core#NRF24_W_TX_PAYLOAD:
-            io.Low(_CSN)
-            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            repeat tmp from 0 to nr_bytes-1
-                spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buff_addr][tmp])
-            io.High(_CSN)
+            spi.Write(TRUE, @reg, 1, 0)
+            spi.Write(TRUE, buff_addr, nr_bytes, TRUE)
 
         core#NRF24_FLUSH_TX:
-            io.Low(_CSN)
-            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            io.High(_CSN)
-
+            spi.Write(TRUE, @reg, 1, TRUE)
         core#NRF24_FLUSH_RX:
-            io.Low(_CSN)
-            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            io.High(_CSN)
-
+            spi.Write(TRUE, @reg, 1, TRUE)
         OTHER:
             case nr_bytes
                 0:
-                    io.Low(_CSN)
-                    spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg) 'Simple command
-                    io.High(_CSN)
+                    spi.Write(TRUE, @reg, 1, TRUE)
                 1..5:
-                    io.Low(_CSN)
-                    spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg) 'Command w/nr_bytes data bytes following
-                    repeat tmp from 0 to nr_bytes-1
-                        spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buff_addr][tmp])
-                    io.High(_CSN)
-
+                    spi.Write(TRUE, @reg, 1, FALSE)
+                    spi.Write(TRUE, buff_addr, nr_bytes, TRUE)
                 OTHER:
                     result := FALSE
                     buff_addr := 0
@@ -779,26 +762,19 @@ PRI readReg (reg, nr_bytes, buff_addr) | tmp
 
     case reg    'XXX clean this up a little; remove some redundancy with the lookdown table above
         core#NRF24_RPD:
-            io.Low(_CSN)
-            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            byte[buff_addr][0] := spi.ShiftIn (_MISO, _SCK, core#MISO_BITORDER, 8)
-            io.High(_CSN)
+            spi.Write(TRUE, @reg, 1, FALSE)
+            spi.Read(buff_addr, 1)
 
         core#NRF24_R_RX_PAYLOAD:
-            io.Low(_CSN)
-            spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
-            repeat tmp from 0 to nr_bytes-1
-                byte[buff_addr][tmp] := spi.ShiftIn (_MISO, _SCK, core#MISO_BITORDER, 8)
-            io.High(_CSN)
+            spi.Write(TRUE, @reg, 1, FALSE)
+            spi.Read(buff_addr, nr_bytes)
+
         OTHER:
 
             case nr_bytes
                 1..5:
-                    io.Low(_CSN)
-                    spi.ShiftOut (_MOSI, _SCK, core#MOSI_BITORDER, 8, reg) ' Which register to query
-                    repeat tmp from 0 to nr_bytes-1
-                        byte[buff_addr][tmp] := spi.ShiftIn (_MISO, _SCK, core#MISO_BITORDER, 8)
-                    io.High(_CSN)
+                    spi.Write(TRUE, @reg, 1, FALSE)
+                    spi.Read(buff_addr, nr_bytes)
                 OTHER:
                     result := FALSE
                     buff_addr := 0

@@ -6,7 +6,7 @@
         auto-acknowledge function (Enhanced ShockBurst - (TM) Nordic Semi)
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated Jan 25, 2020
+    Updated May 7, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -83,7 +83,7 @@ PUB Transmit | count, tmp, addr[2], to_node, i, max_retrans, pkts_retrans, lost_
     nrf24.DataRate(2000)                                    ' 250, 1000, 2000 (kbps)
     nrf24.TXPower(0)                                        ' -18, -12, -6, 0 (dBm)
     nrf24.PipesEnabled(%000011)                             ' %000000..%111111 (enable data pipes per bitmask)
-    nrf24.PowerUp (TRUE)
+    nrf24.Powered (TRUE)
     nrf24.PayloadReady (CLEAR)                              ' Clear interrupts
     nrf24.PayloadSent (CLEAR)                               '
     nrf24.MaxRetransReached (CLEAR)                         '
@@ -132,7 +132,7 @@ PUB Transmit | count, tmp, addr[2], to_node, i, max_retrans, pkts_retrans, lost_
 
 PUB Setup
 
-    clkset(ENAFREQ, CLOCKFREQ, XSEL)
+    clkset(ENAFREQ, CLOCKFREQ)
     repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
     ser.Clear
     ser.PrintF("Serial terminal started\n")

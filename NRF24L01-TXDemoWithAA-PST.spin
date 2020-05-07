@@ -7,7 +7,7 @@
         Propeller Tool-compatible version
     Copyright (c) 2020
     Started Feb 6, 2020
-    Updated Feb 6, 2020
+    Updated May 7, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -28,14 +28,6 @@ CON
     MOSI_PIN        = 2
     MISO_PIN        = 0
 
-
-{
-    CS_PIN          = 22
-    SCK_PIN         = 21
-    MOSI_PIN        = 20
-    MISO_PIN        = 19
-    CE_PIN          = 23
-}
     CLEAR           = 1
     CHANNEL         = 2
 
@@ -87,7 +79,7 @@ PUB Transmit | count, tmp, addr[2], to_node, i, max_retrans, pkts_retrans, lost_
     nrf24.DataRate(2000)                                    ' 250, 1000, 2000 (kbps)
     nrf24.TXPower(-18)                                      ' -18, -12, -6, 0 (dBm)
     nrf24.PipesEnabled(%000001)                             ' %000000..%111111 (enable data pipes per bitmask)
-    nrf24.PowerUp (TRUE)
+    nrf24.Powered (TRUE)
     nrf24.PayloadReady (CLEAR)                              ' Clear interrupts
     nrf24.PayloadSent (CLEAR)                               '
     nrf24.MaxRetransReached (CLEAR)                         '

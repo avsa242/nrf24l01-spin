@@ -5,7 +5,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 
 ## Salient Features
 
-* SPI connection at up to 1MHz (P1), up to _TBD_ (P2)
+* SPI connection at up to 4MHz (P1), up to _TBD_ (P2)
 * Supports setting carrier frequency from 2,400MHz to 2,527MHz
 * Set common RF parameters: TX power
 * Supports on-air baud rates of 250kbps, 1000kbps, 2000kbps
@@ -30,7 +30,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 ## Compiler Compatibility
 
 * P1/SPIN1: OpenSpin (tested with 1.00.81)
-* P2/SPIN2: FastSpin (tested with 4.1.0-beta)
+* P2/SPIN2: FastSpin (tested with 4.1.4)
 
 ## Limitations
 
@@ -40,5 +40,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 ## TODO
 
 - [x] Create some simple demos
+- [ ] Add a few presets in the driver, besides just the factory defaults, Defaults()
+- [ ] Add a speed test
 - [ ] Enhance the test harness to include verification
 

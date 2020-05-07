@@ -13,7 +13,7 @@
 CON
 ' SPI Configuration
     CPOL                        = 0
-    CLK_DELAY                   = 10
+    CLK_DELAY                   = 1
     MOSI_BITORDER               = 5             'MSBFIRST
     MISO_BITORDER               = 0             'MSBPRE
     CE_TX                       = 0

@@ -8,7 +8,7 @@
         Propeller Tool-compatible version
     Copyright (c) 2020
     Started Feb 6, 2020
-    Updated Feb 6, 2020
+    Updated May 7, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -91,7 +91,7 @@ PUB Receive | tmp, from_node, addr[2], i, count, recv_pipe
     nrf24.DataRate(2000)                                    ' 250, 1000, 2000 (kbps)
     nrf24.TXPower(-18)                                      ' -18, -12, -6, 0 (dBm)
     nrf24.PipesEnabled(%111111)                             ' %000000..%111111 (enable data pipes per bitmask)
-    nrf24.PowerUp (TRUE)
+    nrf24.Powered (TRUE)
     nrf24.PayloadReady (CLEAR)                              ' Clear interrupt
     repeat tmp from 0 to 5
         nrf24.PayloadLen (_pktlen, tmp)                     ' Payload length 0..32 (bytes), 0..5 (pipe number)

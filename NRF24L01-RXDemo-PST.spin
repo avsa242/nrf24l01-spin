@@ -5,7 +5,7 @@
     Description: nRF24L01+ Receive demo (no ShockBurst/Auto Acknowledgement, PST-compatible)
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated Feb 5, 2020
+    Updated May 7, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -61,7 +61,7 @@ PUB Receive | tmp, addr[2], i, count, CD
     nrf24.PayloadLen (_payloadlen, 0)                       '   successful reception
 
     nrf24.RXMode                                            ' Start active receive mode
-    nrf24.PowerUp (TRUE)
+    nrf24.Powered (TRUE)
     nrf24.Channel (2)                                       ' Set receive channel. MUST match the TX side for
                                                             '   successful reception
 
