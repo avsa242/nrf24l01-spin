@@ -105,11 +105,11 @@ PUB Transmit | count, tmp, addr[2], to_node, i, max_retrans, pkts_retrans, lost_
         lost_pkts := nrf24.LostPackets                      '
         ser.position(0, 5)
         ser.str(string("Max retrans: "))
-        ser.dec(max_retrans)
+        ser.str(int.decpadded(max_retrans, 2))
         ser.str(string(ser#CR, ser#LF, "Packets retransmitted: "))
-        ser.dec(pkts_retrans)
+        ser.str(int.decpadded(pkts_retrans, 2))
         ser.str(string(ser#CR, ser#LF, "Lost packets: "))
-        ser.dec(lost_pkts)
+        ser.str(int.decpadded(lost_pkts, 2))
 
         if max_retrans == TRUE                              ' If max number of retransmissions reached,
             nrf24.MaxRetransReached(CLEAR)                  '   clear the interrupt so we can continue to TX
