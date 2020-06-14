@@ -6,27 +6,19 @@
         TX Mode
     Copyright (c) 2020
     Started Apr 30, 2020
-    Updated May 7, 2020
+    Updated Jun 14, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
 CON
 
-    XTALFREQ        = 20_000_000
-    XDIV            = 2
-    XMUL            = 16
-    XDIVP           = 1
-    XOSC            = %10
-    XSEL            = %11
-    XPPPP           = ((XDIVP>>1) + 15) & $F
-    CLOCKFREQ       = XTALFREQ / XDIV * XMUL / XDIVP
-    SETFREQ         = 1<<24 + (XDIV-1)<<18 + (XMUL-1)<<8 + XPPPP<<4 + XOSC<<2
-    ENAFREQ         = SETFREQ + XSEL
+    _xtlfreq        = cfg._xtlfreq
+    _clkfreq        = cfg._clkfreq_def
 
-' - User-modifiable constants -
-    LED             = cfg#LED1
-    SER_RX          = cfg#SER_RX
-    SER_TX          = cfg#SER_TX
+' -- User-modifiable constants
+    LED             = cfg.LED1
+    SER_RX          = cfg.SER_RX
+    SER_TX          = cfg.SER_TX
     SER_BAUD        = 2_000_000
 
     MOSI_PIN        = 48
@@ -38,6 +30,8 @@ CON
 
     PKTLEN          = 32
     CHANNEL         = 2
+' --
+
     CLEAR           = -1
 
 OBJ
@@ -52,9 +46,9 @@ VAR
 
     byte _ser_cog, _nrf24_cog
 
-PUB Main | fifo[PKTLEN/4], i
+PUB Main() | fifo[PKTLEN/4], i
 
-    Setup
+    Setup()
 
     repeat i from 0 to PKTLEN-1
         fifo.byte[i] := 32+i
@@ -62,15 +56,15 @@ PUB Main | fifo[PKTLEN/4], i
     repeat
         nrf24.TXPayload (PKTLEN, @fifo, FALSE)
 
-PUB TXSetup | addr[2], i
+PUB TXSetup() | addr[2], i
 
     nrf24.AddressWidth(5)
     addr := string($E7, $E7, $E7, $E7, $E7)
-    nrf24.TXAddr(addr, nrf24#WRITE)
+    nrf24.TXAddr(addr, nrf24.WRITE)
 
     nrf24.Channel(CHANNEL)
-    nrf24.TXMode
-    nrf24.FlushTX
+    nrf24.TXMode()
+    nrf24.FlushTX()
     nrf24.CRCCheckEnabled(TRUE)
     nrf24.DataRate(2000)
     nrf24.TXPower(-18)
@@ -79,20 +73,20 @@ PUB TXSetup | addr[2], i
     nrf24.Powered (TRUE)
     nrf24.PayloadLen (PKTLEN, 0)
 
-PUB Setup
+PUB Setup()
 
     repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
     time.msleep(30)
-    ser.clear
-    ser.printf("Serial terminal started (P2 @ %dMHz)\n", clockfreq/1_000_000)
+    ser.clear()
+    ser.printf("Serial terminal started (P2 @ %dMHz)\n", clkfreq/1_000_000)
 
     if _nrf24_cog := nrf24.Start (CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
-        ser.str(string("NRF24L01+ driver started", ser#CR, ser#LF))
+        ser.str(string("NRF24L01+ driver started", ser.CR, ser.LF))
     else
-        ser.str(string("NRF24L01+ driver failed to start - halting", ser#CR, ser#LF))
+        ser.str(string("NRF24L01+ driver failed to start - halting", ser.CR, ser.LF))
         FlashLED (LED, 500)
 
-    TXSetup
+    TXSetup()
 
 #include "lib.utility.spin2"
 

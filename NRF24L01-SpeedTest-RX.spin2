@@ -6,27 +6,19 @@
         RX Mode
     Copyright (c) 2020
     Started Apr 30, 2020
-    Updated May 7, 2020
+    Updated Jun 14, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
 CON
 
-    XTALFREQ        = 20_000_000
-    XDIV            = 2
-    XMUL            = 16
-    XDIVP           = 1
-    XOSC            = %10
-    XSEL            = %11
-    XPPPP           = ((XDIVP>>1) + 15) & $F
-    CLOCKFREQ       = XTALFREQ / XDIV * XMUL / XDIVP
-    SETFREQ         = 1<<24 + (XDIV-1)<<18 + (XMUL-1)<<8 + XPPPP<<4 + XOSC<<2
-    ENAFREQ         = SETFREQ + XSEL
+    _xtlfreq        = cfg._xtlfreq
+    _clkfreq        = cfg._clkfreq_def
 
-' - User-modifiable constants -
-    LED             = cfg#LED1
-    SER_RX          = cfg#SER_RX
-    SER_TX          = cfg#SER_TX
+' -- User-modifiable constants
+    LED             = cfg.LED1
+    SER_RX          = cfg.SER_RX
+    SER_TX          = cfg.SER_TX
     SER_BAUD        = 2_000_000
 
     MOSI_PIN        = 48
@@ -38,6 +30,8 @@ CON
 
     PKTLEN          = 32
     CHANNEL         = 2
+' --
+
     CLEAR           = -1
 
 OBJ
@@ -55,16 +49,16 @@ VAR
     long _iteration, _timer_set
     byte _ser_cog, _nrf24_cog
 
-PUB Main | i, fifo[PKTLEN/4], iteration, testtime
+PUB Main() | i, fifo[PKTLEN/4], iteration, testtime
 
-    Setup
+    Setup()
     testtime := 1_000
     repeat
         _timer_set := testtime
         iteration := 0
 
         repeat while _timer_set
-            repeat until nrf24.PayloadReady
+            repeat until nrf24.PayloadReady()
             nrf24.PayloadReady(CLEAR)
             nrf24.RXPayload(PKTLEN, @fifo)
             iteration++
@@ -72,15 +66,15 @@ PUB Main | i, fifo[PKTLEN/4], iteration, testtime
         ser.position(0, 3)
         Report(testtime, iteration)
 
-PUB RXSetup | addr[2]
+PUB RXSetup() | addr[2]
 
     nrf24.AddressWidth(5)
     addr := string($E7, $E7, $E7, $E7, $E7)
-    nrf24.RXAddr (addr, 0, nrf24#WRITE)
+    nrf24.RXAddr (addr, 0, nrf24.WRITE)
 
     nrf24.Channel(CHANNEL)
-    nrf24.RXMode
-    nrf24.FlushRX
+    nrf24.RXMode()
+    nrf24.FlushRX()
     nrf24.CRCCheckEnabled(TRUE)
     nrf24.DataRate(2000)
     nrf24.TXPower(-18)
@@ -89,11 +83,11 @@ PUB RXSetup | addr[2]
     nrf24.Powered (TRUE)
     nrf24.PayloadLen (PKTLEN, 0)
 
-PUB cog_Counter | time_left
+PUB cog_Counter() | time_left
 
     repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
-    ser.clear
-    ser.printf("Serial terminal started (P2 @ %dMHz)\n", clockfreq/1_000_000)
+    ser.clear()
+    ser.printf("Serial terminal started (P2 @ %dMHz)\n", clkfreq/1_000_000)
     repeat until _nrf24_cog
     ser.printf("nRF24L01+ driver started\n")
 
@@ -127,19 +121,18 @@ PRI Decimal(scaled, divisor) | whole[4], part[4], places, tmp
         tmp /= 10
         places++
     until tmp == 1
-    part := int.DecZeroed(||(scaled // divisor), places)
+    part := int.DecZeroed(abs(scaled // divisor), places)
 
     ser.Dec (whole)
     ser.Char (".")
     ser.Str (part)
 
-PUB Setup
+PUB Setup()
 
-    clkset(ENAFREQ, CLOCKFREQ)
     cognew(cog_Counter, @_ctr_stack)
 
     _nrf24_cog := nrf24.Start (CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
 
-    RXSetup
+    RXSetup()
 
 #include "lib.utility.spin2"
