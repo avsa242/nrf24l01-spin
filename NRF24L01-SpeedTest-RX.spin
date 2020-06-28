@@ -84,10 +84,11 @@ PUB RXSetup | addr[2]
 PUB cog_Counter | time_left
 
     repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
+    time.msleep(30)
     ser.clear
     ser.str(string("Serial terminal started (P2 @"))
     ser.dec(clkfreq / 1_000_000)
-    ser.str(string("MHz", ser#CR, ser#LF))
+    ser.str(string("MHz)", ser#CR, ser#LF))
     repeat until _nrf24_cog
     ser.str(string("nRF24L01+ driver started", ser#CR, ser#LF))
 
@@ -142,7 +143,6 @@ PUB Setup
     cognew(cog_Counter, @_ctr_stack)
 
     _nrf24_cog := nrf24.Startx (CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
-
     RXSetup
 
 #include "lib.utility.spin"

@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2020
     Started Jan 6, 2019
-    Updated May 7, 2020
+    Updated Jun 28, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -696,8 +696,9 @@ PUB TXPayload(nr_bytes, buff_addr, deferred) | cmd_packet, tmp
         1..32:
             writeReg (core#NRF24_W_TX_PAYLOAD, nr_bytes, buff_addr)
             ifnot deferred                                          ' Transmit immediately
-                CE(1)                                               '   unless deferred is nonzero
-                CE(0)
+                outa[_CE] := 1
+                time.USleep (core#THCE)
+                outa[_CE] := 0
         OTHER:
             return FALSE
 
@@ -731,11 +732,7 @@ PRI Status
 
 PRI writeReg (reg, nr_bytes, buff_addr) | tmp
 ' Write reg to MOSI
-    ifnot lookdown(reg: $00..$17, $1C..$1D, $A0, $E1..$E3)              'Validate reg - there are a few the datasheet says are for testing
-        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
-
-    reg |= core#NRF24_W_REG
-    case reg    'XXX clean this up a little; remove some redundancy with the lookdown table above
+    case reg
         core#NRF24_W_TX_PAYLOAD:
             spi.Write(TRUE, @reg, 1, 0)
             spi.Write(TRUE, buff_addr, nr_bytes, TRUE)
@@ -744,7 +741,8 @@ PRI writeReg (reg, nr_bytes, buff_addr) | tmp
             spi.Write(TRUE, @reg, 1, TRUE)
         core#NRF24_FLUSH_RX:
             spi.Write(TRUE, @reg, 1, TRUE)
-        OTHER:
+        $00..$17, $1C..$1D:
+            reg |= core#NRF24_W_REG
             case nr_bytes
                 0:
                     spi.Write(TRUE, @reg, 1, TRUE)
@@ -754,23 +752,21 @@ PRI writeReg (reg, nr_bytes, buff_addr) | tmp
                 OTHER:
                     result := FALSE
                     buff_addr := 0
+        OTHER:
+            return FALSE
 
 PRI readReg (reg, nr_bytes, buff_addr) | tmp
 ' Read reg from MISO
-    ifnot lookdown(reg: $00..$17, $1C..$1D, $61)                        'Validate reg - there are a few the datasheet says are for testing
-        return FALSE                                                    ' only and will cause the chip to malfunction if written to.
-
-    case reg    'XXX clean this up a little; remove some redundancy with the lookdown table above
-        core#NRF24_RPD:
-            spi.Write(TRUE, @reg, 1, FALSE)
-            spi.Read(buff_addr, 1)
-
+    case reg
         core#NRF24_R_RX_PAYLOAD:
             spi.Write(TRUE, @reg, 1, FALSE)
             spi.Read(buff_addr, nr_bytes)
 
-        OTHER:
+        core#NRF24_RPD:
+            spi.Write(TRUE, @reg, 1, FALSE)
+            spi.Read(buff_addr, 1)
 
+        $00..$08, $0A..$17, $1C..$1D:
             case nr_bytes
                 1..5:
                     spi.Write(TRUE, @reg, 1, FALSE)
