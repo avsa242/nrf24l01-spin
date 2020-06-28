@@ -6,7 +6,7 @@
         RX Mode
     Copyright (c) 2020
     Started Apr 30, 2020
-    Updated Jun 14, 2020
+    Updated Jun 28, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -38,8 +38,6 @@ OBJ
 
     cfg     : "core.con.boardcfg.p2eval"
     ser     : "com.serial.terminal.ansi"
-    time    : "time"
-    io      : "io"
     nrf24   : "wireless.transceiver.nrf24l01.spi.spin2"
     int     : "string.integer"
 
@@ -97,7 +95,7 @@ PUB cog_Counter() | time_left
 
         repeat
             time_left--
-            time.MSleep(1)
+            waitms(1)
         while time_left > 0
         _timer_set := 0
 

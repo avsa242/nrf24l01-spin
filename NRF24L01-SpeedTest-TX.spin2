@@ -6,7 +6,7 @@
         TX Mode
     Copyright (c) 2020
     Started Apr 30, 2020
-    Updated Jun 14, 2020
+    Updated Jun 28, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -38,8 +38,6 @@ OBJ
 
     cfg     : "core.con.boardcfg.p2eval"
     ser     : "com.serial.terminal.ansi"
-    time    : "time"
-    io      : "io"
     nrf24   : "wireless.transceiver.nrf24l01.spi.spin2"
 
 VAR
@@ -76,14 +74,14 @@ PUB TXSetup() | addr[2], i
 PUB Setup()
 
     repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
-    time.msleep(30)
+    waitms(30)
     ser.clear()
     ser.printf("Serial terminal started (P2 @ %dMHz)\n", clkfreq/1_000_000)
 
     if _nrf24_cog := nrf24.Start (CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
-        ser.str(string("NRF24L01+ driver started", ser.CR, ser.LF))
+        ser.printf("NRF24L01+ driver started\n")
     else
-        ser.str(string("NRF24L01+ driver failed to start - halting", ser.CR, ser.LF))
+        ser.printf("NRF24L01+ driver failed to start - halting\n")
         FlashLED (LED, 500)
 
     TXSetup()
