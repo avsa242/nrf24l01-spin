@@ -7,7 +7,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 
 ## Salient Features
 
-* SPI connection at up to 4MHz (P1), up to _TBD_ (P2)
+* SPI connection at up to 4MHz (P1), up to 10MHz (P2)
 * Supports setting carrier frequency from 2,400MHz to 2,527MHz
 * Set common RF parameters: TX power
 * Supports on-air baud rates of 250kbps, 1000kbps, 2000kbps
@@ -36,7 +36,7 @@ P2/SPIN2:
 ## Compiler Compatibility
 
 * P1/SPIN1: OpenSpin (tested with 1.00.81)
-* P2/SPIN2: FastSpin (tested with 4.1.10-beta)
+* P2/SPIN2: FastSpin (tested with 4.2.4)
 * ~~BST~~ (incompatible - no preprocessor)
 * ~~Propeller Tool~~ (incompatible - no preprocessor)
 * ~~PNut~~ (incompatible - no preprocessor)
@@ -44,6 +44,7 @@ P2/SPIN2:
 ## Limitations
 
 * Very early in development - may malfunction, or outright fail to build
+* P2/SPIN2: Because of the way the smart-pin SPI engine works, the I/O pin connection is limited to MISO being 1 pin below SCK, and MOSI being 1 pin above SCK
 * API not yet stable
 
 ## TODO
@@ -51,5 +52,4 @@ P2/SPIN2:
 - [x] Create some simple demos
 - [ ] Add a few presets in the driver, besides just the factory defaults, Defaults()
 - [x] Add a speed test
-- [ ] Enhance the test harness to include verification
 
