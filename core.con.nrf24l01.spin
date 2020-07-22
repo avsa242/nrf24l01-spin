@@ -201,7 +201,7 @@ CON
         BITS_EN_DPL             = %1
         MASK_EN_DPL             = NRF24_FEATURE_MASK ^ (BITS_EN_DPL << FLD_EN_DPL)
 
-#ifndef __propeller2
+#ifndef __propeller2__
 PUB Null
 '' This is not a top-level object
 #endif
