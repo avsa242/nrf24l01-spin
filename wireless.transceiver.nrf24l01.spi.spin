@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2020
     Started Jan 6, 2019
-    Updated Jun 28, 2020
+    Updated Oct 5, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -760,17 +760,17 @@ PRI readReg (reg, nr_bytes, buff_addr) | tmp
     case reg
         core#NRF24_R_RX_PAYLOAD:
             spi.Write(TRUE, @reg, 1, FALSE)
-            spi.Read(buff_addr, nr_bytes)
+            spi.Read(buff_addr, nr_bytes, TRUE)
 
         core#NRF24_RPD:
             spi.Write(TRUE, @reg, 1, FALSE)
-            spi.Read(buff_addr, 1)
+            spi.Read(buff_addr, 1, TRUE)
 
         $00..$08, $0A..$17, $1C..$1D:
             case nr_bytes
                 1..5:
                     spi.Write(TRUE, @reg, 1, FALSE)
-                    spi.Read(buff_addr, nr_bytes)
+                    spi.Read(buff_addr, nr_bytes, TRUE)
                 OTHER:
                     result := FALSE
                     buff_addr := 0
