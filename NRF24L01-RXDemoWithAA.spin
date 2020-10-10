@@ -1,161 +1,117 @@
 {                                                                                                                
     --------------------------------------------
-    Filename: NRF24L01-RXWithAA.spin2
+    Filename: NRF24L01-RXWithAA.spin
     Author: Jesse Burt 
     Description: nRF24L01+ Receive demo that uses the radio's
         auto-acknowledge function (Enhanced ShockBurst - (TM) Nordic Semi)
-        Will display data from all 5 data pipes
+        Will display data from all 6 data pipes
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated May 7, 2020
+    Updated Oct 10, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
-    _clkmode        = cfg#_clkmode
     _xinfreq        = cfg#_xinfreq
+    _clkmode        = cfg#_clkmode
 
+' -- User-modifiable constants
     LED             = cfg#LED1
-    SER_RX          = 31
-    SER_TX          = 30
     SER_BAUD        = 115_200
 
-    CE_PIN          = 5
-    CSN_PIN         = 4
-    SCK_PIN         = 1
-    MOSI_PIN        = 2
-    MISO_PIN        = 0
+    CS_PIN          = 9
+    SCK_PIN         = 10
+    MOSI_PIN        = 11
+    MISO_PIN        = 12
+    CE_PIN          = 8
+
+    CHANNEL         = 2                         ' 0..127
+' --
 
     CLEAR           = 1
-    CHANNEL         = 2
 
 OBJ
 
     ser         : "com.serial.terminal.ansi"
     cfg         : "core.con.boardcfg.flip"
-    io          : "io"
     time        : "time"
-    int         : "string.integer"
     nrf24       : "wireless.transceiver.nrf24l01.spi"
 
 VAR
 
-    long _ser_cog, _nrf24_cog
-    long _fifo[16]
-    byte _pktlen
+    byte _payload[32]
+    byte _payld_len
+    byte _addr[5]
 
-PUB Main | choice
+PUB Main{}
 
-    Setup
+    setup{}
 
-    nrf24.Channel(CHANNEL)
-    ser.str(string("Press any key to begin receiving", ser#CR, ser#LF))
-    ser.CharIn
+    nrf24.channel(CHANNEL)
 
-    Receive
+    receive{}
 
-    FlashLED(LED, 100)
+PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr, addr
 
-PUB Receive | tmp, from_node, addr[2], i, count, recv_pipe
+    longfill(@i, 0, 5)
+    _payld_len := 8                             ' 1..32 (_must_ match TX side)
 
-    _pktlen := 10
+    addr := string($e7, $e7, $e7, $e7, $e7)     ' note: order is LSB, ..., MSB
 
-    nrf24.AddressWidth(5)                                   ' Configure for 5-byte long addresses   
+    nrf24.nodeaddress(addr)
+    nrf24.rxmode{}                              ' Set to receive mode
+    nrf24.flushrx{}                             ' Empty the receive FIFO
+    nrf24.powered(TRUE)
+    nrf24.payloadready(CLEAR)                   ' Clear interrupt
+    nrf24.pipesenabled(%111111)                 ' Pipe enable mask (5..0)
+    repeat pipe_nr from 0 to 5
+        nrf24.payloadlen(_payld_len, pipe_nr)
 
-    bytefill(@addr, 0, 8)
-    repeat i from 0 to 4
-        addr.byte[i] := $E7
-    nrf24.RXAddr (@addr, 0, nrf24#WRITE)                    ' Set pipe 0 address
-
-    bytefill(@addr, 0, 8)
-    repeat i from 0 to 4
-        addr.byte[i] := $C2
-    nrf24.RXAddr (@addr, 1, nrf24#WRITE)                    ' Set pipe 1 address
-
-    bytefill(@addr, 0, 8)
-    addr.byte[0] := $C3
-    nrf24.RXAddr (@addr, 2, nrf24#WRITE)                    ' Set pipe 2 address
-
-    bytefill(@addr, 0, 8)
-    addr.byte[0] := $C4
-    nrf24.RXAddr (@addr, 3, nrf24#WRITE)                    ' Set pipe 3 address
-
-    bytefill(@addr, 0, 8)
-    addr.byte[0] := $C5
-    nrf24.RXAddr (@addr, 4, nrf24#WRITE)                    ' Set pipe 4 address
-
-    bytefill(@addr, 0, 8)
-    addr.byte[0] := $C6
-    nrf24.RXAddr (@addr, 5, nrf24#WRITE)                    ' Set pipe 5 address
-
-
-    nrf24.RXMode                                            ' Set transceiver to receive mode (0 = stay in RX mode)
-    nrf24.FlushRX                                           ' Empty the receive FIFO
-    nrf24.CRCCheckEnabled(TRUE)                             ' TRUE, FALSE (enable CRC generation, checking)
-    nrf24.CRCLength(2)                                      ' 1, 2 bytes (CRC length)
-    nrf24.DataRate(2000)                                    ' 250, 1000, 2000 (kbps)
-    nrf24.TXPower(-18)                                      ' -18, -12, -6, 0 (dBm)
-    nrf24.PipesEnabled(%111111)                             ' %000000..%111111 (enable data pipes per bitmask)
-    nrf24.Powered (TRUE)
-    nrf24.PayloadReady (CLEAR)                              ' Clear interrupt
-    repeat tmp from 0 to 5
-        nrf24.PayloadLen (_pktlen, tmp)                     ' Payload length 0..32 (bytes), 0..5 (pipe number)
-
-    ser.Clear
-    ser.Position(0, 0)
-    ser.str(string("Receive mode - "))
-    ser.Dec(nrf24.CarrierFreq(-2))
-    ser.str(string("MHz", ser#CR, ser#LF))
-
-    ser.str(string("Listening for traffic on node address $"))
-    bytefill(@addr, 0, 8)
-    nrf24.RXAddr(@addr, 0, nrf24#READ)                      ' Read pipe 0 address
-    repeat i from 4 to 0
-        ser.Hex(addr.byte[i], 2)
-    ser.Newline
+    ser.clear{}
+    ser.position(0, 0)
+    ser.printf(string("Receive mode (channel %d)\n"), nrf24.channel(-2), 0, 0, 0, 0, 0)
+    ser.str(string("Listening for transmitters..."))
 
     repeat
-        bytefill (@_fifo, $00, 64)                          ' Clear RX local buffer
-        repeat                                              ' Wait to proceed
-            ser.Position(0, 5)                              ' .
-            ser.str(string("RSSI: "))                       ' .
-            ser.str(int.DecPadded(nrf24.RSSI, 4))           ' .
-            ser.newline                                     ' .
-            ser.str(string("Packets received: "))           ' .
-            ser.dec(count)                                  ' .
-        until nrf24.PayloadReady(-2)                        ' until we've received at least _pktlen bytes
+        bytefill(@_payload, $00, 32)            ' Clear RX local buffer
+        repeat                                  ' Wait to proceed...
+            ser.position(0, 5)
+            ser.printf(string("Packets received: %d "), payld_cnt, 0, 0, 0, 0, 0)
+        until nrf24.payloadready(-2)            ' ...until payload received
 
-        recv_pipe := nrf24.RXPipePending                    ' In which pipe is the received data waiting?
-        nrf24.RXPayload(_pktlen, @_fifo)                    ' Retrieve it into our local buffer
-        count++                                             ' Increment received payload counter
+        recv_pipe := nrf24.rxpipepending{}      ' Which pipe is the data in?
+        nrf24.rxpayload(_payld_len, @_payload)  ' Retrieve it into _payload
+        payld_cnt++                             ' Received payload counter
 
-        from_node := _fifo.byte[1]                          ' Node we've received a packet from
-        ser.Position(0, 8 + (recv_pipe * 4))                ' Display the payload in a terminal position
-        ser.str(string("Received packet on pipe "))         '   based on the pipe number it was
-        ser.dec(recv_pipe)                                  '   received on
-        ser.str(string(" from node $"))
-        ser.Hex(from_node, 2)
+        ser.position(0, 8 + (recv_pipe * 4))    ' Use the pipe number for the
+        nrf24.rxaddr(@_addr, recv_pipe, nrf24#READ)
+        ser.printf(string("Received packet on pipe %d "), recv_pipe, 0, 0, 0, 0, 0)
+                                                '   payload display position
 
-        ser.Hexdump(@_fifo, 0, _pktlen, _pktlen, 0, 9 + (recv_pipe * 4))
+        ser.char("(")
+        repeat i from 4 to 0                    ' Show the pipe's address
+            ser.hex(_addr[i], 2)                ' (2..4 are only 1-byte)
+        ser.char(")")
 
-        nrf24.PayloadReady(CLEAR)                           ' Clear interrupt
-        nrf24.FlushRX                                       ' Flush FIFO
+        ser.hexdump(@_payload, 0, _payld_len, _payld_len, 0, 9 + (recv_pipe * 4))
 
-PUB Setup
+        nrf24.payloadready(CLEAR)               ' Clear interrupt
+        nrf24.flushrx{}                         ' Flush FIFO
 
-    repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
-    time.MSleep(30)
-    ser.Clear
-    ser.str(string("Serial terminal started", ser#CR, ser#LF))
-    if _nrf24_cog := nrf24.Startx (CE_PIN, CSN_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
-        ser.str(string("nRF24L01+ driver started", ser#CR, ser#LF))
+PUB Setup{}
+
+    ser.start(SER_BAUD)
+    time.msleep(30)
+    ser.clear{}
+    ser.strln(string("Serial terminal started"))
+
+    if nrf24.startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
+        ser.strln(string("nRF24L01+ driver started"))
     else
-        ser.str(string("nRF42L01+ driver failed to start - halting", ser#CR, ser#LF))
-        FlashLED (LED, 500)
-
-#include "lib.utility.spin"
+        ser.strln(string("nRF24L01+ driver failed to start - halting"))
+        repeat
 
 DAT
 

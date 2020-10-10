@@ -1,12 +1,12 @@
 {
     --------------------------------------------
-    Filename: NRF24L01-TXDemoWithAA.spin2
+    Filename: NRF24L01-TXDemoWithAA.spin
     Author: Jesse Burt
     Description: nRF24L01+ Transmit demo that uses the radio's
         auto-acknowledge function (Enhanced ShockBurst - (TM) Nordic Semi)
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated May 7, 2020
+    Updated Oct 10, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -16,132 +16,120 @@ CON
     _clkmode        = cfg#_clkmode
     _xinfreq        = cfg#_xinfreq
 
+' -- User-modifiable constants
     LED             = cfg#LED1
-    SER_RX          = 31
-    SER_TX          = 30
     SER_BAUD        = 115_200
 
-    CS_PIN          = 4
-    SCK_PIN         = 1
-    MOSI_PIN        = 2
-    MISO_PIN        = 0
-    CE_PIN          = 5
+    CS_PIN          = 9
+    SCK_PIN         = 10
+    MOSI_PIN        = 11
+    MISO_PIN        = 12
+    CE_PIN          = 8
+
+    CHANNEL         = 2                         ' 0..127
+' --
 
     CLEAR           = 1
-    CHANNEL         = 2
 
 OBJ
 
     ser         : "com.serial.terminal.ansi"
     cfg         : "core.con.boardcfg.flip"
-    io          : "io"
     time        : "time"
     int         : "string.integer"
     nrf24       : "wireless.transceiver.nrf24l01.spi"
 
 VAR
 
-    long _ser_cog, _nrf24_cog
-    long _fifo[16]
-    byte _pktlen
+    byte _payload[32]
+    byte _payld_len
 
-PUB Main | choice
+PUB Main{}
 
-    Setup
+    setup{}
 
-    nrf24.Channel(CHANNEL)
-    ser.str(string("Press any key to begin transmitting", ser#CR, ser#LF))
-    ser.CharIn
+    nrf24.channel(CHANNEL)
+    transmit{}
 
-    Transmit
+PUB Transmit{} | count, tmp, addr[2], i, max_retrans, pkts_retrans, lost_pkts
 
-PUB Transmit | count, tmp, addr[2], to_node, i, max_retrans, pkts_retrans, lost_pkts, countdown
+    _payld_len := 8
+    longfill(@count, 0, 8)
 
-    _pktlen := 10
+    addr := string($e7, $e7, $e7, $e7, $e7)     ' note: order is LSB, ..., MSB
+    nrf24.nodeaddress(addr)                     ' Set TX/RX address to the same
+                                                ' (RX pipe 0 used for auto-ack)
+    nrf24.txmode{}                              ' Set to transmit mode and
+    nrf24.flushtx{}                             '   empty the transmit FIFO
+    nrf24.txpower(0)                            ' -18, -12, -6, 0 (dBm)
+    nrf24.powered(TRUE)
 
-    nrf24.AddressWidth(5)
-    bytefill(@addr, 0, 8)
-    repeat i from 4 to 0
-        addr.byte[i] := $E7                                 ' Set the first 4 octets of the address
-    addr.byte[0] := $E7                                     '   and the last can be different (for pipes 2..5)
-    nrf24.NodeAddress (@addr)                               ' Set TX and RX address to the same
-                                                            ' (RX pipe is used for receipt of Auto-Acknowledgement)
+    nrf24.payloadready(CLEAR)                   ' Clear interrupts
+    nrf24.payloadsent(CLEAR)                    '
+    nrf24.maxretransreached(CLEAR)              ' _must_ be clear to transmit
+    nrf24.payloadlen(_payld_len, 0)             ' 1..32 (len), 0..5 (pipe #)
 
-    nrf24.TXMode                                            ' Set to Transmit mode and
-    nrf24.FlushTX                                           '   empty the transmit FIFO
-    nrf24.CRCCheckEnabled(TRUE)                             ' TRUE, FALSE (enable CRC generation, checking)
-    nrf24.CRCLength (2)                                     ' 1, 2 bytes (CRC length)
-    nrf24.DataRate(2000)                                    ' 250, 1000, 2000 (kbps)
-    nrf24.TXPower(0)                                        ' -18, -12, -6, 0 (dBm)
-    nrf24.PipesEnabled(%000011)                             ' %000000..%111111 (enable data pipes per bitmask)
-    nrf24.Powered (TRUE)
-    nrf24.PayloadReady (CLEAR)                              ' Clear interrupts
-    nrf24.PayloadSent (CLEAR)                               '
-    nrf24.MaxRetransReached (CLEAR)                         '
-    nrf24.PayloadLen (_pktlen, 0)                           ' Payload length 0..32 (bytes), 0..5 (pipe number)
+    ser.clear{}
+    ser.position(0, 0)
+    ser.str(string("Transmit mode (channel "))
+    ser.dec(nrf24.channel(-2))
+    ser.strln(string(")"))
+    ser.str(string("Transmitting..."))
 
-    ser.Clear
-    ser.Position(0, 0)
-    ser.str(string("Transmit mode - "))
-    ser.dec(nrf24.CarrierFreq(-2))
-    ser.str(string("MHz", ser#CR, ser#LF))
-    ser.str(string("Transmitting to node $"))
-    repeat i from 4 to 0
-        ser.Hex(addr.byte[i], 2)
+    _payload[0] := "T"                          ' Start of payload
+    _payload[1] := "E"
+    _payload[2] := "S"
+    _payload[3] := "T"
 
-    to_node := $E7
-    _fifo.byte[0] := to_node                                ' Address LSB of node we're sending to
-    _fifo.byte[1] := addr.byte[0]                           ' This node's address
-    _fifo.byte[2] := "T"                                    ' Start of payload
-    _fifo.byte[3] := "E"
-    _fifo.byte[4] := "S"
-    _fifo.byte[5] := "T"
-
-    countdown := 20
-    count := 0
     repeat
-        max_retrans := nrf24.MaxRetransReached(-2)          '
-        pkts_retrans := nrf24.PacketsRetransmitted          ' Collect some packet statistics
-        lost_pkts := nrf24.LostPackets                      '
+        ' Collect some packet statistics
+        max_retrans := nrf24.maxretransreached(-2)
+        pkts_retrans := nrf24.packetsretransmitted{}
+        lost_pkts := nrf24.lostpackets{}
+
         ser.position(0, 5)
-        ser.str(string("Max retrans: "))
-        ser.str(int.decpadded(max_retrans, 2))
+        ser.str(string("Max retransmissions reached? "))
+        ser.str(lookupz(||(max_retrans): string("No "), string("Yes")))
+
         ser.str(string(ser#CR, ser#LF, "Packets retransmitted: "))
         ser.str(int.decpadded(pkts_retrans, 2))
+
         ser.str(string(ser#CR, ser#LF, "Lost packets: "))
         ser.str(int.decpadded(lost_pkts, 2))
 
-        if max_retrans == TRUE                              ' If max number of retransmissions reached,
-            nrf24.MaxRetransReached(CLEAR)                  '   clear the interrupt so we can continue to TX
+        if max_retrans == TRUE                  ' Max retransmissions reached?
+            nrf24.maxretransreached(CLEAR)      '   If yes, clear the int
 
-        if lost_pkts => 15                                  ' If number of packets lost exceeds 15
-            nrf24.Channel(CHANNEL)                          '   clear the interrupt so we can continue to TX
+        if lost_pkts => 15                      ' Packets lost exceeds 15?
+            nrf24.channel(CHANNEL)              '   If yes, clear the int
 
-        if countdown == 20                                  ' Transmit, if it's the start of the countdown
-            tmp := int.DecZeroed(count++, 4)                ' Tack a counter onto the
-            bytemove(@_fifo.byte[6], tmp, 4)                '   end of the payload
-            ser.position(0, 10)
-            ser.str(string("Sending"))
-            ser.Hexdump(@_fifo, 0, _pktlen, _pktlen, 0, 11)
-            nrf24.TXPayload (_pktlen, @_fifo, FALSE)        ' Transmit _fifo contents immediately
+        tmp := int.deczeroed(count++, 4)        ' Tack a counter onto the
+        bytemove(@_payload[4], tmp, 4)          '   end of the payload
+        ser.position(0, 10)
+        ser.str(string("Transmitting packet "))
 
-        time.MSleep(50)                                     ' Don't abuse the airwaves - wait between packets
-        if countdown-- < 0
-            countdown := 20
+        ser.char("(")
+        repeat i from 4 to 0                    ' Show address transmitting to
+            ser.hex(byte[addr][i], 2)
+        ser.strln(string(")"))
 
-PUB Setup
+        ' Show what will be transmitted
+        ser.hexdump(@_payload, 0, _payld_len, _payld_len, 0, 11)
 
-    repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
-    time.MSleep(30)
-    ser.Clear
-    ser.str(string("Serial terminal started", ser#CR, ser#LF))
-    if _nrf24_cog := nrf24.Startx (CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
-        ser.str(string("NRF24L01+ driver started", ser#CR, ser#LF))
+        nrf24.txpayload(_payld_len, @_payload, FALSE)
+
+        time.msleep(1000)                       ' Optional inter-packet delay
+
+PUB Setup{}
+
+    ser.start(SER_BAUD)
+    time.msleep(30)
+    ser.clear{}
+    ser.strln(string("Serial terminal started"))
+    if nrf24.startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
+        ser.strln(string("NRF24L01+ driver started"))
     else
-        ser.str(string("NRF24L01+ driver failed to start - halting", ser#CR, ser#LF))
-        FlashLED (LED, 500)
-
-#include "lib.utility.spin"
+        ser.strln(string("NRF24L01+ driver failed to start - halting"))
 
 DAT
 
