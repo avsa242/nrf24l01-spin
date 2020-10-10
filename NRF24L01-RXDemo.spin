@@ -59,7 +59,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
 
     ' Set receive address (note: order is LSB, ..., MSB)
     bytemove(@_addr, string($e7, $e7, $e7, $e7, $e7), 5)
-    nrf24.rxaddr(@_addr, 0, nrf24.WRITE)
+    nrf24.rxaddr(@_addr, 0, nrf24#WRITE)
 
     nrf24.rxmode{}                              ' Set to receive mode
     nrf24.flushrx{}                             ' Empty the receive FIFO
