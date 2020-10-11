@@ -571,14 +571,14 @@ PUB RXMode{}
     RXTX(ROLE_RX)
     CE(1)
 
-PUB RXPayload(nr_bytes, buff_addr) | tmp
+PUB RXPayload(nr_bytes, ptr_buff) | tmp
 ' Receive payload stored in FIFO
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
 '   Any other value is ignored
     case nr_bytes
         1..32:
-            readReg (core#CMD_R_RX_PAYLOAD, nr_bytes, buff_addr)
+            readReg (core#CMD_R_RX_PAYLOAD, nr_bytes, ptr_buff)
         OTHER:
             return FALSE
 
@@ -623,26 +623,26 @@ PUB TESTCW(enabled) | tmp
     tmp := (tmp | enabled) & core#RF_SETUP_REGMASK
     writeReg (core#RF_SETUP, 1, @tmp)
 
-PUB TXAddr(buff_addr, rw) | tmp[2]
+PUB TXAddr(ptr_buff, rw) | tmp[2]
 ' Set transmit address
 '   Valid values:
-'       buff_addr:
+'       ptr_buff:
 '           Address of buffer containing nRF24L01+ address to transmit to
 '       rw:
 '           0: Read current address
 '           1: Write new address
 '           Any other value reads current address
-' NOTE: Buffer at buff_addr must be a minimum of 5 bytes
+' NOTE: Buffer at ptr_buff must be a minimum of 5 bytes
     bytefill(@tmp, $00, 8)
     readReg (core#TX_ADDR, 5, @tmp)
 
     case rw
         1:
         OTHER:
-            bytemove(buff_addr, @tmp, 5)
+            bytemove(ptr_buff, @tmp, 5)
             return
 
-    writeReg (core#TX_ADDR, 5, buff_addr)
+    writeReg (core#TX_ADDR, 5, ptr_buff)
 
 PUB TXFIFOEmpty{}
 ' Queries the FIFO_STATUS register for TX FIFO empty flag
@@ -659,7 +659,7 @@ PUB TXMode
 ' Change chip state to TX (transmit)
     RXTX(ROLE_TX)
 
-PUB TXPayload(nr_bytes, buff_addr, deferred) | cmd_packet, tmp
+PUB TXPayload(nr_bytes, ptr_buff, deferred) | cmd_packet, tmp
 ' Queue payload to be transmitted   'XXX remove deferred param, make new method and hub var
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
@@ -668,7 +668,7 @@ PUB TXPayload(nr_bytes, buff_addr, deferred) | cmd_packet, tmp
 '           Any other value: Queue data only, don't transmit
     case nr_bytes
         1..32:
-            writeReg (core#CMD_W_TX_PAYLOAD, nr_bytes, buff_addr)
+            writeReg (core#CMD_W_TX_PAYLOAD, nr_bytes, ptr_buff)
             ifnot deferred                                          ' Transmit immediately
                 outa[_CE] := 1
                 time.USleep (core#THCE)
@@ -704,12 +704,12 @@ PRI Status
 ' Returns status of last SPI transaction
     readReg (core#STATUS, 1, @result)
 
-PRI writeReg (reg, nr_bytes, buff_addr) | tmp
+PRI writeReg (reg, nr_bytes, ptr_buff) | tmp
 ' Write reg to MOSI
     case reg
         core#CMD_W_TX_PAYLOAD:
             spi.Write(TRUE, @reg, 1, 0)
-            spi.Write(TRUE, buff_addr, nr_bytes, TRUE)
+            spi.Write(TRUE, ptr_buff, nr_bytes, TRUE)
 
         core#CMD_FLUSH_TX:
             spi.Write(TRUE, @reg, 1, TRUE)
@@ -722,32 +722,32 @@ PRI writeReg (reg, nr_bytes, buff_addr) | tmp
                     spi.Write(TRUE, @reg, 1, TRUE)
                 1..5:
                     spi.Write(TRUE, @reg, 1, FALSE)
-                    spi.Write(TRUE, buff_addr, nr_bytes, TRUE)
+                    spi.Write(TRUE, ptr_buff, nr_bytes, TRUE)
                 OTHER:
                     result := FALSE
-                    buff_addr := 0
+                    ptr_buff := 0
         OTHER:
             return FALSE
 
-PRI readReg (reg, nr_bytes, buff_addr) | tmp
+PRI readReg (reg, nr_bytes, ptr_buff) | tmp
 ' Read reg from MISO
     case reg
         core#CMD_R_RX_PAYLOAD:
             spi.Write(TRUE, @reg, 1, FALSE)
-            spi.Read(buff_addr, nr_bytes, TRUE)
+            spi.Read(ptr_buff, nr_bytes, TRUE)
 
         core#RPD:
             spi.Write(TRUE, @reg, 1, FALSE)
-            spi.Read(buff_addr, 1, TRUE)
+            spi.Read(ptr_buff, 1, TRUE)
 
         $00..$08, $0A..$17, $1C..$1D:
             case nr_bytes
                 1..5:
                     spi.Write(TRUE, @reg, 1, FALSE)
-                    spi.Read(buff_addr, nr_bytes, TRUE)
+                    spi.Read(ptr_buff, nr_bytes, TRUE)
                 OTHER:
                     result := FALSE
-                    buff_addr := 0
+                    ptr_buff := 0
 
 DAT
 {
