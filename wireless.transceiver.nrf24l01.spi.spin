@@ -486,21 +486,20 @@ PUB PLL_Lock(enabled): flag
     enabled := ((flag & core#PLL_LOCK_MASK) | enabled) & core#RF_SETUP_REGMASK
     writeReg (core#RF_SETUP, 1, @enabled)
 
-PUB Powered(enabled) | tmp
+PUB Powered(enabled): curr_state
 ' Power on or off
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
-    readReg (core#CONFIG, 1, @tmp)
-    case ||enabled
+    curr_state := 0
+    readReg (core#CONFIG, 1, @curr_state)
+    case ||(enabled)
         0, 1:
-            enabled := ||enabled << core#PWR_UP
+            enabled := ||(enabled) << core#PWR_UP
         OTHER:
-            result := ((tmp >> core#PWR_UP) & %1) * TRUE
-            return
+            return ((curr_state >> core#PWR_UP) & %1) == 1
 
-    tmp &= core#PWR_UP_MASK
-    tmp := (tmp | enabled) & core#CONFIG_REGMASK
-    writeReg (core#CONFIG, 1, @tmp)
+    enabled := ((curr_state & core#PWR_UP_MASK) | enabled) & core#CONFIG_REGMASK
+    writeReg (core#CONFIG, 1, @enabled)
 
 PUB RPD{}
 ' Received Power Detector
