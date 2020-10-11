@@ -147,7 +147,7 @@ PUB AfterRX (next_state)
     else
         CE(1)
 
-PUB AutoAckEnabledPipes(pipe_mask) | tmp
+PUB AutoAckEnabledPipes(pipe_mask): curr_mask
 ' Enable the Auto Acknowledgement function (aka Enhanced ShockBurst - (TM) NORDIC Semi.)
 '   per set data pipe mask:
 '   Data Pipe:     5    0   5    0
@@ -157,12 +157,12 @@ PUB AutoAckEnabledPipes(pipe_mask) | tmp
 '   Example:
 '       AutoAckEnabledPipes(%001010)
 '           would enable AA for data pipes 1 and 3, and disable for all others
-    readReg (core#EN_AA, 1, @tmp)
+    curr_mask := 0
+    readReg (core#EN_AA, 1, @curr_mask)
     case pipe_mask
         %000000..%111111:
         OTHER:
-            result := tmp & core#EN_AA_REGMASK
-            return
+            return curr_mask & core#EN_AA_REGMASK
 
     writeReg (core#EN_AA, 1, @pipe_mask)
 
