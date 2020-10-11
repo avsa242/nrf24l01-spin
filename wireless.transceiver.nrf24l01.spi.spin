@@ -335,40 +335,39 @@ PUB EnableACK(enabled): curr_state
     enabled := ((curr_state & core#EN_ACK_PAY_MASK) | enabled) & core#FEATURE_REGMASK
     writeReg (core#FEATURE, 1, @enabled)
 
-PUB FlushRX
-
+PUB FlushRX{}
+' Flush receive FIFO buffer
     writeReg (core#CMD_FLUSH_RX, 0, 0)
 
-PUB FlushTX
-
+PUB FlushTX{}
+' Flush transmit FIFO buffer
     writeReg (core#CMD_FLUSH_TX, 0, 0)
 
-PUB Idle
-
+PUB Idle{}
+' Set to idle state
     CE(0)
 
-PUB IntMask(mask) | tmp
+PUB IntMask(mask): curr_mask
 ' Control which events will trigger an interrupt on the IRQ pin, using a 3-bit mask
 '           Bits:  210   210
 '                  |||   |||
 '   Valid values: %000..%111
 '       Bit:    Interrupt will be asserted on IRQ pin if:
 '       2       new data is ready in RX FIFO
-'       1       data is transmitted
+'       1       data is transmitted (_and_ if ACK from RX if using auto-ack)
 '       0       TX retransmits reach maximum
 '   Set a bit to 0 to disable the specific interrupt, 1 to enable
 '   Any other value polls the chip and returns the current setting
-    readReg (core#CONFIG, 1, @tmp)'XXX
+    curr_mask := 0
+    readReg (core#CONFIG, 1, @curr_mask)
     case mask
         %000..%111:
-            mask := !(mask << core#MASKINT) 'Invert because the chip's internal logic is reversed, i.e.,
-        OTHER:                                      ' 1 disables the interrupt, 0 enables an active-low interrupt
-            result := !(tmp >> core#MASKINT) & core#MASKINT_BITS
-            return
+            mask := !(mask << core#MASKINT)     ' invert bits: chip internal
+        OTHER:                                  '   logic is inverse
+            return !(curr_mask >> core#MASKINT) & core#MASKINT_BITS
 
-    tmp &= core#MASKINT_MASK
-    tmp := (tmp | mask) & core#CONFIG_REGMASK
-    writeReg (core#CONFIG, 1, @tmp)
+    mask := ((curr_mask & core#MASKINT_MASK) | mask) & core#CONFIG_REGMASK
+    writeReg (core#CONFIG, 1, @mask)
 
 PUB LostPackets
 ' Count lost packets
