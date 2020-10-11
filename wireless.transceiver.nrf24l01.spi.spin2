@@ -159,7 +159,7 @@ PUB AutoAckEnabledPipes(pipe_mask=-2): curr_mask
     case pipe_mask
         %000000..%111111:
         OTHER:
-            return tmp & core.EN_AA_REGMASK
+            return curr_mask & core.EN_AA_REGMASK
 
     writeReg (core.EN_AA, 1, @pipe_mask)
 
@@ -175,7 +175,7 @@ PUB AutoRetransmitDelay(delay_us=-2): curr_dly
             delay_us := (delay_us - 1) << core.ARD
         OTHER:
             curr_dly := ((curr_dly >> core.ARD) & core.ARD_BITS) + 1
-            return lookup(tmp: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
+            return lookup(curr_dly: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
 
     delay_us := ((curr_dly & core.ARD_MASK) | delay_us) & core.SETUP_RETR_REGMASK
     writeReg (core.SETUP_RETR, 1, @delay_us)
