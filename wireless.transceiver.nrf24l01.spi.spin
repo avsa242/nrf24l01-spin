@@ -501,14 +501,14 @@ PUB Powered(enabled): curr_state
     enabled := ((curr_state & core#PWR_UP_MASK) | enabled) & core#CONFIG_REGMASK
     writeReg (core#CONFIG, 1, @enabled)
 
-PUB RPD{}
+PUB RPD{}: flag
 ' Received Power Detector
 '   Returns:
 '       FALSE (0): No Carrier
 '       TRUE (-1): Carrier Detected
-    result := $00
-    readReg (core#RPD, 1, @result)
-    result *= TRUE
+    flag := 0
+    readReg (core#RPD, 1, @flag)
+    return flag == 1
 
 PUB RSSI
 ' RSSI (emulated)
