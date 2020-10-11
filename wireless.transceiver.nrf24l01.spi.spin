@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2020
     Started Jan 6, 2019
-    Updated Oct 5, 2020
+    Updated Oct 11, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
