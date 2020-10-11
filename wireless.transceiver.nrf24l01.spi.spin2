@@ -455,24 +455,18 @@ PUB PayloadSent(clear_intr): flag
     clear_intr := ((flag & core.MASKINT_TX_DS_MASK) | clear_intr) & core.STATUS_REGMASK
     writeReg (core.STATUS, 1, @clear_intr)
 
-PUB PipesEnabled(mask=-2): result | tmp
+PUB PipesEnabled(mask=-2): curr_mask
 ' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
 '   Data pipe:     5    0   5    0
 '                  |....|   |....|
 '   Valid values: %000000..%111111
     case mask
         %000000..%111111:
-'           Don't actually do anything if the values are in this range,
-'            since they're already actually valid. Commented line below
-'            shows what *would* be done:
-'            mask := (mask << core.ERX_P0)
+            writeReg (core.EN_RXADDR, 1, @mask)
         OTHER:
-            result := tmp & core.EN_RXADDR_MASK
-            return
-
-    tmp &= core.EN_RXADDR_MASK  'XXX remove these two lines
-    tmp := (tmp | mask) & core.EN_RXADDR_REGMASK
-    writeReg (core.EN_RXADDR, 1, @tmp)  ' XXX tmp ror mask
+            curr_mask := 0
+            readreg(core.EN_RXADDR, 1, @curr_mask)
+            return curr_mask & core.EN_RXADDR_MASK
 
 PUB PLL_Lock(enabled=-2): result | tmp
 ' Force PLL Lock signal (intended for testing only)
