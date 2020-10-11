@@ -218,22 +218,21 @@ PUB Channel(number): curr_chan
         OTHER:
             readReg (core#RF_CH, 1, @curr_chan)
 
-PUB CRCCheckEnabled(enabled) | tmp
+PUB CRCCheckEnabled(enabled): curr_state
 ' Enable CRC
 ' NOTE: Forced on if any data pipe has AutoAck enabled
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
-    readReg (core#CONFIG, 1, @tmp)
+    curr_state := 0
+    readReg (core#CONFIG, 1, @curr_state)
     case ||enabled
         0, 1:
             enabled := ||enabled << core#EN_CRC
         OTHER:
-            result := ((tmp >> core#EN_CRC) & %1) * TRUE
-            return
+            return ((curr_state >> core#EN_CRC) & %1) == 1
 
-    tmp &= core#EN_CRC_MASK
-    tmp := (tmp | enabled) & core#CONFIG_REGMASK
-    writeReg (core#CONFIG, 1, @tmp)
+    enabled := ((curr_state & core#EN_CRC_MASK) | enabled) & core#CONFIG_REGMASK
+    writeReg (core#CONFIG, 1, @enabled)
 
 PUB CRCLength(bytes) | tmp
 ' Choose CRC Encoding scheme, in bytes
