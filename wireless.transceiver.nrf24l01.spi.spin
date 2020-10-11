@@ -399,11 +399,11 @@ PUB NodeAddress(addr_ptr)
     RXAddr(addr_ptr, 0, WRITE)
     TXAddr(addr_ptr, WRITE)
 
-PUB PacketsRetransmitted
+PUB PacketsRetransmitted{}: pkt_cnt
 ' Count retransmitted packets
 '   Returns: Number of packets retransmitted since the start of transmission of a new packet
-    readReg (core#OBSERVE_TX, 1, @result)
-    result &= core#ARC_CNT
+    readReg (core#OBSERVE_TX, 1, @pkt_cnt)
+    return pkt_cnt & core#ARC_CNT
 
 PUB PayloadLen(width, pipe_nr) | tmp
 ' Set length of static payload, in bytes
