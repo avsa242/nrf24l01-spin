@@ -582,26 +582,25 @@ PUB RXPayload(nr_bytes, ptr_buff)
         OTHER:
             return
 
-PUB RXPipePending{}
+PUB RXPipePending{}: pipe_nr
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
     return (Status{} >> core#RX_P_NO) & core#RX_P_NO_BITS
 
-PUB RXTX(role) | tmp
+PUB RXTX(role): curr_role
 ' Set to Primary RX or TX
 '   Valid values: 0: TX, 1: RX
 '   Any other value polls the chip and returns the current setting
-    readReg (core#CONFIG, 1, @tmp)
+    curr_role := 0
+    readReg (core#CONFIG, 1, @curr_role)
     case role
         0, 1:
             role := role << core#PRIM_RX
         OTHER:
-            result := ((tmp >> core#PRIM_RX) & %1)
-            return
+            return ((curr_role >> core#PRIM_RX) & %1)
 
-    tmp &= core#PRIM_RX_MASK
-    tmp := (tmp | role) & core#CONFIG_REGMASK
-    writeReg (core#CONFIG, 1, @tmp)
+    role := ((curr_role & core#PRIM_RX_MASK) | role) & core#CONFIG_REGMASK
+    writeReg (core#CONFIG, 1, @role)
 
 PUB Sleep{}
 ' Power down chip
