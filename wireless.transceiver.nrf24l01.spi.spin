@@ -405,7 +405,7 @@ PUB PacketsRetransmitted{}: pkt_cnt
     readReg (core#OBSERVE_TX, 1, @pkt_cnt)
     return pkt_cnt & core#ARC_CNT
 
-PUB PayloadLen(width, pipe_nr) | tmp
+PUB PayloadLen(width, pipe_nr): curr_len
 ' Set length of static payload, in bytes
 '   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
 '   Valid values:
@@ -414,17 +414,16 @@ PUB PayloadLen(width, pipe_nr) | tmp
 '   Any other value for pipe is ignored
 '   Any other value for width polls the chip and returns the current setting
 '   NOTE: Setting a width of 0 effectively disables the pipe
-    tmp := 0
+    curr_len := 0
     case pipe_nr
         0..5:
-            readReg (core#RX_PW_P0 + pipe_nr, 1, @tmp)
+            readReg (core#RX_PW_P0 + pipe_nr, 1, @curr_len)
             case width
                 0..32:
                     writeReg (core#RX_PW_P0 + pipe_nr, 1, @width)
                     return width
                 OTHER:
-                    result := tmp & core#RX_PW_BITS
-                    return result
+                    return curr_len & core#RX_PW_BITS
 
         OTHER:
             return FALSE
