@@ -234,21 +234,20 @@ PUB CRCCheckEnabled(enabled): curr_state
     enabled := ((curr_state & core#EN_CRC_MASK) | enabled) & core#CONFIG_REGMASK
     writeReg (core#CONFIG, 1, @enabled)
 
-PUB CRCLength(bytes) | tmp
+PUB CRCLength(bytes): curr_len
 ' Choose CRC Encoding scheme, in bytes
 '   Valid values: 1, 2
 '   Any other value polls the chip and returns the current setting
-    readReg (core#CONFIG, 1, @tmp)
+    curr_len := 0
+    readReg (core#CONFIG, 1, @curr_len)
     case bytes
         1, 2:
             bytes := (bytes-1) << core#CRCO
         OTHER:
-            result := ((tmp >> core#CRCO) & %1) + 1
-            return
+            return ((curr_len >> core#CRCO) & %1) + 1
 
-    tmp &= core#CRCO_MASK
-    tmp := (tmp | bytes) & core#CONFIG_REGMASK
-    writeReg (core#CONFIG, 1, @tmp)
+    bytes := ((curr_len & core#CRCO_MASK) | bytes) & core#CONFIG_REGMASK
+    writeReg (core#CONFIG, 1, @bytes)
 
 PUB DataRate(kbps) | tmp
 ' Set RF data rate in kbps
