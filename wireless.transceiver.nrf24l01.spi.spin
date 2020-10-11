@@ -621,7 +621,7 @@ PUB TESTCW(enabled): curr_state
     enabled := ((curr_state & core#CONT_WAVE_MASK) | enabled) & core#RF_SETUP_REGMASK
     writeReg (core#RF_SETUP, 1, @enabled)
 
-PUB TXAddr(ptr_buff, rw) | tmp[2]
+PUB TXAddr(ptr_buff, rw)
 ' Set transmit address
 '   Valid values:
 '       ptr_buff:
@@ -631,16 +631,12 @@ PUB TXAddr(ptr_buff, rw) | tmp[2]
 '           1: Write new address
 '           Any other value reads current address
 ' NOTE: Buffer at ptr_buff must be a minimum of 5 bytes
-    bytefill(@tmp, $00, 8)
-    readReg (core#TX_ADDR, 5, @tmp)
-
     case rw
         1:
+            writeReg (core#TX_ADDR, 5, ptr_buff)
         OTHER:
-            bytemove(ptr_buff, @tmp, 5)
+            readReg (core#TX_ADDR, 5, ptr_buff)
             return
-
-    writeReg (core#TX_ADDR, 5, ptr_buff)
 
 PUB TXFIFOEmpty{}
 ' Queries the FIFO_STATUS register for TX FIFO empty flag
