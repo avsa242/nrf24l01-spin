@@ -195,7 +195,7 @@ PUB AutoRetransmitCount(tries=-2): curr_tries
     tries := ((curr_tries & core.ARC_MASK) | tries) & core.SETUP_RETR_REGMASK
     writeReg (core.SETUP_RETR, 1, @tries)
 
-PUB CarrierFreq(MHz=-2): result
+PUB CarrierFreq(MHz=-2): curr_freq
 ' Set carrier frequency, in MHz
 '   Valid values: 2400..2527
 '   Any other value polls the chip and returns the current setting
@@ -203,7 +203,7 @@ PUB CarrierFreq(MHz=-2): result
         2400..2527:
             Channel(MHz-2400)
         OTHER:
-            result := 2400 + Channel()
+            return 2400 + Channel()
 
 PUB Channel(number=-2): result
 ' Set RF channel

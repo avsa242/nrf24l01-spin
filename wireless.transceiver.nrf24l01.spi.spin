@@ -198,7 +198,7 @@ PUB AutoRetransmitCount(tries): curr_tries
     tries := ((curr_tries & core#ARC_MASK) | tries) & core#SETUP_RETR_REGMASK
     writeReg (core#SETUP_RETR, 1, @tries)
 
-PUB CarrierFreq(MHz)
+PUB CarrierFreq(MHz): curr_freq
 ' Set carrier frequency, in MHz
 '   Valid values: 2400..2527
 '   Any other value polls the chip and returns the current setting
