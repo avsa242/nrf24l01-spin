@@ -319,22 +319,21 @@ PUB DynPayloadEnabled(enabled): curr_state
     enabled := ((curr_state & core#EN_DPL_MASK) | enabled) & core#FEATURE_REGMASK
     writeReg (core#FEATURE, 1, @enabled)
 
-PUB EnableACK(enabled) | tmp
+PUB EnableACK(enabled): curr_state
 ' Enable payload with ACK
 ' XXX Add timing notes/code from datasheet, p.63, note d
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
-    readReg (core#FEATURE, 1, @tmp)
-    case ||enabled
+    curr_state := 0
+    readReg (core#FEATURE, 1, @curr_state)
+    case ||(enabled)
         0, 1:
-            enabled := ||enabled << core#EN_ACK_PAY
+            enabled := ||(enabled) << core#EN_ACK_PAY
         OTHER:
-            result := ((tmp >> core#EN_ACK_PAY) & core#EN_ACK_PAY) * TRUE
-            return
+            return ((curr_state >> core#EN_ACK_PAY) & core#EN_ACK_PAY) == 1
 
-    tmp &= core#EN_ACK_PAY_MASK
-    tmp := (tmp | enabled) & core#FEATURE_REGMASK
-    writeReg (core#FEATURE, 1, @tmp)
+    enabled := ((curr_state & core#EN_ACK_PAY_MASK) | enabled) & core#FEATURE_REGMASK
+    writeReg (core#FEATURE, 1, @enabled)
 
 PUB FlushRX
 
