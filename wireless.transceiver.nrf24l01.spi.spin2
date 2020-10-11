@@ -163,22 +163,22 @@ PUB AutoAckEnabledPipes(pipe_mask=-2): curr_mask
 
     writeReg (core.EN_AA, 1, @pipe_mask)
 
-PUB AutoRetransmitDelay(delay_us=-2): result | tmp
+PUB AutoRetransmitDelay(delay_us=-2): curr_dly
 ' Setup of automatic retransmission - Auto Retransmit Delay, in microseconds
 ' Delay defined from end of transmission to start of next transmission
 '   Valid values: 250..4000
 '   Any other value polls the chip and returns the current setting
-    readReg (core.SETUP_RETR, 1, @tmp)
+    curr_dly := 0
+    readReg (core.SETUP_RETR, 1, @curr_dly)
     case delay_us := lookdown(delay_us: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
         1..16:
             delay_us := (delay_us - 1) << core.ARD
         OTHER:
-            tmp := ((tmp >> core.ARD) & core.ARD) + 1
-            result := lookup(tmp: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
-            return
-    tmp &= core.ARD_MASK
-    tmp := (tmp | delay_us) & core.SETUP_RETR_REGMASK
-    writeReg (core.SETUP_RETR, 1, @tmp)
+            curr_dly := ((curr_dly >> core.ARD) & core.ARD_BITS) + 1
+            return lookup(tmp: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
+
+    delay_us := ((curr_dly & core.ARD_MASK) | delay_us) & core.SETUP_RETR_REGMASK
+    writeReg (core.SETUP_RETR, 1, @delay_us)
 
 PUB AutoRetransmitCount(tries=-2): result | tmp
 ' Setup of automatic retransmission - Auto Retransmit Count
