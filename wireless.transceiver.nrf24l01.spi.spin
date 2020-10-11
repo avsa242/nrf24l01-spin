@@ -443,21 +443,20 @@ PUB PayloadReady(clear_intr): flag
     clear_intr := ((flag & core#MASKINT_RX_DR_MASK) | clear_intr) & core#STATUS_REGMASK
     writeReg (core#STATUS, 1, @clear_intr)
 
-PUB PayloadSent(clear_intr) | tmp
+PUB PayloadSent(clear_intr): flag
 ' Query or clear Data Sent TX FIFO interrupt
 '   Valid values: TRUE (-1 or 1): Clear interrupt flag
 '   Any other value polls the chip and returns TRUE if packet transmitted, FALSE otherwise
-    readReg (core#STATUS, 1, @tmp)'XXX
-    case ||clear_intr
+    flag := 0
+    readReg (core#STATUS, 1, @flag)
+    case ||(clear_intr)
         1:
-            clear_intr := ||clear_intr << core#TX_DS
+            clear_intr := ||(clear_intr) << core#TX_DS
         OTHER:
-            result := ((tmp >> core#TX_DS) & %1) * TRUE
-            return
+            return ((flag >> core#TX_DS) & %1) == 1
 
-    tmp &= core#MASKINT_TX_DS_MASK
-    tmp := (tmp | clear_intr) & core#STATUS_REGMASK
-    writeReg (core#STATUS, 1, @tmp)
+    clear_intr := ((flag & core#MASKINT_TX_DS_MASK) | clear_intr) & core#STATUS_REGMASK
+    writeReg (core#STATUS, 1, @clear_intr)
 
 PUB PipesEnabled(mask) | tmp
 ' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
