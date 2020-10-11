@@ -366,13 +366,13 @@ PUB IntMask(mask=-2): curr_mask
     mask := ((curr_mask & core.MASKINT_MASK) | mask) & core.CONFIG_REGMASK
     writeReg (core.CONFIG, 1, @mask)
 
-PUB LostPackets(): result
+PUB LostPackets(): pkt_cnt
 ' Count lost packets
 '   Returns: Number of lost packets since last channel/carrier freq set
 '   Max value is 15
 '   NOTE: To reset, re-set the Channel or CarrierFreq
-    readReg (core.OBSERVE_TX, 1, @result)
-    result := (result >> core.PLOS_CNT) & core.PLOS_CNT_BITS
+    readReg (core.OBSERVE_TX, 1, @pkt_cnt)
+    return (pkt_cnt >> core.PLOS_CNT) & core.PLOS_CNT_BITS
 
 PUB MaxRetransReached(clear_intr=-2): result | tmp
 ' Query or clear Maximum number of TX retransmits interrupt
