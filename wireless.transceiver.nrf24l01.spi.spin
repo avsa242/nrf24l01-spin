@@ -271,23 +271,22 @@ PUB DataRate(kbps): curr_rate
 
     writeReg (core#RF_SETUP, 1, @curr_rate)
 
-PUB DynamicACK(enabled) | tmp
+PUB DynamicACK(enabled): curr_state
 ' Enable selective auto-acknowledge feature
 ' When enabled, the receive will not auto-acknowledge packets sent to it.
 ' XXX expand
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
-    readReg (core#FEATURE, 1, @tmp)
+    curr_state := 0
+    readReg (core#FEATURE, 1, @curr_state)
     case ||enabled
         0, 1:
             enabled := ||enabled << core#EN_DYN_ACK
         OTHER:
-            result := ((tmp >> core#EN_DYN_ACK) & core#EN_DYN_ACK) * TRUE
-            return
+            return ((curr_state >> core#EN_DYN_ACK) & %1) == 1
 
-    tmp &= core#EN_DYN_ACK_MASK
-    tmp := (tmp | enabled) & core#FEATURE_REGMASK
-    writeReg (core#FEATURE, 1, @tmp)
+    enabled := ((curr_state & core#EN_DYN_ACK_MASK) | enabled) & core#FEATURE_REGMASK
+    writeReg (core#FEATURE, 1, @enabled)
 
 PUB DynamicPayload(mask) | tmp
 ' Control which data pipes (0 through 5) have dynamic payload length enabled, using a 6-bit mask
