@@ -183,20 +183,20 @@ PUB AutoRetransmitDelay(delay_us): curr_dly
     delay_us := ((curr_dly & core#ARD_MASK) | delay_us) & core#SETUP_RETR_REGMASK
     writeReg (core#SETUP_RETR, 1, @delay_us)
 
-PUB AutoRetransmitCount(tries) | tmp
+PUB AutoRetransmitCount(tries): curr_tries
 ' Setup of automatic retransmission - Auto Retransmit Count
 ' Defines number of attempts to re-transmit on fail of Auto-Acknowledge
 '   Valid values: 0..15 (0 disables re-transmit)
 '   Any other value polls the chip and returns the current setting
-    readReg (core#SETUP_RETR, 1, @tmp)
+    curr_tries := 0
+    readReg (core#SETUP_RETR, 1, @curr_tries)
     case tries
         0..15:
         OTHER:
-            result := (tmp & core#ARC)
-            return
-    tmp &= core#ARC_MASK
-    tmp := (tmp | tries) & core#SETUP_RETR_REGMASK
-    writeReg (core#SETUP_RETR, 1, @tmp)
+            return (curr_tries & core#ARC_BITS)
+
+    tries := ((curr_tries & core#ARC_MASK) | tries) & core#SETUP_RETR_REGMASK
+    writeReg (core#SETUP_RETR, 1, @tries)
 
 PUB CarrierFreq(MHz)
 ' Set carrier frequency, in MHz
