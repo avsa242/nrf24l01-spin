@@ -122,20 +122,20 @@ PUB CE(state)
     io.Set(_CE, state)
     time.USleep (core#THCE)
 
-PUB AddressWidth(bytes) | tmp
+PUB AddressWidth(bytes): curr_width
 ' Set width, in bytes, of RX/TX address field
 '   Valid values: 3, 4, 5
 '   Any other value polls the chip and returns the current setting
-    readReg (core#SETUP_AW, 1, @tmp)
+    curr_width := 0
+    readReg (core#SETUP_AW, 1, @curr_width)
     case bytes
         3, 4, 5:
-            bytes := bytes-2
+            bytes -= 2                          ' adjust to bitfield value
         OTHER:
-            return (tmp & core#AW) + 2
+            return (curr_width & core#AW_BITS) + 2
 
-    tmp &= core#AW_MASK
-    tmp := (tmp | bytes) & core#SETUP_AW_REGMASK
-    writeReg (core#SETUP_AW, 1, @tmp)
+    bytes := ((curr_width & core#AW_MASK) | bytes) & core#SETUP_AW_REGMASK
+    writeReg (core#SETUP_AW, 1, @bytes)
 
 PUB AfterRX (next_state)
 ' Define state to transition to after packet rcvd
