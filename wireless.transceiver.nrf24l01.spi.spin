@@ -471,21 +471,20 @@ PUB PipesEnabled(mask): curr_mask
             readreg(core#EN_RXADDR, 1, @curr_mask)
             return curr_mask & core#EN_RXADDR_MASK
 
-PUB PLL_Lock(enabled) | tmp
+PUB PLL_Lock(enabled): flag
 ' Force PLL Lock signal (intended for testing only)
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
-    readReg (core#RF_SETUP, 1, @tmp)
-    case ||enabled
+    flag := 0
+    readReg (core#RF_SETUP, 1, @flag)
+    case ||(enabled)
         0, 1:
-            enabled := ||enabled << core#PLL_LOCK
+            enabled := ||(enabled) << core#PLL_LOCK
         OTHER:
-            result := ((tmp >> core#PLL_LOCK) & %1) * TRUE
-            return
+            return ((flag >> core#PLL_LOCK) & %1) == 1
 
-    tmp &= core#PLL_LOCK_MASK
-    tmp := (tmp | enabled) & core#RF_SETUP_REGMASK
-    writeReg (core#RF_SETUP, 1, @tmp)
+    enabled := ((flag & core#PLL_LOCK_MASK) | enabled) & core#RF_SETUP_REGMASK
+    writeReg (core#RF_SETUP, 1, @enabled)
 
 PUB Powered(enabled) | tmp
 ' Power on or off
