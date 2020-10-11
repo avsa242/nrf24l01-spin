@@ -585,7 +585,7 @@ PUB RXPayload(nr_bytes, ptr_buff)
 PUB RXPipePending{}
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
-    result := (Status >> core#RX_P_NO) & core#RX_P_NO_BITS
+    return (Status{} >> core#RX_P_NO) & core#RX_P_NO_BITS
 
 PUB RXTX(role) | tmp
 ' Set to Primary RX or TX
