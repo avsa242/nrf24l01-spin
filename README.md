@@ -11,11 +11,11 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 * Supports setting carrier frequency from 2,400MHz to 2,527MHz
 * Set common RF parameters: TX power
 * Supports on-air baud rates of 250kbps, 1000kbps, 2000kbps
-* Address filtering: 3, 4, 5 bytes address width (pipes 2..5: only the LSByte is changeable)
+* Address filtering: 3, 4, 5 bytes address width (for pipes 0, 1 only; pipes 2..5: only the LSByte is changeable)
 * Options for increasing transmission robustness: CRC calculation/checking (1 or 2 byte length)
 * Packet radio options: arbitrary payload lengths (1..32), dynamic payload length
 * Supports setting frequency by channel number (0..127)
-* RSSI measurement (*operates as a carrier-detect function only*)
+* Carrier-detect
 * FIFO: Read RX/TX states (empty, full, data ready, data sent), flush
 * Optional auto acknowledgement function (aka Enhanced ShockBurst (TM) NORDIC Semiconductor), auto-retransmit count, auto-retransmit delay, max number of retries
 * Selectively enable pipes (0..5), with some settings changeable on a per-pipe basis (payload length, address, address width)
@@ -36,7 +36,7 @@ P2/SPIN2:
 ## Compiler Compatibility
 
 * P1/SPIN1: OpenSpin (tested with 1.00.81)
-* P2/SPIN2: FastSpin (tested with 4.2.4)
+* P2/SPIN2: FastSpin (tested with 4.4.0)
 * ~~BST~~ (incompatible - no preprocessor)
 * ~~Propeller Tool~~ (incompatible - no preprocessor)
 * ~~PNut~~ (incompatible - no preprocessor)
@@ -44,8 +44,9 @@ P2/SPIN2:
 ## Limitations
 
 * Very early in development - may malfunction, or outright fail to build
-* P2/SPIN2: Because of the way the smart-pin SPI engine works, the I/O pin connection is limited to MISO being 1 pin below SCK, and MOSI being 1 pin above SCK
+* P2/SPIN2: Because of the way the smart-pin SPI engine works, the I/O pin connection is limited to MISO being SCK-1, and MOSI being SCK+1
 * API not yet stable
+* RSSI method is only an alias for RPD(), which returns a receive power detect/carrier-detect flag. For wireless.transceiver API compatibility only
 
 ## TODO
 
