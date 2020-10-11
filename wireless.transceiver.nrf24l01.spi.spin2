@@ -507,16 +507,12 @@ PUB RPD(): flag
     readReg (core.RPD, 1, @flag)
     return flag == 1
 
-PUB RSSI(): result
+PUB RSSI(): level
 ' RSSI (emulated)
 '   Returns:
 '       -64: Carrier detected
 '       -255 No carrier
-    case RPD()
-        TRUE:
-            return -64
-        FALSE:
-            return -255
+    return lookupz(abs(rpd()): -255, -64)
 
 PUB RXAddr(ptr_buff, pipe=0, rw=0): result | tmp[2]
 ' Set receive address of pipe number 'pipe' from buffer at address ptr_buff
