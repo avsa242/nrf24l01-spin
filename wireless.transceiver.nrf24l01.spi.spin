@@ -288,25 +288,20 @@ PUB DynamicACK(enabled): curr_state
     enabled := ((curr_state & core#EN_DYN_ACK_MASK) | enabled) & core#FEATURE_REGMASK
     writeReg (core#FEATURE, 1, @enabled)
 
-PUB DynamicPayload(mask) | tmp
+PUB DynamicPayload(mask): curr_mask
 ' Control which data pipes (0 through 5) have dynamic payload length enabled, using a 6-bit mask
 '   Data pipe:     5    0   5     0
 '                  |....|   |.....|
 '   Valid values: %000000..%1111111
-    readReg (core#DYNPD, 1, @tmp)
+    curr_mask := 0
+    readReg (core#DYNPD, 1, @curr_mask)
     case mask
         %000000..%111111:
-'           Don't actually do anything if the values are in this range,
-'            since they're already actually valid. Commented line below
-'            shows what *would* be done:
-'            mask := (mask << core#ERX_P0)
+'            mask := (mask << core#ERX_P0)      ' shows what _would_ be done
         OTHER:
-            result := tmp & core#DYNPD_REGMASK
-            return
+            return curr_mask & core#DYNPD_REGMASK
 
-    tmp &= core#DPL_MASK                        'XXX fix: remove these two lines
-    tmp := (tmp | mask) & core#DYNPD_REGMASK    'XXX
-    writeReg (core#DYNPD, 1, @tmp)              'XXX tmp -> mask
+    writeReg (core#DYNPD, 1, @mask)
 
 PUB DynPayloadEnabled(enabled) | tmp
 ' Enable Dynamic Payload Length
