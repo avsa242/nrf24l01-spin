@@ -246,27 +246,27 @@ PUB CRCLength(bytes=-2): curr_len
     bytes := ((curr_len & core.CRCO_MASK) | bytes) & core.CONFIG_REGMASK
     writeReg (core.CONFIG, 1, @bytes)
 
-PUB DataRate(kbps=-2): result | tmp
+PUB DataRate(kbps=-2): curr_rate
 ' Set RF data rate in kbps
 '   Valid values: 250, 1000, 2000
 '   Any other value polls the chip and returns the current setting
-    readReg (core.RF_SETUP, 1, @tmp)
+    curr_rate := 0
+    readReg (core.RF_SETUP, 1, @curr_rate)
     case kbps
         1000:
-            tmp &= core.RF_DR_HIGH_MASK
-            tmp &= core.RF_DR_LOW_MASK
+            curr_rate &= core.RF_DR_HIGH_MASK
+            curr_rate &= core.RF_DR_LOW_MASK
         2000:
-            tmp |= (1 << core.RF_DR_HIGH)
-            tmp &= core.RF_DR_LOW_MASK
+            curr_rate |= (1 << core.RF_DR_HIGH)
+            curr_rate &= core.RF_DR_LOW_MASK
         250:
-            tmp &= core.RF_DR_HIGH_MASK
-            tmp |= (1 << core.RF_DR_LOW)
+            curr_rate &= core.RF_DR_HIGH_MASK
+            curr_rate |= (1 << core.RF_DR_LOW)
         OTHER:
-            tmp := (tmp >> core.RF_DR_HIGH) & %101  'Only care about the RF_DR_x bits
-            result := lookupz(tmp: 1000, 2000, 0, 0, 250)
-            return
+            curr_rate := (curr_rate >> core.RF_DR_HIGH) & %101  'Only care about the RF_DR_x bits
+            return lookupz(curr_rate: 1000, 2000, 0, 0, 250)
 
-    writeReg (core.RF_SETUP, 1, @tmp)
+    writeReg (core.RF_SETUP, 1, @curr_rate)
 
 PUB DynamicACK(enabled=-2): result | tmp
 ' Enable selective auto-acknowledge feature
