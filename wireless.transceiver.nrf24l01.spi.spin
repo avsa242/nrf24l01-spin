@@ -517,11 +517,11 @@ PUB RSSI{}: level
 '       -255 No carrier
     return lookupz(||(rpd{}): -255, -64)
 
-PUB RXAddr(buff_addr, pipe, rw) | tmp[2]
-' Set receive address of pipe number 'pipe' from buffer at address buff_addr
+PUB RXAddr(ptr_buff, pipe, rw)
+' Set receive address of pipe number 'pipe' from buffer at address ptr_buff
 '   Valid values:
-'       buff_addr:
-'           Address of buffer containing nRF24L01+ address to transmit to
+'       ptr_buff:
+'           Address of buffer containing nRF24L01+ recieve address
 '           For pipes 0 and 1, must be a buffer at least 5 bytes long
 '           For pipes 2..5, must be a buffer at least 1 byte long
 '       pipe: 0..5
@@ -530,25 +530,22 @@ PUB RXAddr(buff_addr, pipe, rw) | tmp[2]
 '           0: Read current address
 '           1: Write new address
 '           Any other value reads current address
-    bytefill(@tmp, $00, 8)
     case pipe
         0, 1:
-            readReg (core#RX_ADDR_P0 + pipe, 5, @tmp)
-                case rw
-                    1:
-                        writeReg (core#RX_ADDR_P0 + pipe, 5, buff_addr)
-                    OTHER:
-                        bytemove(buff_addr, @tmp, 5)
-                        return
-        2..5:                                                                   ' Pipes 2..5 are limited to
-            readReg (core#RX_ADDR_P0 + pipe, 1, @tmp)                     '  1 unique address byte
-                case rw                                                         '  (hardware limitation)
-                    1:
-                        writeReg (core#RX_ADDR_P0 + pipe, 1, buff_addr)
-                    OTHER:
-                        bytemove(buff_addr, @tmp, 1)
-                        return
-        OTHER:                                                                  ' Invalid pipe
+            case rw
+                1:
+                    writeReg (core#RX_ADDR_P0 + pipe, 5, ptr_buff)
+                OTHER:
+                    readReg (core#RX_ADDR_P0 + pipe, 5, ptr_buff)
+                    return
+        2..5:                                   ' Pipes 2..5 are limited to
+            case rw                             ' 1 unique byte
+                1:                              ' (hardware limitation)
+                    writeReg (core#RX_ADDR_P0 + pipe, 1, ptr_buff)
+                OTHER:
+                    readReg (core#RX_ADDR_P0 + pipe, 1, ptr_buff)
+                    return
+        OTHER:                                  ' Invalid pipe
             return
 
 PUB RXFIFOEmpty{}
