@@ -205,7 +205,7 @@ PUB CarrierFreq(MHz=-2): curr_freq
         OTHER:
             return 2400 + Channel()
 
-PUB Channel(number=-2): result
+PUB Channel(number=-2): curr_chan
 ' Set RF channel
 '   Valid values: 0..127
 '   Any other value polls the chip and returns the current setting
@@ -213,7 +213,7 @@ PUB Channel(number=-2): result
         0..127:
             writeReg (core.RF_CH, 1, @number)
         OTHER:
-            readReg (core.RF_CH, 1, @result)
+            readReg (core.RF_CH, 1, @curr_chan)
 
 PUB CRCCheckEnabled(enabled=-2): result | tmp
 ' Enable CRC
