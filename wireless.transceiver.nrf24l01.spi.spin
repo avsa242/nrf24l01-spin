@@ -303,22 +303,21 @@ PUB DynamicPayload(mask): curr_mask
 
     writeReg (core#DYNPD, 1, @mask)
 
-PUB DynPayloadEnabled(enabled) | tmp
+PUB DynPayloadEnabled(enabled): curr_state
 ' Enable Dynamic Payload Length
 ' NOTE: Must be enabled to use the DynamicPayload method.
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
-    readReg (core#FEATURE, 1, @tmp)
+    curr_state := 0
+    readReg (core#FEATURE, 1, @curr_state)
     case ||enabled
         0, 1:
             enabled := ||enabled << core#EN_DPL
         OTHER:
-            result := ((tmp >> core#EN_DPL) & core#EN_DPL) * TRUE
-            return
+            return ((curr_state >> core#EN_DPL) & core#EN_DPL) == 1
 
-    tmp &= core#EN_DPL_MASK
-    tmp := (tmp | enabled) & core#FEATURE_REGMASK
-    writeReg (core#FEATURE, 1, @tmp)
+    enabled := ((curr_state & core#EN_DPL_MASK) | enabled) & core#FEATURE_REGMASK
+    writeReg (core#FEATURE, 1, @enabled)
 
 PUB EnableACK(enabled) | tmp
 ' Enable payload with ACK
