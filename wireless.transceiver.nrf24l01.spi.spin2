@@ -603,21 +603,20 @@ PUB Sleep()
 ' Power down chip
     Powered(FALSE)
 
-PUB TESTCW(enabled=-2): result | tmp
+PUB TESTCW(enabled=-2): curr_state
 ' Enable continuous carrier transmit (intended for testing only)
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
-    readReg (core.RF_SETUP, 1, @tmp)
+    curr_state := 0
+    readReg (core.RF_SETUP, 1, @curr_state)
     case abs(enabled)
         0, 1:
             enabled := abs(enabled) << core.CONT_WAVE
         OTHER:
-            result := ((tmp >> core.CONT_WAVE) & %1) * TRUE
-            return
+            return ((curr_state >> core.CONT_WAVE) & %1) == 1
 
-    tmp &= core.CONT_WAVE_MASK
-    tmp := (tmp | enabled) & core.RF_SETUP_REGMASK
-    writeReg (core.RF_SETUP, 1, @tmp)
+    enabled := ((curr_state & core.CONT_WAVE_MASK) | enabled) & core.RF_SETUP_REGMASK
+    writeReg (core.RF_SETUP, 1, @enabled)
 
 PUB TXAddr(ptr_buff, rw=0): result | tmp[2]
 ' Set transmit address
