@@ -377,22 +377,21 @@ PUB LostPackets{}: pkt_cnt
     readReg (core#OBSERVE_TX, 1, @pkt_cnt)
     return (pkt_cnt >> core#PLOS_CNT) & core#PLOS_CNT_BITS
 
-PUB MaxRetransReached(clear_intr) | tmp
+PUB MaxRetransReached(clear_intr): flag
 ' Query or clear Maximum number of TX retransmits interrupt
-' NOTE: If this flag is set, it must be cleared to enable further communication.
 '   Valid values: TRUE (-1 or 1): Clear interrupt flag
 '   Any other value returns TRUE when max number of retransmits reached, FALSE otherwise
-    readReg (core#STATUS, 1, @tmp)
-    case ||clear_intr
+'   NOTE: If this flag is set, it must be cleared to enable further communication.
+    flag := 0
+    readReg (core#STATUS, 1, @flag)
+    case ||(clear_intr)
         1:
             clear_intr := %1 << core#MAX_RT
         OTHER:
-            result := ((tmp >> core#MAX_RT) & core#MAX_RT) * TRUE
-            return
+            return ((flag >> core#MAX_RT) & %1) == 1
 
-    tmp &= core#MAX_RT_MASK
-    tmp := (tmp | clear_intr) & core#STATUS_REGMASK
-    writeReg (core#STATUS, 1, @tmp)
+    clear_intr := ((flag & core#MAX_RT_MASK) | clear_intr) & core#STATUS_REGMASK
+    writeReg (core#STATUS, 1, @clear_intr)
 
 PUB NodeAddress(addr_ptr)
 ' Set node address
