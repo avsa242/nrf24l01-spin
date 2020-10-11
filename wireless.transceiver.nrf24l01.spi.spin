@@ -571,7 +571,7 @@ PUB RXMode{}
     RXTX(ROLE_RX)
     CE(1)
 
-PUB RXPayload(nr_bytes, ptr_buff) | tmp
+PUB RXPayload(nr_bytes, ptr_buff)
 ' Receive payload stored in FIFO
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
@@ -580,7 +580,7 @@ PUB RXPayload(nr_bytes, ptr_buff) | tmp
         1..32:
             readReg (core#CMD_R_RX_PAYLOAD, nr_bytes, ptr_buff)
         OTHER:
-            return FALSE
+            return
 
 PUB RXPipePending{}
 ' Returns pipe number of pending data available in FIFO

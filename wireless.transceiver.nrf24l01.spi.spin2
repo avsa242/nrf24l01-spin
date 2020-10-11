@@ -568,7 +568,7 @@ PUB RXMode()
     RXTX(ROLE_RX)
     CE(1)
 
-PUB RXPayload(nr_bytes, ptr_buff): result | tmp
+PUB RXPayload(nr_bytes, ptr_buff)
 ' Receive payload stored in FIFO
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
