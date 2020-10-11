@@ -545,18 +545,23 @@ PUB RXAddr(ptr_buff, pipe=0, rw=0)
         OTHER:                                  ' Invalid pipe
             return
 
-PUB RXFIFOEmpty(): result
-' Queries the FIFO_STATUS register for RX FIFO empty flag
-'   Returns TRUE if empty, FALSE if there's data in RX FIFO
-    readReg (core.FIFO_STATUS, 1, @result)
-    return (result & %1) * TRUE
+PUB RXFIFOEmpty(): flag
+' Flag indicating RX FIFO empty
+'   Returns:
+'       TRUE (-1): RX FIFO empty
+'       FALSE (0): RX FIFO contains unread data
+    flag := 0
+    readReg (core.FIFO_STATUS, 1, @flag)
+    return (flag & %1) == 1
 
-PUB RXFIFOFull(): result
-' Queries the FIFO_STATUS register for RX FIFO full flag
-'   Returns TRUE if full, FALSE if there're available locations in the RX FIFO
-    readReg (core.FIFO_STATUS, 1, @result)
-    result >>= core.RXFIFO_FULL
-    result &= %1
+PUB RXFIFOFull(): flag
+' Flag indicating RX FIFO full
+'   Returns:
+'       TRUE (-1): RX FIFO full
+'       FALSE (0): RX FIFO not full
+    flag := 0
+    readReg (core.FIFO_STATUS, 1, @flag)
+    return ((flag >> core.RXFIFO_FULL) & %1) == 1
 
 PUB RXMode()
 ' Change chip state to RX (receive)
