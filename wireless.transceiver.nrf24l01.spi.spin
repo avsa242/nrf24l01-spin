@@ -687,15 +687,16 @@ PUB TXPower(dBm): curr_pwr
     dBm := ((curr_pwr & core#RF_PWR_MASK) | dBm) & core#RF_SETUP_REGMASK
     writeReg (core#RF_SETUP, 1, @dBm)
 
-PUB TXReuse{}
-' Queries the FIFO_STATUS register for TX_REUSE flag
-'   Returns TRUE if re-using last transmitted payload, FALSE if not
-    readReg (core#FIFO_STATUS, 1, @result)
-    result &= (1 << core#TXFIFO_REUSE) * TRUE
+PUB TXReuse{}: flag
+' Flag indicating last transmitted payload is to be re-used
+'   Returns:
+'       TRUE (-1): last transmitted payload reused, FALSE (0) otherwise
+    readReg (core#FIFO_STATUS, 1, @flag)
+    return ((flag >> core#TXFIFO_REUSE) & %1) == 1
 
-PRI Status
-' Returns status of last SPI transaction
-    readReg (core#STATUS, 1, @result)
+PRI Status{}: nrf_status
+' Interrupt and data available status
+    readReg (core#STATUS, 1, @nrf_status)
 
 PRI writeReg (reg, nr_bytes, ptr_buff) | tmp
 ' Write reg to MOSI
