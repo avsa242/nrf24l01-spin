@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2020
     Started Jan 6, 2019
-    Updated Oct 11, 2020
+    Updated Oct 12, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -124,7 +124,7 @@ PUB CE(state)
 
 PUB AddressWidth(bytes): curr_width
 ' Set width, in bytes, of RX/TX address field
-'   Valid values: 3, 4, 5
+'   Valid values: 3, 4, *5
 '   Any other value polls the chip and returns the current setting
     curr_width := 0
     readReg (core#SETUP_AW, 1, @curr_width)
@@ -152,7 +152,7 @@ PUB AutoAckEnabledPipes(pipe_mask): curr_mask
 '   per set data pipe mask:
 '   Data Pipe:     5    0   5    0
 '                  |....|   |....|
-'   Valid values: %000000..%111111
+'   Valid values: %000000..%111111 (default %111111)
 '   0 disables AA for the given pipe, 1 enables
 '   Example:
 '       AutoAckEnabledPipes(%001010)
@@ -169,7 +169,7 @@ PUB AutoAckEnabledPipes(pipe_mask): curr_mask
 PUB AutoRetransmitDelay(delay_us): curr_dly
 ' Setup of automatic retransmission - Auto Retransmit Delay, in microseconds
 ' Delay defined from end of transmission to start of next transmission
-'   Valid values: 250..4000
+'   Valid values: *250..4000
 '   Any other value polls the chip and returns the current setting
     curr_dly := 0
     readReg (core#SETUP_RETR, 1, @curr_dly)
@@ -186,7 +186,7 @@ PUB AutoRetransmitDelay(delay_us): curr_dly
 PUB AutoRetransmitCount(tries): curr_tries
 ' Setup of automatic retransmission - Auto Retransmit Count
 ' Defines number of attempts to re-transmit on fail of Auto-Acknowledge
-'   Valid values: 0..15 (0 disables re-transmit)
+'   Valid values: 0..15 (default 3; 0 disables re-transmit)
 '   Any other value polls the chip and returns the current setting
     curr_tries := 0
     readReg (core#SETUP_RETR, 1, @curr_tries)
@@ -200,7 +200,7 @@ PUB AutoRetransmitCount(tries): curr_tries
 
 PUB CarrierFreq(MHz): curr_freq
 ' Set carrier frequency, in MHz
-'   Valid values: 2400..2527
+'   Valid values: 2400..2527 (default 2402)
 '   Any other value polls the chip and returns the current setting
     case MHz
         2400..2527:
@@ -210,7 +210,7 @@ PUB CarrierFreq(MHz): curr_freq
 
 PUB Channel(number): curr_chan
 ' Set RF channel
-'   Valid values: 0..127
+'   Valid values: 0..127 (default 2)
 '   Any other value polls the chip and returns the current setting
     case number
         0..127:
@@ -220,9 +220,9 @@ PUB Channel(number): curr_chan
 
 PUB CRCCheckEnabled(enabled): curr_state
 ' Enable CRC
-' NOTE: Forced on if any data pipe has AutoAck enabled
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
+'   NOTE: Forced on if any data pipe has AutoAck enabled
     curr_state := 0
     readReg (core#CONFIG, 1, @curr_state)
     case ||enabled
@@ -235,8 +235,8 @@ PUB CRCCheckEnabled(enabled): curr_state
     writeReg (core#CONFIG, 1, @enabled)
 
 PUB CRCLength(bytes): curr_len
-' Choose CRC Encoding scheme, in bytes
-'   Valid values: 1, 2
+' Set CRC length, in bytes
+'   Valid values: *1, 2
 '   Any other value polls the chip and returns the current setting
     curr_len := 0
     readReg (core#CONFIG, 1, @curr_len)
@@ -251,7 +251,7 @@ PUB CRCLength(bytes): curr_len
 
 PUB DataRate(kbps): curr_rate
 ' Set RF data rate in kbps
-'   Valid values: 250, 1000, 2000
+'   Valid values: 250, 1000, *2000
 '   Any other value polls the chip and returns the current setting
     curr_rate := 0
     readReg (core#RF_SETUP, 1, @curr_rate)
@@ -275,7 +275,7 @@ PUB DynamicACK(enabled): curr_state
 ' Enable selective auto-acknowledge feature
 ' When enabled, the receive will not auto-acknowledge packets sent to it.
 ' XXX expand
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     curr_state := 0
     readReg (core#FEATURE, 1, @curr_state)
@@ -292,7 +292,7 @@ PUB DynamicPayload(mask): curr_mask
 ' Control which data pipes (0 through 5) have dynamic payload length enabled, using a 6-bit mask
 '   Data pipe:     5    0   5     0
 '                  |....|   |.....|
-'   Valid values: %000000..%1111111
+'   Valid values: %000000..%1111111 (default %000000)
     curr_mask := 0
     readReg (core#DYNPD, 1, @curr_mask)
     case mask
@@ -305,9 +305,9 @@ PUB DynamicPayload(mask): curr_mask
 
 PUB DynPayloadEnabled(enabled): curr_state
 ' Enable Dynamic Payload Length
-' NOTE: Must be enabled to use the DynamicPayload method.
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
+'   NOTE: Must be enabled to use the DynamicPayload method.
     curr_state := 0
     readReg (core#FEATURE, 1, @curr_state)
     case ||enabled
@@ -322,7 +322,7 @@ PUB DynPayloadEnabled(enabled): curr_state
 PUB EnableACK(enabled): curr_state
 ' Enable payload with ACK
 ' XXX Add timing notes/code from datasheet, p.63, note d
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     curr_state := 0
     readReg (core#FEATURE, 1, @curr_state)
@@ -351,7 +351,7 @@ PUB IntMask(mask): curr_mask
 ' Control which events will trigger an interrupt on the IRQ pin, using a 3-bit mask
 '           Bits:  210   210
 '                  |||   |||
-'   Valid values: %000..%111
+'   Valid values: %000..%111 (default is %000)
 '       Bit:    Interrupt will be asserted on IRQ pin if:
 '       2       new data is ready in RX FIFO
 '       1       data is transmitted (_and_ if ACK from RX if using auto-ack)
@@ -409,8 +409,8 @@ PUB PayloadLen(width, pipe_nr): curr_len
 ' Set length of static payload, in bytes
 '   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
 '   Valid values:
-'       pipe: 0..5 (default 0)
-'       width: 0..32
+'       pipe: 0..5
+'       width: 0..32 (default 0)
 '   Any other value for pipe is ignored
 '   Any other value for width polls the chip and returns the current setting
 '   NOTE: Setting a width of 0 effectively disables the pipe
@@ -462,7 +462,7 @@ PUB PipesEnabled(mask): curr_mask
 ' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
 '   Data pipe:     5    0   5    0
 '                  |....|   |....|
-'   Valid values: %000000..%111111
+'   Valid values: %000000..%111111 (default %000011)
     case mask
         %000000..%111111:
             writeReg (core#EN_RXADDR, 1, @mask)
@@ -473,7 +473,7 @@ PUB PipesEnabled(mask): curr_mask
 
 PUB PLL_Lock(enabled): flag
 ' Force PLL Lock signal (intended for testing only)
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     flag := 0
     readReg (core#RF_SETUP, 1, @flag)
@@ -488,7 +488,7 @@ PUB PLL_Lock(enabled): flag
 
 PUB Powered(enabled): curr_state
 ' Power on or off
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     curr_state := 0
     readReg (core#CONFIG, 1, @curr_state)
@@ -530,6 +530,13 @@ PUB RXAddr(ptr_buff, pipe, rw)
 '           0: Read current address
 '           1: Write new address
 '           Any other value reads current address
+'   Default pipe addresses:
+'   0: $E7E7E7E7E7
+'   1: $C2C2C2C2C2
+'   2: $C3
+'   3: $C4
+'   4: $C5
+'   5: $C6
     case pipe
         0, 1:
             case rw
@@ -588,7 +595,7 @@ PUB RXPipePending{}: pipe_nr
 
 PUB RXTX(role): curr_role
 ' Set to Primary RX or TX
-'   Valid values: 0: TX, 1: RX
+'   Valid values: *0: TX, 1: RX
 '   Any other value polls the chip and returns the current setting
     curr_role := 0
     readReg (core#CONFIG, 1, @curr_role)
@@ -607,7 +614,7 @@ PUB Sleep{}
 
 PUB TESTCW(enabled): curr_state
 ' Enable continuous carrier transmit (intended for testing only)
-'   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
+'   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
     curr_state := 0
     readReg (core#RF_SETUP, 1, @curr_state)
@@ -629,7 +636,8 @@ PUB TXAddr(ptr_buff, rw)
 '           0: Read current address
 '           1: Write new address
 '           Any other value reads current address
-' NOTE: Buffer at ptr_buff must be a minimum of 5 bytes
+'   Default address: $E7E7E7E7E7
+'   NOTE: Buffer at ptr_buff must be a minimum of 5 bytes
     case rw
         1:
             writeReg (core#TX_ADDR, 5, ptr_buff)
@@ -671,7 +679,7 @@ PUB TXPayload(nr_bytes, ptr_buff, deferred)
 
 PUB TXPower(dBm): curr_pwr
 ' Set transmit mode RF output power, in dBm
-'   Valid values: -18, -12, -6, 0
+'   Valid values: -18, -12, -6, *0
 '   Any other value polls the chip and returns the current setting
     curr_pwr := 0
     readReg (core#RF_SETUP, 1, @curr_pwr)
