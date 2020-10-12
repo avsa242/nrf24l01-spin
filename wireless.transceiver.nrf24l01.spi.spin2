@@ -666,23 +666,22 @@ PUB TXPayload(nr_bytes, ptr_buff, deferred=0)
         OTHER:
             return
 
-PUB TXPower(dBm=-2): result | tmp
+PUB TXPower(dBm=-2): curr_pwr
 ' Set transmit mode RF output power, in dBm
 '   Valid values: -18, -12, -6, 0
 '   Any other value polls the chip and returns the current setting
-    readReg (core.RF_SETUP, 1, @tmp)
+    curr_pwr := 0
+    readReg (core.RF_SETUP, 1, @curr_pwr)
     case dBm
         -18, -12, -6, 0:
             dBm := lookdownz(dBm: -18, -12, -6, 0)
             dBm := dBm << core.RF_PWR
         OTHER:
-            tmp := (tmp >> core.RF_PWR) & core.RF_PWR_BITS
-            result := lookupz(tmp: -18, -12, -6, 0)
-            return
+            curr_pwr := (curr_pwr >> core.RF_PWR) & core.RF_PWR_BITS
+            return lookupz(curr_pwr: -18, -12, -6, 0)
 
-    tmp &= core.RF_PWR_MASK
-    tmp := (tmp | dBm) & core.RF_SETUP_REGMASK
-    writeReg (core.RF_SETUP, 1, @tmp)
+    dBm := ((curr_pwr & core.RF_PWR_MASK) | dBm) & core.RF_SETUP_REGMASK
+    writeReg (core.RF_SETUP, 1, @dBm)
 
 PUB TXReuse(): result
 ' Queries the FIFO_STATUS register for TX_REUSE flag
