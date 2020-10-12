@@ -649,11 +649,11 @@ PUB TXFIFOFull{}: flag
 '   Returns: TRUE if full, FALSE if locations available in TX FIFO
     return (Status{} & %1) == 1
 
-PUB TXMode
+PUB TXMode{}
 ' Change chip state to TX (transmit)
     RXTX(ROLE_TX)
 
-PUB TXPayload(nr_bytes, ptr_buff, deferred) | cmd_packet, tmp
+PUB TXPayload(nr_bytes, ptr_buff, deferred)
 ' Queue payload to be transmitted   'XXX remove deferred param, make new method and hub var
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
@@ -668,7 +668,7 @@ PUB TXPayload(nr_bytes, ptr_buff, deferred) | cmd_packet, tmp
                 time.USleep (core#THCE)
                 outa[_CE] := 0
         OTHER:
-            return FALSE
+            return
 
 PUB TXPower(dBm) | tmp
 ' Set transmit mode RF output power, in dBm

@@ -650,7 +650,7 @@ PUB TXMode()
 ' Change chip state to TX (transmit)
     RXTX(ROLE_TX)
 
-PUB TXPayload(nr_bytes, ptr_buff, deferred=0): result | cmd_packet, tmp
+PUB TXPayload(nr_bytes, ptr_buff, deferred=0)
 ' Queue payload to be transmitted   'XXX remove deferred param, make new method and hub var
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
@@ -664,7 +664,7 @@ PUB TXPayload(nr_bytes, ptr_buff, deferred=0): result | cmd_packet, tmp
                 CE(1)                                               '   unless deferred is nonzero
                 CE(0)
         OTHER:
-            return FALSE
+            return
 
 PUB TXPower(dBm=-2): result | tmp
 ' Set transmit mode RF output power, in dBm
