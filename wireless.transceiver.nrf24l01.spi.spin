@@ -638,11 +638,11 @@ PUB TXAddr(ptr_buff, rw)
             readReg (core#TX_ADDR, 5, ptr_buff)
             return
 
-PUB TXFIFOEmpty{}
+PUB TXFIFOEmpty{}: flag
 ' Queries the FIFO_STATUS register for TX FIFO empty flag
 '   Returns TRUE if empty, FALSE if there's data in TX FIFO
-    readReg (core#FIFO_STATUS, 1, @result)
-    result &= (1 << core#TXFIFO_EMPTY) * TRUE
+    readReg (core#FIFO_STATUS, 1, @flag)
+    return ((flag >> core#TXFIFO_EMPTY) & %1) == 1
 
 PUB TXFIFOFull{}
 ' Returns TX FIFO full flag
