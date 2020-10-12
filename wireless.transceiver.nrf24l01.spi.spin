@@ -644,10 +644,10 @@ PUB TXFIFOEmpty{}: flag
     readReg (core#FIFO_STATUS, 1, @flag)
     return ((flag >> core#TXFIFO_EMPTY) & %1) == 1
 
-PUB TXFIFOFull{}
+PUB TXFIFOFull{}: flag
 ' Returns TX FIFO full flag
 '   Returns: TRUE if full, FALSE if locations available in TX FIFO
-    result := (Status & %1) * TRUE
+    return (Status{} & %1) == 1
 
 PUB TXMode
 ' Change chip state to TX (transmit)
