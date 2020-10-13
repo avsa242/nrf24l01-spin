@@ -709,7 +709,6 @@ PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
         core#CMD_W_TX_PAYLOAD:
             spi.write(TRUE, @reg_nr, 1, 0)
             spi.write(TRUE, ptr_buff, nr_bytes, TRUE)
-
         core#CMD_FLUSH_TX:
             spi.write(TRUE, @reg_nr, 1, TRUE)
         core#CMD_FLUSH_RX:
@@ -727,7 +726,7 @@ PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
         other:
             return
 
-PRI readreg_nr(reg_nr, nr_bytes, ptr_buff) | tmp
+PRI readreg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Read reg_nr from MISO
     case reg_nr
         core#CMD_R_RX_PAYLOAD:
