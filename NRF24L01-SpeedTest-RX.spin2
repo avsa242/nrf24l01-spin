@@ -76,14 +76,14 @@ PUB Main() | i, iteration, testtime, pipe_nr
     ser.newline()
 
     nrf24.flushrx()                             ' clear rx fifo
-    nrf24.payloadready(CLEAR)                   ' clear interrupt
+    nrf24.intclear(%100)                        ' clear interrupt
     repeat
         iteration := 0
         _timer_set := testtime                  ' trigger the timer
 
         repeat while _timer_set                 ' loop while timer is >0
-            repeat until nrf24.payloadready(-2) ' wait for rx data
-            nrf24.payloadready(CLEAR)           ' _must_ clear interrupt
+            repeat until nrf24.payloadready()   ' wait for rx data
+            nrf24.intclear(%100)                ' _must_ clear interrupt
             nrf24.rxpayload(PKTLEN, @_rxdata)   ' retrieve payload
             iteration++                         ' tally up # payloads rx'd
 

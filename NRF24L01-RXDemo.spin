@@ -64,7 +64,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
     nrf24.rxmode{}                              ' Set to receive mode
     nrf24.flushrx{}                             ' Empty the receive FIFO
     nrf24.powered(TRUE)
-    nrf24.payloadready(CLEAR)                   ' Clear interrupt
+    nrf24.intclear(%111)                        ' Clear interrupt
     nrf24.pipesenabled(%111111)                 ' Pipe enable mask (5..0)
     nrf24.autoackenabledpipes(%000000)          ' Auto-ack/Shockburst per pipe
 
@@ -81,7 +81,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
         repeat                                  ' Wait to proceed...
             ser.position(0, 5)
             ser.printf(string("Packets received: %d "), payld_cnt, 0, 0, 0, 0, 0)
-        until nrf24.payloadready(-2)            ' ...until payload received
+        until nrf24.payloadready{}              ' ...until payload received
 
         recv_pipe := nrf24.rxpipepending{}      ' Which pipe is the data in?
         nrf24.rxaddr(@_addr, recv_pipe, nrf24#READ) ' Copy it into a variable
@@ -99,7 +99,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
 
         ser.hexdump(@_payload, 0, _payld_len, _payld_len, 0, 9 + (recv_pipe * 4))
 
-        nrf24.payloadready(CLEAR)               ' Clear interrupt
+        nrf24.intclear(%100)                    ' Clear interrupt
         nrf24.flushrx{}                         ' Flush FIFO
 
 PUB Setup{}

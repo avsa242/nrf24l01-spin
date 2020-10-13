@@ -84,9 +84,7 @@ PUB Defaults() | tmp[2]
     pll_lock(FALSE)
     datarate(2000)
     txpower(0)
-    payloadready(CLEAR)
-    payloadsent(CLEAR)
-    maxretransreached(CLEAR)
+    intclear(%111)
     tmp := string($E7, $E7, $E7, $E7, $E7)
     rxaddr(tmp, 0, WRITE)
     tmp := string($C2, $C2, $C2, $C2, $C2)
@@ -342,6 +340,23 @@ PUB Idle()
 ' Set to idle state
     ce(0)
 
+PUB IntClear(mask)
+' Clear interrupts
+'           Bits:  210   210
+'                  |||   |||
+'   Valid values: %000..%111
+'       Bit:    Interrupt:
+'       2       new data is ready in RX FIFO
+'       1       data is transmitted (_and_ if ACK from RX if using auto-ack)
+'       0       TX retransmits reach maximum
+'   Any other value polls the chip and returns the current setting
+    case mask
+        %000..%111:
+            mask := (mask << core.MASKINT) & core.STATUS_REGMASK
+            writereg(core.STATUS, 1, @mask)
+        other:
+            return
+
 PUB IntMask(mask=-2): curr_mask
 ' Control which events will trigger an interrupt on the IRQ pin, using a 3-bit mask
 '           Bits:  210   210
@@ -372,21 +387,14 @@ PUB LostPackets(): pkt_cnt
     readreg(core.OBSERVE_TX, 1, @pkt_cnt)
     return (pkt_cnt >> core.PLOS_CNT) & core.PLOS_CNT_BITS
 
-PUB MaxRetransReached(clear_intr=-2): flag
-' Query or clear Maximum number of TX retransmits interrupt
-'   Valid values: TRUE (-1 or 1): Clear interrupt flag
-'   Any other value returns TRUE when max number of retransmits reached, FALSE otherwise
-'   NOTE: If this flag is set, it must be cleared to enable further communication.
+PUB MaxRetransReached(): flag
+' Flag indicating maximum number of retransmit attempts reached
+'   Returns: TRUE (-1) if max reached, FALSE (0) otherwise
+'   NOTE: If this flag is set, it must be cleared (IntClear(%001)) to enable further communication.
+'   NOTE: To set max number of attempts, use AutoRetransmitCount()
     flag := 0
     readreg(core.STATUS, 1, @flag)
-    case abs(clear_intr)
-        1:
-            clear_intr := %1 << core.MAX_RT
-        other:
-            return ((flag >> core.MAX_RT) & %1) == 1
-
-    clear_intr := ((flag & core.MAX_RT_MASK) | clear_intr) & core.STATUS_REGMASK
-    writereg(core.STATUS, 1, @clear_intr)
+    return ((flag >> core.MAX_RT) & %1) == 1
 
 PUB NodeAddress(addr_ptr)
 ' Set node address
@@ -423,35 +431,19 @@ PUB PayloadLen(width=-2, pipe_nr=0): curr_len
         other:
             return FALSE
 
-PUB PayloadReady(clear_intr=-2): flag
-' Query or clear Data Ready RX FIFO interrupt
-'   Valid values: TRUE (-1 or 1): Clear interrupt flag
-'   Any other value queries the chip and returns TRUE if new data in FIFO, FALSE otherwise
+PUB PayloadReady(): flag
+' Flag indicating received payload ready
+'   Returns: TRUE (-1) if interrupt flag asserted, FALSE (0) otherwise
     flag := 0
     readreg(core.STATUS, 1, @flag)
-    case abs(clear_intr)
-        1:
-            clear_intr := abs(clear_intr) << core.RX_DR
-        other:
-            return ((flag >> core.RX_DR) & %1) == 1
+    return ((flag >> core.RX_DR) & %1) == 1
 
-    clear_intr := ((flag & core.MASKINT_RX_DR_MASK) | clear_intr) & core.STATUS_REGMASK
-    writereg(core.STATUS, 1, @clear_intr)
-
-PUB PayloadSent(clear_intr=-2): flag
-' Query or clear Data Sent TX FIFO interrupt
-'   Valid values: TRUE (-1 or 1): Clear interrupt flag
-'   Any other value polls the chip and returns TRUE if packet transmitted, FALSE otherwise
+PUB PayloadSent(): flag
+' Flag indicating transmitted payload sent
+'   (and acknowledged by receiver, if auto-ack is in use)
     flag := 0
     readreg(core.STATUS, 1, @flag)
-    case abs(clear_intr)
-        1:
-            clear_intr := abs(clear_intr) << core.TX_DS
-        other:
-            return ((flag >> core.TX_DS) & %1) == 1
-
-    clear_intr := ((flag & core.MASKINT_TX_DS_MASK) | clear_intr) & core.STATUS_REGMASK
-    writereg(core.STATUS, 1, @clear_intr)
+    return ((flag >> core.TX_DS) & %1) == 1
 
 PUB PipesEnabled(mask=-2): curr_mask
 ' Control which data pipes (0 through 5) are enabled, using a 6-bit mask

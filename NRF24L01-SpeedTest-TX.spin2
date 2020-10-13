@@ -77,10 +77,10 @@ PUB Main() | i
     ser.newline()
 
     nrf24.flushtx()
-    if nrf24.autoackenabledpipes(-2)            ' decide which loop to run
+    if nrf24.autoackenabledpipes()              ' decide which loop to run
         repeat                                  ' based on whether auto-ack
-            if nrf24.maxretransreached(-2)      ' is enabled...
-                nrf24.maxretransreached(CLEAR)
+            if nrf24.maxretransreached()        ' is enabled...
+                nrf24.intclear(%001)
             nrf24.txpayload(PKTLEN, @_txdata, FALSE)
     else                                        ' ...or not
         repeat

@@ -66,9 +66,7 @@ PUB Transmit{} | payld_cnt, tmp, i, max_retrans, pkts_retrans, lost_pkts
     nrf24.powered(TRUE)
     nrf24.autoackenabledpipes(%000000)          ' Auto-ack/Shockburst, per pipe
 
-    nrf24.payloadready(CLEAR)                   ' Clear interrupts
-    nrf24.payloadsent(CLEAR)                    '
-    nrf24.maxretransreached(CLEAR)              ' _must_ be clear to transmit
+    nrf24.intclear(%111)                        ' Clear interrupts
     nrf24.payloadlen(_payld_len, 0)             ' 1..32 (len), 0..5 (pipe #)
 
     ser.clear{}
@@ -85,7 +83,7 @@ PUB Transmit{} | payld_cnt, tmp, i, max_retrans, pkts_retrans, lost_pkts
 
     repeat
         ' Collect some packet statistics
-        max_retrans := nrf24.maxretransreached(-2)
+        max_retrans := nrf24.maxretransreached{}
         pkts_retrans := nrf24.packetsretransmitted{}
         lost_pkts := nrf24.lostpackets{}
 
@@ -100,7 +98,7 @@ PUB Transmit{} | payld_cnt, tmp, i, max_retrans, pkts_retrans, lost_pkts
         ser.str(int.decpadded(lost_pkts, 2))
 
         if max_retrans == TRUE                  ' Max retransmissions reached?
-            nrf24.maxretransreached(CLEAR)      '   If yes, clear the int
+            nrf24.intclear(%001)                '   If yes, clear the int
 
         if lost_pkts => 15                      ' Packets lost exceeds 15?
             nrf24.channel(CHANNEL)              '   If yes, clear the int
