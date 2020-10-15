@@ -7,7 +7,7 @@
         Will display data from all 6 data pipes
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated Oct 10, 2020
+    Updated Oct 15, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -29,8 +29,6 @@ CON
 
     CHANNEL         = 2                         ' 0..127
 ' --
-
-    CLEAR           = 1
 
 OBJ
 
@@ -65,7 +63,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
     nrf24.rxmode{}                              ' Set to receive mode
     nrf24.flushrx{}                             ' Empty the receive FIFO
     nrf24.powered(TRUE)
-    nrf24.payloadready(CLEAR)                   ' Clear interrupt
+    nrf24.intclear(%100)                        ' Clear interrupt
     nrf24.pipesenabled(%111111)                 ' Pipe enable mask (5..0)
     nrf24.autoackenabledpipes(%000000)          ' Auto-ack/Shockburst per pipe
 
@@ -87,7 +85,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
             ser.str(string("Packets received: "))
             ser.dec(payld_cnt)
 
-        until nrf24.payloadready(-2)            ' ...until payload received
+        until nrf24.payloadready{}              ' ...until payload received
 
         recv_pipe := nrf24.rxpipepending{}      ' Which pipe is the data in?
         nrf24.rxaddr(@_addr, recv_pipe, nrf24#READ) ' Copy it into a variable
@@ -106,7 +104,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
 
         hexdump(@_payload, 0, _payld_len, _payld_len, 0, 9 + (recv_pipe * 4))
 
-        nrf24.payloadready(CLEAR)               ' Clear interrupt
+        nrf24.intclear(%100)                    ' Clear interrupt
         nrf24.flushrx{}                         ' Flush FIFO
 
 PRI HexDump(buff_addr, base_addr, nr_bytes, columns, x, y) | maxcol, maxrow, digits, hexoffset, ascoffset, offset, hexcol, asccol, row, col, currbyte

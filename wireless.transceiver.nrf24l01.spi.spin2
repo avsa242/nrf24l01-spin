@@ -369,7 +369,7 @@ PUB IntMask(mask=-2): curr_mask
     readreg(core.CONFIG, 1, @curr_mask)
     case mask
         %000..%111:
-            mask := (!mask) << core.MASKINT)    ' invert bits: chip internal
+            mask := (!mask) << core.MASKINT     ' invert bits: chip internal
         other:                                  '   logic is inverse
             return !((curr_mask >> core.MASKINT) & core.MASKINT_BITS)
 
