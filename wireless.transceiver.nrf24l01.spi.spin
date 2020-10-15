@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2020
     Started Jan 6, 2019
-    Updated Oct 13, 2020
+    Updated Oct 15, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -18,9 +18,6 @@ CON
 ' RXAddr and TXAddr constants
     READ        = 0
     WRITE       = 1
-
-' Can be used as a parameter for PayloadReady, PayloadSent, MaxRetransReached to clear interrupts
-    CLEAR       = 1
 
 VAR
 
@@ -375,9 +372,9 @@ PUB IntMask(mask): curr_mask
     readreg(core#CONFIG, 1, @curr_mask)
     case mask
         %000..%111:
-            mask := !(mask << core#MASKINT)     ' invert bits: chip internal
+            mask := (!mask) << core#MASKINT     ' invert bits: chip internal
         other:                                  '   logic is inverse
-            return !(curr_mask >> core#MASKINT) & core#MASKINT_BITS
+            return !((curr_mask >> core#MASKINT) & core#MASKINT_BITS)
 
     mask := ((curr_mask & core#MASKINT_MASK) | mask) & core#CONFIG_REGMASK
     writereg(core#CONFIG, 1, @mask)
