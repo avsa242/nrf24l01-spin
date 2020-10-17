@@ -5,7 +5,7 @@
     Description: nRF24L01+ Transmit demo
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated Oct 10, 2020
+    Updated Oct 17, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -130,6 +130,7 @@ PUB Setup{}
         ser.strln(string("NRF24L01+ driver started"))
     else
         ser.strln(string("NRF24L01+ driver failed to start - halting"))
+        repeat
 
 DAT
 
