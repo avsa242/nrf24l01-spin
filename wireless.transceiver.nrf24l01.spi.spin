@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2020
     Started Jan 6, 2019
-    Updated Oct 15, 2020
+    Updated Oct 17, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -183,12 +183,12 @@ PUB AutoRetransmitDelay(delay_us): curr_dly
 '   Any other value polls the chip and returns the current setting
     curr_dly := 0
     readreg(core#SETUP_RETR, 1, @curr_dly)
-    case delay_us := lookdown(delay_us: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
-        1..16:
-            delay_us := (delay_us - 1) << core#ARD
+    case delay_us
+        250..4000:
+            delay_us := ((delay_us / 250) - 1) << core#ARD
         other:
             curr_dly := ((curr_dly >> core#ARD) & core#ARD_BITS) + 1
-            return lookup(curr_dly: 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000, 3250, 3500, 3750, 4000)
+            return curr_dly * 250
 
     delay_us := ((curr_dly & core#ARD_MASK) | delay_us) & core#SETUP_RETR_REGMASK
     writereg(core#SETUP_RETR, 1, @delay_us)
