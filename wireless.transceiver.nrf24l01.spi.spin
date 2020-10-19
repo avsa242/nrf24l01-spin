@@ -285,9 +285,9 @@ PUB DynamicACK(enabled): curr_state
 
 PUB DynamicPayload(mask): curr_mask
 ' Control which data pipes (0 through 5) have dynamic payload length enabled, using a 6-bit mask
-'   Data pipe:     5    0   5     0
-'                  |....|   |.....|
-'   Valid values: %000000..%1111111 (default %000000)
+'   Data pipe:     5    0   5    0
+'                  |....|   |....|
+'   Valid values: %000000..%111111 (default %000000)
     case mask
         %000000..%111111:
             writereg(core#DYNPD, 1, @mask)
