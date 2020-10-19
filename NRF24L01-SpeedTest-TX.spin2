@@ -26,7 +26,7 @@ CON
     SCK_FREQ    = 10_000_000
 
     PKTLEN      = 32                            ' 1..32 (bytes)
-    CHANNEL     = 2                             ' 0..127 (2.400..2.527GHz)
+    CHANNEL     = 2                             ' 0..125 (2.400..2.525GHz)
 ' --
 
     MOSI_PIN    = SCK_PIN+1                     ' this order is necessary with

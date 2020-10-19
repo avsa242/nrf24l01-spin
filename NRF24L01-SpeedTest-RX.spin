@@ -6,7 +6,7 @@
         RX Mode
     Copyright (c) 2020
     Started Apr 30, 2020
-    Updated Oct 11, 2020
+    Updated Oct 19, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -26,7 +26,7 @@ CON
     MISO_PIN    = 12
 
     PKTLEN      = 32                            ' 1..32 (bytes)
-    CHANNEL     = 2                             ' 0..127 (2.400..2.527GHz)
+    CHANNEL     = 2                             ' 0..125 (2.400..2.525GHz)
 ' --
 
     CLEAR       = 1

@@ -24,7 +24,7 @@ CON
     SCK_PIN         = 18
     SCK_FREQ        = 10_000_000
 
-    CHANNEL         = 2                         ' 0..127
+    CHANNEL         = 2                         ' 0..125
 ' --
 
     MOSI_PIN        = SCK_PIN+1                 ' this order is necessary with

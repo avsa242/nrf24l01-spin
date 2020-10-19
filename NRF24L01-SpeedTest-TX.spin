@@ -27,7 +27,7 @@ CON
     MISO_PIN    = 12
 
     PKTLEN      = 32                            ' 1..32 (bytes)
-    CHANNEL     = 2                             ' 0..127 (2.400..2.527GHz)
+    CHANNEL     = 2                             ' 0..125 (2.400..2.525GHz)
 ' --
 
     CLEAR       = 1

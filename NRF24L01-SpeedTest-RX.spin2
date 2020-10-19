@@ -6,7 +6,7 @@
         RX Mode (P2 version)
     Copyright (c) 2020
     Started Apr 30, 2020
-    Updated Oct 11, 2020
+    Updated Oct 19, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -25,7 +25,7 @@ CON
     SCK_FREQ    = 10_000_000
 
     PKTLEN      = 32                            ' 1..32 (bytes)
-    CHANNEL     = 2                             ' 0..127 (2.400..2.527GHz)
+    CHANNEL     = 2                             ' 0..125 (2.400..2.525GHz)
 ' --
 
     MOSI_PIN    = SCK_PIN+1                     ' this order is necessary with

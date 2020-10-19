@@ -8,13 +8,12 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 ## Salient Features
 
 * SPI connection at up to 4MHz (P1), up to 10MHz (P2)
-* Supports setting carrier frequency from 2,400MHz to 2,527MHz
+* Supports setting carrier frequency from 2,400MHz to 2,525MHz, or by equiv. channel number
 * Set common RF parameters: TX power
 * Supports on-air baud rates of 250kbps, 1000kbps, 2000kbps
 * Address filtering: 3, 4, 5 bytes address width (for pipes 0, 1 only; pipes 2..5: only the LSByte is changeable)
 * Options for increasing transmission robustness: CRC calculation/checking (1 or 2 byte length)
 * Packet radio options: arbitrary payload lengths (1..32), dynamic payload length
-* Supports setting frequency by channel number (0..127)
 * Carrier-detect
 * FIFO: Read RX/TX states (empty, full, data ready, data sent), flush
 * Optional auto acknowledgement function (aka Enhanced ShockBurst (TM) NORDIC Semiconductor), auto-retransmit count, auto-retransmit delay, max number of retries

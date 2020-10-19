@@ -192,10 +192,10 @@ PUB AutoRetransmitDelay(delay_us=-2): curr_dly
 
 PUB CarrierFreq(MHz=-2): curr_freq
 ' Set carrier frequency, in MHz
-'   Valid values: 2400..2527 (default 2402)
+'   Valid values: 2400..2525 (default 2402)
 '   Any other value polls the chip and returns the current setting
     case MHz
-        2400..2527:
+        2400..2525:
             Channel(MHz-2400)
         other:
             return 2400 + channel()
@@ -652,6 +652,7 @@ PUB TXPayload(nr_bytes, ptr_buff)
         1..32:
             writereg(core.CMD_W_TX_PAYLOAD, nr_bytes, ptr_buff)
             ce(1)
+            waitus(10)
             ce(0)
         other:
             return

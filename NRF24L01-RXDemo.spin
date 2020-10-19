@@ -26,7 +26,7 @@ CON
     MISO_PIN        = 12
     CE_PIN          = 8
 
-    CHANNEL         = 2                         ' 0..127
+    CHANNEL         = 2                         ' 0..125
 ' --
 
     CLEAR           = 1

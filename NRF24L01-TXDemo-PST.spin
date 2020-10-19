@@ -6,7 +6,7 @@
         (PST-compatible)
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated Oct 15, 2020
+    Updated Oct 19, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -26,7 +26,7 @@ CON
     MISO_PIN        = 12
     CE_PIN          = 8
 
-    CHANNEL         = 2                         ' 0..127
+    CHANNEL         = 2                         ' 0..125
 ' --
 
 OBJ

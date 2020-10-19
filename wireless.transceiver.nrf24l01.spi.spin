@@ -195,20 +195,20 @@ PUB AutoRetransmitDelay(delay_us): curr_dly
 
 PUB CarrierFreq(MHz): curr_freq
 ' Set carrier frequency, in MHz
-'   Valid values: 2400..2527 (default 2402)
+'   Valid values: 2400..2525 (default 2402)
 '   Any other value polls the chip and returns the current setting
     case MHz
-        2400..2527:
+        2400..2525:
             channel(MHz-2400)
         other:
             return 2400 + channel(-2)
 
 PUB Channel(number): curr_chan
 ' Set RF channel
-'   Valid values: 0..127 (default 2)
+'   Valid values: 0..125 (default 2)
 '   Any other value polls the chip and returns the current setting
     case number
-        0..127:
+        0..125:
             writereg(core#RF_CH, 1, @number)
         other:
             readreg(core#RF_CH, 1, @curr_chan)
