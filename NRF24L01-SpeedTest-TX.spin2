@@ -6,7 +6,7 @@
         TX Mode (P2 version)
     Copyright (c) 2020
     Started Apr 30, 2020
-    Updated Oct 11, 2020
+    Updated Oct 19, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -81,10 +81,10 @@ PUB Main() | i
         repeat                                  ' based on whether auto-ack
             if nrf24.maxretransreached()        ' is enabled...
                 nrf24.intclear(%001)
-            nrf24.txpayload(PKTLEN, @_txdata, FALSE)
+            nrf24.txpayload(PKTLEN, @_txdata)
     else                                        ' ...or not
         repeat
-            nrf24.txpayload(PKTLEN, @_txdata, FALSE)
+            nrf24.txpayload(PKTLEN, @_txdata)
 
 PUB Setup()
 

@@ -115,7 +115,7 @@ PUB Transmit{} | payld_cnt, tmp, i, max_retrans, pkts_retrans, lost_pkts
         ' Show what will be transmitted
         hexdump(@_payload, 0, _payld_len, _payld_len, 0, 11)
 
-        nrf24.txpayload(_payld_len, @_payload, FALSE)
+        nrf24.txpayload(_payld_len, @_payload)
 
         time.msleep(1000)                       ' Optional inter-packet delay
 

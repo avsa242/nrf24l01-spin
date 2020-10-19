@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2020
     Started Jan 6, 2019
-    Updated Oct 17, 2020
+    Updated Oct 19, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -647,20 +647,16 @@ PUB TXMode{}
 ' Change chip state to TX (transmit)
     rxtx(TX)
 
-PUB TXPayload(nr_bytes, ptr_buff, deferred)
-' Queue payload to be transmitted   'XXX remove deferred param, make new method and hub var
+PUB TXPayload(nr_bytes, ptr_buff)
+' Queue payload to be transmitted
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
-'       deferred:
-'           FALSE(0): Transmit immediately after queuing data
-'           Any other value: Queue data only, don't transmit
     case nr_bytes
         1..32:
             writereg(core#CMD_W_TX_PAYLOAD, nr_bytes, ptr_buff)
-            ifnot deferred                      ' Transmit immediately
-                outa[_CE] := 1                  '   unless deferred is nonzero
-                time.usleep(core#THCE)
-                outa[_CE] := 0
+            outa[_CE] := 1
+            time.usleep(core#THCE)
+            outa[_CE] := 0
         other:
             return
 

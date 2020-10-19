@@ -5,7 +5,7 @@
     Description: nRF24L01+ Transmit demo
     Copyright (c) 2020
     Started Nov 23, 2019
-    Updated Oct 17, 2020
+    Updated Oct 19, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -116,7 +116,7 @@ PUB Transmit{} | payld_cnt, tmp, i, max_retrans, pkts_retrans, lost_pkts
         ' Show what will be transmitted
         ser.hexdump(@_payload, 0, _payld_len, _payld_len, 0, 11)
 
-        nrf24.txpayload(_payld_len, @_payload, FALSE)
+        nrf24.txpayload(_payld_len, @_payload)
 
         time.msleep(1000)                       ' Optional inter-packet delay
 
