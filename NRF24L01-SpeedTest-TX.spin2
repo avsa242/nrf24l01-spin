@@ -4,9 +4,9 @@
     Author: Jesse Burt
     Description: Speed test for nRF24L01+ modules
         TX Mode (P2 version)
-    Copyright (c) 2020
+    Copyright (c) 2021
     Started Apr 30, 2020
-    Updated Oct 19, 2020
+    Updated Jan 2, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -20,17 +20,17 @@ CON
     LED         = cfg.LED1
     SER_BAUD    = 2_000_000
 
-    CE_PIN      = 16
-    CS_PIN      = 20
+    CE_PIN      = 20
+    CS_PIN      = 21
     SCK_PIN     = 18
-    SCK_FREQ    = 10_000_000
+    MOSI_PIN    = 16                            ' MOSI and MISO must be within
+    MISO_PIN    = 17                            '   3 pins +/- of SCK
+    SCK_FREQ    = 10_000_000                    ' 10_000_000 max
 
     PKTLEN      = 32                            ' 1..32 (bytes)
     CHANNEL     = 2                             ' 0..125 (2.400..2.525GHz)
 ' --
 
-    MOSI_PIN    = SCK_PIN+1                     ' this order is necessary with
-    MISO_PIN    = SCK_PIN-1                     ' the smart-pin SPI engine
     CLEAR       = 1
 
 OBJ
@@ -93,7 +93,7 @@ PUB Setup()
     ser.clear()
     ser.strln("Serial terminal started")
 
-    if nrf24.start(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
+    if nrf24.start(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
         ser.strln("NRF24L01+ driver started")
     else
         ser.strln("NRF24L01+ driver failed to start - halting")
