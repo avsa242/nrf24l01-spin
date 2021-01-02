@@ -3,9 +3,9 @@
     Filename: core.con.nrf24l01.spin
     Author: Jesse Burt
     Description: nRF24L01+ Low-level constant definitions
-    Copyright (c) 2020
+    Copyright (c) 2021
     Started Jan 6, 2019
-    Updated Oct 11, 2020
+    Updated Jan 2, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -42,8 +42,8 @@ CON
 
 
 ' Register definitions
-    CONFIG                  = $00
-    CONFIG_REGMASK          = $7F
+    CFG                     = $00
+    CFG_MASK                = $7F
         MASKINT_RX_DR       = 6
         MASKINT_TX_DS       = 5
         MASKINT_MAX_RT      = 4
@@ -53,17 +53,17 @@ CON
         PWR_UP              = 1
         PRIM_RX             = 0
         MASKINT_BITS        = %111 
-        MASKINT_RX_DR_MASK  = (1 << MASKINT_RX_DR) ^ CONFIG_REGMASK
-        MASKINT_TX_DS_MASK  = (1 << MASKINT_TX_DS) ^ CONFIG_REGMASK
-        MASKINT_MAX_RT_MASK = (1 << MASKINT_MAX_RT) ^ CONFIG_REGMASK
-        MASKINT_MASK        = (MASKINT_BITS << MASKINT) ^ CONFIG_REGMASK
-        EN_CRC_MASK         = (1 << EN_CRC) ^ CONFIG_REGMASK
-        CRCO_MASK           = (1 << CRCO) ^ CONFIG_REGMASK
-        PWR_UP_MASK         = (1 << PWR_UP) ^ CONFIG_REGMASK
-        PRIM_RX_MASK        = (1 << PRIM_RX) ^ CONFIG_REGMASK
+        MASKINT_RX_DR_MASK  = (1 << MASKINT_RX_DR) ^ CFG_MASK
+        MASKINT_TX_DS_MASK  = (1 << MASKINT_TX_DS) ^ CFG_MASK
+        MASKINT_MAX_RT_MASK = (1 << MASKINT_MAX_RT) ^ CFG_MASK
+        MASKINT_MASK        = (MASKINT_BITS << MASKINT) ^ CFG_MASK
+        EN_CRC_MASK         = (1 << EN_CRC) ^ CFG_MASK
+        CRCO_MASK           = (1 << CRCO) ^ CFG_MASK
+        PWR_UP_MASK         = (1 << PWR_UP) ^ CFG_MASK
+        PRIM_RX_MASK        = 1 ^ CFG_MASK
 
     EN_AA                   = $01
-    EN_AA_REGMASK           = $3F
+    EN_AA_MASK              = $3F
         ENAA_P5             = 5
         ENAA_P4             = 4
         ENAA_P3             = 3
@@ -71,63 +71,64 @@ CON
         ENAA_P1             = 1
         ENAA_P0             = 0
         ENAA_BITS           = %111111
-        ENAA_MASK           = ENAA_BITS ^ EN_AA_REGMASK
+        ENAA_MASK           = ENAA_BITS ^ EN_AA_MASK
 
     EN_RXADDR               = $02
-    EN_RXADDR_REGMASK       = $3F
+    EN_RXADDR_MASK          = $3F
         ERX_P5              = 5
         ERX_P4              = 4
         ERX_P3              = 3
         ERX_P2              = 2
         ERX_P1              = 1
         ERX_P0              = 0
-        EN_RXADDR_BITS      = %111111
-        EN_RXADDR_MASK      = EN_RXADDR_BITS ^ EN_RXADDR_REGMASK
+        EN_ADDR_BITS        = %111111
+        EN_ADDR_MASK        = EN_ADDR_BITS ^ EN_RXADDR_MASK
 
     SETUP_AW                = $03
-    SETUP_AW_REGMASK        = $03
+    SETUP_AW_MASK           = $03
         AW                  = 0
         AW_BITS             = %11
-        AW_MASK             = AW_BITS ^ SETUP_AW_REGMASK
+        AW_MASK             = AW_BITS ^ SETUP_AW_MASK
 
     SETUP_RETR              = $04
-    SETUP_RETR_REGMASK      = $FF
+    SETUP_RETR_MASK         = $FF
         ARD                 = 4
         ARC                 = 0
         ARD_BITS            = %1111
         ARC_BITS            = %1111
-        ARD_MASK            = (ARD_BITS << ARD) ^ SETUP_RETR_REGMASK
-        ARC_MASK            = ARC_BITS ^ SETUP_RETR_REGMASK
+        ARD_MASK            = (ARD_BITS << ARD) ^ SETUP_RETR_MASK
+        ARC_MASK            = ARC_BITS ^ SETUP_RETR_MASK
 
     RF_CH                   = $05
         RFCH                = 0
         RFCH_BITS           = %1111111
 
     RF_SETUP                = $06               'XXX UNEXPECTED POR VALUE ($00 - expected $0E)
-    RF_SETUP_REGMASK        = $BE
+    RF_SETUP_MASK           = $BE
         CONT_WAVE           = 7
         RF_DR_LOW           = 5
         PLL_LOCK            = 4
         RF_DR_HIGH          = 3
         RF_PWR              = 1
+        RF_DR_BITS          = %101
         RF_PWR_BITS         = %11
-        CONT_WAVE_MASK      = (1 << CONT_WAVE) ^ RF_SETUP_REGMASK
-        RF_DR_LOW_MASK      = (1 << RF_DR_LOW) ^ RF_SETUP_REGMASK
-        PLL_LOCK_MASK       = (1 << PLL_LOCK) ^ RF_SETUP_REGMASK
-        RF_DR_HIGH_MASK     = (1 << RF_DR_HIGH) ^ RF_SETUP_REGMASK
-        RF_PWR_MASK         = (RF_PWR_BITS << RF_PWR) ^ RF_SETUP_REGMASK
+        CONT_WAVE_MASK      = (1 << CONT_WAVE) ^ RF_SETUP_MASK
+        RF_DR_LOW_MASK      = (1 << RF_DR_LOW) ^ RF_SETUP_MASK
+        PLL_LOCK_MASK       = (1 << PLL_LOCK) ^ RF_SETUP_MASK
+        RF_DR_HIGH_MASK     = (1 << RF_DR_HIGH) ^ RF_SETUP_MASK
+        RF_PWR_MASK         = (RF_PWR_BITS << RF_PWR) ^ RF_SETUP_MASK
 
     STATUS                  = $07
-    STATUS_REGMASK          = $7F
+    STATUS_MASK             = $7F
         RX_DR               = 6
         TX_DS               = 5
         MAX_RT              = 4
         RX_P_NO             = 1
         TX_FULL             = 0
         RX_P_NO_BITS        = %111
-        RX_DR_MASK          = (1 << RX_DR) ^ STATUS_REGMASK
-        TX_DS_MASK          = (1 << TX_DS) ^ STATUS_REGMASK
-        MAX_RT_MASK         = (1 << MAX_RT) ^ STATUS_REGMASK
+        RX_DR_MASK          = (1 << RX_DR) ^ STATUS_MASK
+        TX_DS_MASK          = (1 << TX_DS) ^ STATUS_MASK
+        MAX_RT_MASK         = (1 << MAX_RT) ^ STATUS_MASK
 
     OBSERVE_TX              = $08
         PLOS_CNT            = 4
@@ -136,7 +137,7 @@ CON
         ARC_CNT_BITS        = %1111
 
     RPD                     = $09
-    RPD_REGMASK             = $01
+    RPD_MASK                = $01
 
     RX_ADDR_P0              = $0A               ' 5 bytes
     RX_ADDR_P1              = $0B               ' 5 bytes
@@ -167,7 +168,7 @@ CON
         RXFIFO_EMPTY        = 0
 
     DYNPD                   = $1C
-    DYNPD_REGMASK           = $3F
+    DYNPD_MASK              = $3F
         DPL_P5              = 5
         DPL_P4              = 4
         DPL_P3              = 3
@@ -175,16 +176,16 @@ CON
         DPL_P1              = 1
         DPL_P0              = 0
         DPL_BITS            = %111111
-        DPL_MASK            = DPL_BITS ^ DYNPD_REGMASK
+        DPL_MASK            = DPL_BITS ^ DYNPD_MASK
 
-    FEATURE                 = $1D
-    FEATURE_REGMASK         = $07
+    FEAT                    = $1D
+    FEAT_MASK               = $07
         EN_DPL              = 2
         EN_ACK_PAY          = 1
         EN_DYN_ACK          = 0
-        EN_DPL_MASK         = (1 << EN_DPL) ^ FEATURE_REGMASK
-        EN_ACK_PAY_MASK     = (1 << EN_ACK_PAY) ^ FEATURE_REGMASK
-        EN_DYN_ACK_MASK     = %1 ^ FEATURE_REGMASK
+        EN_DPL_MASK         = (1 << EN_DPL) ^ FEAT_MASK
+        EN_ACK_PAY_MASK     = (1 << EN_ACK_PAY) ^ FEAT_MASK
+        EN_DYN_ACK_MASK     = 1 ^ FEAT_MASK
 
 #ifndef __propeller2__
 PUB Null
