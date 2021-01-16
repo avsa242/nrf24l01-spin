@@ -4,9 +4,9 @@
     Author: Jesse Burt 
     Description: nRF24L01+ Receive demo
         Will display data from all 6 data pipes
-    Copyright (c) 2020
+    Copyright (c) 2021
     Started Nov 23, 2019
-    Updated Oct 10, 2020
+    Updated Jan 16, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -73,14 +73,14 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
 
     ser.clear{}
     ser.position(0, 0)
-    ser.printf(string("Receive mode (channel %d)\n"), nrf24.channel(-2), 0, 0, 0, 0, 0)
+    ser.printf1(string("Receive mode (channel %d)\n"), nrf24.channel(-2))
     ser.str(string("Listening for transmitters..."))
 
     repeat
         bytefill(@_payload, $00, 32)            ' Clear RX local buffer
         repeat                                  ' Wait to proceed...
             ser.position(0, 5)
-            ser.printf(string("Packets received: %d "), payld_cnt, 0, 0, 0, 0, 0)
+            ser.printf1(string("Packets received: %d "), payld_cnt)
         until nrf24.payloadready{}              ' ...until payload received
 
         recv_pipe := nrf24.rxpipepending{}      ' Which pipe is the data in?
@@ -89,7 +89,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
         payld_cnt++                             ' Received payload counter
 
         ser.position(0, 8 + (recv_pipe * 4))    ' Use the pipe number for the
-        ser.printf(string("Received packet on pipe %d "), recv_pipe, 0, 0, 0, 0, 0)
+        ser.printf1(string("Received packet on pipe %d "), recv_pipe)
                                                 '   payload display position
 
         ser.char("(")

@@ -52,7 +52,7 @@ CON
         CRCO                = 2
         PWR_UP              = 1
         PRIM_RX             = 0
-        MASKINT_BITS        = %111 
+        MASKINT_BITS        = %111
         MASKINT_RX_DR_MASK  = (1 << MASKINT_RX_DR) ^ CFG_MASK
         MASKINT_TX_DS_MASK  = (1 << MASKINT_TX_DS) ^ CFG_MASK
         MASKINT_MAX_RT_MASK = (1 << MASKINT_MAX_RT) ^ CFG_MASK
