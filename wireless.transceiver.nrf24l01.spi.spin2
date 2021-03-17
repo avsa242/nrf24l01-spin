@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+ (P2 version)
     Copyright (c) 2021
     Started Nov 2, 2019
-    Updated Jan 16, 2021
+    Updated Mar 17, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -60,7 +60,7 @@ PUB Stop()
     pinl(_CE)
     sleep()
 
-PUB Defaults() | tmp[2]
+PUB Defaults() | pipe_nr
 ' The nRF24L01+ has no RESET pin or function to restore the chip to a known initial operating state,
 '   so use this method to establish default settings, per the datasheet
     crccheckenabled(TRUE)
@@ -78,25 +78,113 @@ PUB Defaults() | tmp[2]
     datarate(2000)
     txpower(0)
     intclear(%111)
-    tmp := string($E7, $E7, $E7, $E7, $E7)
-    rxaddr(tmp, 0, WRITE)
-    tmp := string($C2, $C2, $C2, $C2, $C2)
-    rxaddr(tmp, 1, WRITE)
-    tmp := $C3
-    rxaddr(@tmp, 2, WRITE)
-    tmp := $C4
-    rxaddr(@tmp, 3, WRITE)
-    tmp := $C5
-    rxaddr(@tmp, 4, WRITE)
-    tmp := $C6
-    rxaddr(@tmp, 5, WRITE)
-    tmp := string($E7, $E7, $E7, $E7, $E7)
-    txaddr(tmp, WRITE)
-    repeat tmp from 0 to 5
-        payloadlen(0, tmp)
+    rxaddr(string($E7, $E7, $E7, $E7, $E7), 0, WRITE)
+    rxaddr(string($C2, $C2, $C2, $C2, $C2), 1, WRITE)
+    rxaddr(string($C3), 2, WRITE)
+    rxaddr(string($C4), 3, WRITE)
+    rxaddr(string($C5), 4, WRITE)
+    rxaddr(string($C6), 5, WRITE)
+    txaddr(string($E7, $E7, $E7, $E7, $E7), WRITE)
+    repeat pipe_nr from 0 to 5
+        payloadlen(0, pipe_nr)
     dynamicpayload(%000000)
     dynpayloadenabled(FALSE)
     enableack(FALSE)
+
+PUB Preset_RX250k()
+' Receive mode, 250kbps (no AutoAck - 1M or 2M required)
+    rxmode()
+    flushrx()
+    powered(TRUE)
+    intclear(%111)
+    pipesenabled(%000011)
+    autoackenabledpipes(%000000)
+    datarate(250)
+
+PUB Preset_RX1M()
+' Receive mode, 1Mbps (AutoAck enabled)
+    rxmode()
+    flushrx()
+    powered(TRUE)
+    intclear(%111)
+    pipesenabled(%000011)
+    autoackenabledpipes(%111111)
+    datarate(1000)
+
+PUB Preset_RX1M_NoAA()
+' Receive mode, 1Mbps (AutoAck disabled)
+    rxmode()
+    flushrx()
+    powered(TRUE)
+    intclear(%111)
+    pipesenabled(%000011)
+    autoackenabledpipes(%000000)
+    datarate(1000)
+
+PUB Preset_RX2M()
+' Receive mode, 2Mbps (AutoAck enabled)
+    rxmode()
+    flushrx()
+    powered(TRUE)
+    intclear(%111)
+    pipesenabled(%000011)
+    autoackenabledpipes(%111111)
+    datarate(2000)
+
+PUB Preset_RX2M_NoAA()
+' Receive mode, 2Mbps (AutoAck disabled)
+    rxmode()
+    flushrx()
+    powered(TRUE)
+    intclear(%111)
+    pipesenabled(%000011)
+    autoackenabledpipes(%000000)
+    datarate(2000)
+
+PUB Preset_TX250k()
+' Transmit mode, 250kbps (no AutoAck - 1M or 2M required)
+    txmode()
+    flushtx()
+    powered(true)
+    autoackenabledpipes(%000000)
+    intclear(%111)
+    datarate(250)
+
+PUB Preset_TX1M()
+' Transmit mode, 1Mbit (AutoAck enabled)
+    txmode()
+    flushtx()
+    powered(true)
+    autoackenabledpipes(%111111)
+    intclear(%111)
+    datarate(1000)
+
+PUB Preset_TX1M_NoAA()
+' Transmit mode, 1Mbit (AutoAck disabled)
+    txmode()
+    flushtx()
+    powered(true)
+    autoackenabledpipes(%000000)
+    intclear(%111)
+    datarate(1000)
+
+PUB Preset_TX2M()
+' Transmit mode, 2Mbit (AutoAck enabled)
+    txmode()
+    flushtx()
+    powered(true)
+    autoackenabledpipes(%111111)
+    intclear(%111)
+    datarate(2000)
+
+PUB Preset_TX2M_NoAA()
+' Transmit mode, 2Mbit (AutoAck disabled)
+    txmode()
+    flushtx()
+    powered(true)
+    autoackenabledpipes(%000000)
+    intclear(%111)
+    datarate(2000)
 
 PUB CE(state)
 ' Set state of nRF24L01+ Chip Enable pin
