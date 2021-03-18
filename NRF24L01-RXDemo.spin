@@ -6,7 +6,7 @@
         Will display data from all 6 data pipes
     Copyright (c) 2021
     Started Nov 23, 2019
-    Updated Jan 16, 2021
+    Updated Mar 18, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -20,16 +20,14 @@ CON
     LED             = cfg#LED1
     SER_BAUD        = 115_200
 
-    CS_PIN          = 9
-    SCK_PIN         = 10
-    MOSI_PIN        = 11
-    MISO_PIN        = 12
-    CE_PIN          = 8
+    CS_PIN          = 3
+    SCK_PIN         = 1
+    MOSI_PIN        = 4
+    MISO_PIN        = 0
+    CE_PIN          = 2
 
     CHANNEL         = 2                         ' 0..125
 ' --
-
-    CLEAR           = 1
 
 OBJ
 
@@ -54,19 +52,15 @@ PUB Main{}
 
 PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
 
-    longfill(@i, 0, 5)
+    longfill(@i, 0, 4)
     _payld_len := 8                             ' 1..32 (_must_ match TX side)
 
-    ' Set receive address (note: order is LSB, ..., MSB)
-    bytemove(@_addr, string($e7, $e7, $e7, $e7, $e7), 5)
-    nrf24.rxaddr(@_addr, 0, nrf24#WRITE)
+    ' Set receive address (note: order in string() is LSB, ..., MSB)
+    nrf24.rxaddr(string($e7, $e7, $e7, $e7, $e7), 0, nrf24#WRITE)
 
-    nrf24.rxmode{}                              ' Set to receive mode
-    nrf24.flushrx{}                             ' Empty the receive FIFO
-    nrf24.powered(TRUE)
-    nrf24.intclear(%111)                        ' Clear interrupt
-    nrf24.pipesenabled(%111111)                 ' Pipe enable mask (5..0)
-    nrf24.autoackenabledpipes(%000000)          ' Auto-ack/Shockburst per pipe
+    ' choose a receive mode preset (2Mbps, with or without AutoAck/ShockBurst)
+    nrf24.preset_rx2m{}                         ' receive mode, 2Mbps
+'    nrf24.preset_rx2m_noaa{}                    ' receive mode, 2Mbps, no AA
 
     repeat pipe_nr from 0 to 5
         nrf24.payloadlen(_payld_len, pipe_nr)   ' Set all pipes the same len
@@ -84,8 +78,9 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
         until nrf24.payloadready{}              ' ...until payload received
 
         recv_pipe := nrf24.rxpipepending{}      ' Which pipe is the data in?
-        nrf24.rxaddr(@_addr, recv_pipe, nrf24#READ) ' Copy it into a variable
-        nrf24.rxpayload(_payld_len, @_payload)  ' Retrieve it into _payload
+        ' copy the address of the pipe the data was received in
+        nrf24.rxaddr(@_addr, recv_pipe, nrf24#READ)
+        nrf24.rxpayload(_payld_len, @_payload)  ' Retrieve payload into hub
         payld_cnt++                             ' Received payload counter
 
         ser.position(0, 8 + (recv_pipe * 4))    ' Use the pipe number for the
@@ -93,7 +88,7 @@ PUB Receive{} | i, payld_cnt, recv_pipe, pipe_nr
                                                 '   payload display position
 
         ser.char("(")
-        repeat i from 4 to 0                    ' Show the pipe's _address
+        repeat i from 4 to 0                    ' Show the pipe's address
             ser.hex(_addr[i], 2)                ' (2..4 are only 1-byte)
         ser.char(")")
 

@@ -5,7 +5,7 @@
     Description: nRF24L01+ Transmit demo
     Copyright (c) 2021
     Started Nov 23, 2019
-    Updated Jan 2, 2021
+    Updated Mar 18, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -28,8 +28,6 @@ CON
 
     CHANNEL         = 2                         ' 0..125
 ' --
-
-    CLEAR           = 1
 
 OBJ
 
@@ -56,17 +54,15 @@ PUB Transmit() | payld_cnt, tmp, i, max_retrans, pkts_retrans, lost_pkts
     _payld_len := 8
     longfill(@payld_cnt, 0, 6)
 
-    ' Set transmit address (note: order is LSB, ..., MSB)
-    bytemove(@_addr, string($e7, $e7, $e7, $e7, $e7), 5)
-    nrf24.nodeaddress(@_addr)                   ' Set TX/RX address to the same
-                                                ' (RX pipe 0 used for auto-ack)
-    nrf24.txmode()                              ' Set to Transmit mode and
-    nrf24.flushtx()                             '   empty the transmit FIFO
-    nrf24.txpower(0)                            ' -18, -12, -6, 0 (dBm)
-    nrf24.powered(TRUE)
-    nrf24.autoackenabledpipes(%000000)          ' Auto-ack/Shockburst, per pipe
+    ' Set transmit/receive address (note: order in string() is LSB, ..., MSB)
+    nrf24.nodeaddress(string($e7, $e7, $e7, $e7, $e7))
+    nrf24.txaddr(@_addr, nrf24#READ)            ' read it back
 
-    nrf24.intclear(%111)                        ' Clear interrupts
+    ' choose a transmit mode preset (2Mbps, with or without AutoAck/ShockBurst)
+    nrf24.preset_tx2m()                         ' transmit mode, 2Mbps
+'    nrf24.preset_tx2m_noaa()                    ' transmit mode, 2Mbps, no AA
+    nrf24.txpower(0)                            ' -18, -12, -6, 0 (dBm)
+
     nrf24.payloadlen(_payld_len, 0)             ' 1..32 (len), 0..5 (pipe #)
 
     ser.clear()
