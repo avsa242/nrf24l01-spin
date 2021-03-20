@@ -18,7 +18,7 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 * FIFO: Read RX/TX states (empty, full, data ready, data sent), flush
 * Optional auto acknowledgement function (aka Enhanced ShockBurst (TM) NORDIC Semiconductor), auto-retransmit count, auto-retransmit delay, max number of retries
 * Selectively enable pipes (0..5), with some settings changeable on a per-pipe basis (payload length, address, address width)
-* Interrupts based on any combination of: New RX data ready, data transmitted, max number of retransmits reached
+* Interrupts based on any combination of: New RX data ready, data transmitted, max number of retransmits reached (driver doesn't directly support the IRQ pin - only reading/clearing the interrupt state register)
 * Packet stats: Lost packet count, retransmitted packet count
 * Power on/off
 * RF Testing modes: Force PLL lock, CW mode
@@ -27,15 +27,15 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Nordic 
 
 P1/SPIN1:
 * spin-standard-library
-* P1: 1 additional core/cog, for the PASM SPI driver
+* P1: 1 additional core/cog, for the PASM SPI engine
 
 P2/SPIN2:
 * p2-spin-standard-library
 
 ## Compiler Compatibility
 
-* P1/SPIN1: OpenSpin (tested with 1.00.81)
-* P2/SPIN2: FlexSpin (tested with 4.4.0)
+* P1/SPIN1: OpenSpin (tested with 1.00.81), FlexSpin (tested with 5.2.1-beta)
+* P2/SPIN2: FlexSpin (tested with 5.2.1-beta)
 * ~~BST~~ (incompatible - no preprocessor)
 * ~~Propeller Tool~~ (incompatible - no preprocessor)
 * ~~PNut~~ (incompatible - no preprocessor)
