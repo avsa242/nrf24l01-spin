@@ -6,7 +6,7 @@
         Will display data from all 6 data pipes
     Copyright (c) 2021
     Started Nov 23, 2019
-    Updated Mar 18, 2021
+    Updated Mar 20, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -42,25 +42,27 @@ VAR
     byte _payld_len
     byte _addr[5]
 
-PUB Main()
+PUB Main() | i, payld_cnt, recv_pipe, pipe_nr
 
-    setup()
+    setup()                                     ' start serial term. and nRF24
 
+' -- User-modifiable settings
     nrf24.channel(CHANNEL)
 
-    receive()
-
-PUB Receive() | i, payld_cnt, recv_pipe, pipe_nr
-
-    longfill(@i, 0, 4)
     _payld_len := 8                             ' 1..32 (_must_ match TX side)
 
     ' Set receive address (note: order in string() is LSB, ..., MSB)
-    nrf24.rxaddr(string($e7, $e7, $e7, $e7, $e7), 0, nrf24.WRITE)
+    nrf24.rxaddr(string($e7, $e7, $e7, $e7, $e7), 0, nrf24#WRITE)
 
-    ' choose a receive mode preset (2Mbps, with or without AutoAck/ShockBurst)
-    nrf24.preset_rx2m()                         ' receive mode, 2Mbps
-'    nrf24.preset_rx2m_noaa()                    ' receive mode, 2Mbps, no AA
+    ' choose a receive mode preset (250kbps, 1Mbps, 2Mbps)
+    '   with optional Auto-Ack/ShockBurst  (power-on default)
+'    nrf24.preset_rx250k()                       ' 250kbps
+'    nrf24.preset_rx250k_noaa()                  ' 250kbps, No Auto-Ack
+'    nrf24.preset_1m()                           ' 1Mbps
+'    nrf24.preset_1m_noaa()                      ' 1Mbps, No Auto-Ack
+    nrf24.preset_rx2m()                         ' 2Mbps
+'    nrf24.preset_rx2m_noaa()                    ' 2Mbps, No Auto-Ack
+' --
 
     repeat pipe_nr from 0 to 5
         nrf24.payloadlen(_payld_len, pipe_nr)   ' Set all pipes the same len
@@ -70,6 +72,7 @@ PUB Receive() | i, payld_cnt, recv_pipe, pipe_nr
     ser.printf("Receive mode (channel %d)\n", nrf24.channel())
     ser.printf("Listening for transmitters...")
 
+    payld_cnt := 0
     repeat
         bytefill(@_payload, $00, 32)            ' Clear RX local buffer
         repeat                                  ' Wait to proceed...
