@@ -12,12 +12,14 @@
 
 CON
 
-    TX          = 0
-    RX          = 1
+    PAYLD_LEN_MAX   = 32
+
+    TX              = 0
+    RX              = 1
 
 ' RXAddr and TXAddr constants
-    READ        = 0
-    WRITE       = 1
+    READ            = 0
+    WRITE           = 1
 
 VAR
 
