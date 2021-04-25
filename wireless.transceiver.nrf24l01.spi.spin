@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2021
     Started Jan 6, 2019
-    Updated Apr 22, 2021
+    Updated Apr 25, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -463,6 +463,15 @@ PUB FlushTX{}
 ' Flush transmit FIFO buffer
     writereg(core#CMD_FLUSH_TX, 0, 0)
 
+PUB FreqDeviation(freq): curr_freq
+' Set frequency deviation, in Hz
+'   NOTE: Read-only, for compatibility only
+    case datarate(-2)
+        250, 1000:
+            return 160_000
+        2000:
+            return 320_000
+
 PUB Idle{}
 ' Set to idle state
     ce(0)
@@ -673,6 +682,15 @@ PUB RXAddr(ptr_buff, pipe, rw)
         other:                                  ' Invalid pipe
             return
 
+PUB RXBandwidth(bw): curr_bw
+' Set transceiver bandwidth, in Hz
+'   NOTE: Read-only, for compatibility only
+    case datarate(-2)
+        250, 1000:
+            return 1_000_000
+        2000:
+            return 2_000_000
+
 PUB RXFIFOEmpty{}: flag
 ' Flag indicating RX FIFO empty
 '   Returns:
@@ -729,6 +747,10 @@ PUB RXTX(role): curr_role
 PUB Sleep{}
 ' Power down chip
     powered(FALSE)
+
+PUB Syncword(ptr_syncwd): curr_syncwd
+' Set syncword
+    nodeaddress(ptr_syncwd)
 
 PUB TESTCW(state): curr_state
 ' Enable continuous carrier transmit (intended for testing only)

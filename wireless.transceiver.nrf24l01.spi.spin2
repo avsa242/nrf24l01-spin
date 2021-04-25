@@ -462,6 +462,15 @@ PUB FlushTX()
 ' Flush transmit FIFO buffer
     writereg(core.CMD_FLUSH_TX, 0, 0)
 
+PUB FreqDeviation(freq): curr_freq
+' Set frequency deviation, in Hz
+'   NOTE: Read-only, for compatibility only
+    case datarate{}
+        250, 1000:
+            return 160_000
+        2000:
+            return 320_000
+
 PUB Idle()
 ' Set to idle state
     ce(0)
@@ -672,6 +681,15 @@ PUB RXAddr(ptr_buff, pipe=0, rw=0)
         other:                                  ' Invalid pipe
             return
 
+PUB RXBandwidth(bw): curr_bw
+' Set transceiver bandwidth, in Hz
+'   NOTE: Read-only, for compatibility only
+    case datarate{}
+        250, 1000:
+            return 1_000_000
+        2000:
+            return 2_000_000
+
 PUB RXFIFOEmpty(): flag
 ' Flag indicating RX FIFO empty
 '   Returns:
@@ -728,6 +746,10 @@ PUB RXTX(role=-2): curr_role
 PUB Sleep()
 ' Power down chip
     powered(FALSE)
+
+PUB Syncword(ptr_syncwd): curr_syncwd
+' Set syncword
+    nodeaddress(ptr_syncwd)
 
 PUB TESTCW(state=-2): curr_state
 ' Enable continuous carrier transmit (intended for testing only)
