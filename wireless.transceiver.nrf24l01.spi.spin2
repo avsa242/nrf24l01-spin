@@ -39,12 +39,13 @@ OBJ
 PUB Null()
 ' This is not a top-level object
 
-PUB Start(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): okay | tmp[2], i
+PUB Start(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): status | tmp[2], i
 
-    if lookdown(CE_PIN: 0..63) and lookdown(CS_PIN: 0..63) and{
-}   lookdown(SCK_PIN: 0..63) and lookdown(MOSI_PIN: 0..63) and{
+    if lookdown(CE_PIN: 0..63) and lookdown(CS_PIN: 0..63) and {
+}   lookdown(SCK_PIN: 0..63) and lookdown(MOSI_PIN: 0..63) and {
 }   lookdown(MISO_PIN: 0..63)
-        if okay := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ, core#SPI_MODE)
+        if (status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ, {
+}       core.SPI_MODE))
             longmove(@_CE, @CE_PIN, 2)
             waitus(core.TPOR)
             waitus(core.TPD2STBY)
@@ -58,7 +59,7 @@ PUB Start(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): okay |
             repeat i from 0 to 4                '   read pipe #0's address
                 if tmp.byte[i] <> $E7           ' doesn't match default?
                     return FALSE                ' connection prob, or no nRF24
-            return okay                         ' nRF24 found
+            return                              ' nRF24 found
     ' if this point is reached, something above failed
     ' Double check I/O pin assignments, connections, power
     ' Lastly - make sure you have at least one free core/cog
@@ -719,7 +720,7 @@ PUB RXPayload(nr_bytes, ptr_buff)
 '       nr_bytes: 1..32 (Any other value is ignored)
 '   Any other value is ignored
     if lookdown(nr_bytes: 1..32)
-        readreg(core#CMD_R_RX_PAYLOAD, nr_bytes, ptr_buff)
+        readreg(core.CMD_R_RX_PAYLOAD, nr_bytes, ptr_buff)
     else
         return
 

@@ -41,12 +41,13 @@ OBJ
 PUB Null{}
 ' This is not a top-level object
 
-PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay | tmp[2], i
-
-    if lookdown(CE_PIN: 0..31) and lookdown(CS_PIN: 0..31) and{
-}   lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and{
+PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status | tmp[2], i
+' Start using custom I/O settings
+    if lookdown(CE_PIN: 0..31) and lookdown(CS_PIN: 0..31) and {
+}   lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and {
 }   lookdown(MISO_PIN: 0..31)
-        if okay := spi.init(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, core#SPI_MODE)
+        if (status := spi.init(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, {
+}       core#SPI_MODE))
             longmove(@_CE, @CE_PIN, 5)
             time.usleep(core#TPOR)
             time.usleep(core#TPD2STBY)
@@ -59,7 +60,7 @@ PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay | tmp[2], i
             repeat i from 0 to 4                '   read pipe #0's address
                 if tmp.byte[i] <> $E7           ' doesn't match default?
                     return FALSE                ' connection prob, or no nRF24
-            return okay                         ' nRF24 found
+            return                              ' nRF24 found
     ' if this point is reached, something above failed
     ' Double check I/O pin assignments, connections, power
     ' Lastly - make sure you have at least one free core/cog
