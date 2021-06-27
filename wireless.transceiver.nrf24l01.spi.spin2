@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+ (P2 version)
     Copyright (c) 2021
     Started Nov 2, 2019
-    Updated Apr 22, 2021
+    Updated Jun 27, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -727,7 +727,7 @@ PUB RXPayload(nr_bytes, ptr_buff)
 PUB RXPipePending(): pipe_nr
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
-    return (status() >> core.RX_P_NO) & core.RX_P_NO_BITS
+    return (nrfstatus() >> core.RX_P_NO) & core.RX_P_NO_BITS
 
 PUB RXTX(role=-2): curr_role
 ' Set to Primary RX or TX
@@ -794,7 +794,7 @@ PUB TXFIFOEmpty(): flag
 PUB TXFIFOFull(): flag
 ' Flag indicating TX FIFO full
 '   Returns: TRUE if full, FALSE if locations available in TX FIFO
-    return (status() & 1) == 1
+    return (nrfstatus() & 1) == 1
 
 PUB TXMode()
 ' Change chip state to TX (transmit)
@@ -837,7 +837,7 @@ PUB TXReuse(): flag
     readreg(core.FIFO_STATUS, 1, @flag)
     return ((flag >> core.TXFIFO_REUSE) & 1) == 1
 
-PRI Status(): nrf_status
+PRI nrfStatus(): nrf_status
 ' Interrupt and data available status
     readreg(core.STATUS, 1, @nrf_status)
 
