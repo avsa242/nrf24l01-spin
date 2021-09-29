@@ -93,7 +93,7 @@ PUB Defaults{} | pipe_nr
     channel(2)
     testcw(FALSE)
     pll_lock(FALSE)
-    datarate(2000)
+    datarate(2_000_000)
     txpower(0)
     intclear(%111)
     rxaddr(string($E7, $E7, $E7, $E7, $E7), 0, WRITE)
@@ -117,7 +117,7 @@ PUB Preset_RX250k{}
     intclear(%111)
     pipesenabled(%000011)
     autoackenabledpipes(%111111)
-    datarate(250)
+    datarate(250_000)
 
 PUB Preset_RX250k_NoAA{}
 ' Receive mode, 250kbps (AutoAck disabled)
@@ -127,7 +127,7 @@ PUB Preset_RX250k_NoAA{}
     intclear(%111)
     pipesenabled(%000011)
     autoackenabledpipes(%000000)
-    datarate(250)
+    datarate(250_000)
 
 PUB Preset_RX1M{}
 ' Receive mode, 1Mbps (AutoAck enabled)
@@ -137,7 +137,7 @@ PUB Preset_RX1M{}
     intclear(%111)
     pipesenabled(%000011)
     autoackenabledpipes(%111111)
-    datarate(1000)
+    datarate(1_000_000)
 
 PUB Preset_RX1M_NoAA{}
 ' Receive mode, 1Mbps (AutoAck disabled)
@@ -147,7 +147,7 @@ PUB Preset_RX1M_NoAA{}
     intclear(%111)
     pipesenabled(%000011)
     autoackenabledpipes(%000000)
-    datarate(1000)
+    datarate(1_000_000)
 
 PUB Preset_RX2M{}
 ' Receive mode, 2Mbps (AutoAck enabled)
@@ -157,7 +157,7 @@ PUB Preset_RX2M{}
     intclear(%111)
     pipesenabled(%000011)
     autoackenabledpipes(%111111)
-    datarate(2000)
+    datarate(2_000_000)
 
 PUB Preset_RX2M_NoAA{}
 ' Receive mode, 2Mbps (AutoAck disabled)
@@ -167,7 +167,7 @@ PUB Preset_RX2M_NoAA{}
     intclear(%111)
     pipesenabled(%000011)
     autoackenabledpipes(%000000)
-    datarate(2000)
+    datarate(2_000_000)
 
 PUB Preset_TX250k{}
 ' Transmit mode, 250kbps (AutoAck enabled)
@@ -176,7 +176,7 @@ PUB Preset_TX250k{}
     powered(true)
     autoackenabledpipes(%111111)
     intclear(%111)
-    datarate(250)
+    datarate(250_000)
     autoretransmitdelay(1500)                   ' covers worst-case
 
 PUB Preset_TX250k_NoAA{}
@@ -186,7 +186,7 @@ PUB Preset_TX250k_NoAA{}
     powered(true)
     autoackenabledpipes(%000000)
     intclear(%111)
-    datarate(250)
+    datarate(250_000)
 
 PUB Preset_TX1M{}
 ' Transmit mode, 1Mbit (AutoAck enabled)
@@ -195,7 +195,7 @@ PUB Preset_TX1M{}
     powered(true)
     autoackenabledpipes(%111111)
     intclear(%111)
-    datarate(1000)
+    datarate(1_000_000)
     autoretransmitdelay(500)                    ' covers worst-case
 
 PUB Preset_TX1M_NoAA{}
@@ -205,7 +205,7 @@ PUB Preset_TX1M_NoAA{}
     powered(true)
     autoackenabledpipes(%000000)
     intclear(%111)
-    datarate(1000)
+    datarate(1_000_000)
 
 PUB Preset_TX2M{}
 ' Transmit mode, 2Mbit (AutoAck enabled)
@@ -214,7 +214,7 @@ PUB Preset_TX2M{}
     powered(true)
     autoackenabledpipes(%111111)
     intclear(%111)
-    datarate(2000)
+    datarate(2_000_000)
     autoretransmitdelay(500)                    ' covers worst-case
 
 PUB Preset_TX2M_NoAA{}
@@ -224,7 +224,7 @@ PUB Preset_TX2M_NoAA{}
     powered(true)
     autoackenabledpipes(%000000)
     intclear(%111)
-    datarate(2000)
+    datarate(2_000_000)
 
 PUB CE(state)
 ' Set state of nRF24L01+ Chip Enable pin
@@ -306,14 +306,14 @@ PUB AutoRetransmitDelay(delay_us): curr_dly
 '   NOTE: The minimum value required for successful transmission depends on the
 '       current DataRate() and PayloadLen() settings:
 '       DataRate()  PayloadLen() max:   AutoRetransmitDelay() minimum:
-'       2000        15                  250
-'       2000        Any                 500
-'       1000        5                   250
-'       1000        Any                 500
-'       250         8                   750
-'       250         16                  1000
-'       250         24                  1250
-'       250         Any                 1500
+'       2_000_000   15                  250
+'       2_000_000   Any                 500
+'       1_000_000   5                   250
+'       1_000_000   Any                 500
+'       250_000     8                   750
+'       250_000     16                  1000
+'       250_000     24                  1250
+'       250_000     Any                 1500
     curr_dly := 0
     readreg(core#SETUP_RETR, 1, @curr_dly)
     case delay_us
@@ -378,24 +378,24 @@ PUB CRCLength(length): curr_len
     writereg(core#CFG, 1, @length)
 
 PUB DataRate(rate): curr_rate
-' Set RF data rate in kbps
-'   Valid values: 250, 1000, *2000
+' Set RF data rate, in bps
+'   Valid values: 250_000, 1_000_000, *2_000_000
 '   Any other value polls the chip and returns the current setting
     curr_rate := 0
     readreg(core#RF_SETUP, 1, @curr_rate)
     case rate
-        1000:
+        1_000_000:
             curr_rate &= core#RF_DR_HIGH_MASK
             curr_rate &= core#RF_DR_LOW_MASK
-        2000:
+        2_000_000:
             curr_rate |= (1 << core#RF_DR_HIGH)
             curr_rate &= core#RF_DR_LOW_MASK
-        250:
+        250_000:
             curr_rate &= core#RF_DR_HIGH_MASK
             curr_rate |= (1 << core#RF_DR_LOW)
         other:
             curr_rate := ((curr_rate >> core#RF_DR_HIGH) & core#RF_DR_BITS)
-            return lookupz(curr_rate: 1000, 2000, 0, 0, 250)
+            return lookupz(curr_rate: 1_000_000, 2_000_000, 0, 0, 250_000)
 
     writereg(core#RF_SETUP, 1, @curr_rate)
 
@@ -457,9 +457,9 @@ PUB FreqDeviation(freq): curr_freq
 ' Set frequency deviation, in Hz
 '   NOTE: Read-only, for compatibility only
     case datarate(-2)
-        250, 1000:
+        250_000, 1_000_000:
             return 160_000
-        2000:
+        2_000_000:
             return 320_000
 
 PUB Idle{}
@@ -689,9 +689,9 @@ PUB RXBandwidth(bw): curr_bw
 ' Set transceiver bandwidth, in Hz
 '   NOTE: Read-only, for compatibility only
     case datarate(-2)
-        250, 1000:
+        250_000, 1_000_000:
             return 1_000_000
-        2000:
+        2_000_000:
             return 2_000_000
 
 PUB RXFIFOEmpty{}: flag
