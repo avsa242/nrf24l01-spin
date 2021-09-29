@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2021
     Started Jan 6, 2019
-    Updated Jun 27, 2021
+    Updated Sep 29, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -25,6 +25,10 @@ CON
     PAYLD_RDY       = 1 << 2
     PAYLD_SENT      = 1 << 1
     MAX_RETRANS     = 1 << 0
+
+' Packet length modes
+    PKTLEN_FIXED    = 0
+    PKTLEN_VAR      = 1
 
 VAR
 
@@ -101,7 +105,7 @@ PUB Defaults{} | pipe_nr
     repeat pipe_nr from 0 to 5
         payloadlen(0, pipe_nr)
     dynamicpayload(%000000)
-    dynpayloadenabled(FALSE)
+    payloadlencfg(PKTLEN_FIXED)
     enableack(FALSE)
 
 PUB Preset_RX250k{}
@@ -424,22 +428,6 @@ PUB DynamicPayload(mask): curr_mask
             readreg(core#DYNPD, 1, @curr_mask)
             return curr_mask & core#DYNPD_MASK
 
-PUB DynPayloadEnabled(state): curr_state
-' Enable Dynamic Payload Length
-'   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
-'   Any other value polls the chip and returns the current setting
-'   NOTE: Must be state to use the DynamicPayload method.
-    curr_state := 0
-    readreg(core#FEAT, 1, @curr_state)
-    case ||(state)
-        0, 1:
-            state := ||(state) << core#EN_DPL
-        other:
-            return ((curr_state >> core#EN_DPL) & 1) == 1
-
-    state := ((curr_state & core#EN_DPL_MASK) | state) & core#FEAT_MASK
-    writereg(core#FEAT, 1, @state)
-
 PUB EnableACK(state): curr_state
 ' Enable payload with ACK
 ' XXX Add timing notes/code from datasheet, p.63, note d
@@ -571,6 +559,24 @@ PUB PayloadLen(length, pipe_nr): curr_len
 
         other:
             return
+
+PUB PayloadLenCfg(mode): curr_mode
+' Set packet length mode
+'   Valid values:
+'       PKTLEN_FIXED (0): fixed-length packet/payload
+'       PKTLEN_VAR (1): variable-length packet/payload
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Must be PKTLEN_VAR to use the DynamicPayload() method.
+    curr_mode := 0
+    readreg(core#FEAT, 1, @curr_mode)
+    case ||(mode)
+        0, 1:
+            mode := ||(mode) << core#EN_DPL
+        other:
+            return (((curr_mode >> core#EN_DPL) & 1) == 1)
+
+    mode := ((curr_mode & core#EN_DPL_MASK) | mode) & core#FEAT_MASK
+    writereg(core#FEAT, 1, @mode)
 
 PUB PayloadReady{}: flag
 ' Flag indicating received payload ready

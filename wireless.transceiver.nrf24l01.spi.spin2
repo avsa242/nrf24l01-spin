@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+ (P2 version)
     Copyright (c) 2021
     Started Nov 2, 2019
-    Updated Jun 27, 2021
+    Updated Sep 29, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -26,6 +26,10 @@ CON
     PAYLD_SENT      = 1 << 1
     MAX_RETRANS     = 1 << 0
 
+' Packet length modes
+    PKTLEN_FIXED    = 0
+    PKTLEN_VAR      = 1
+
 VAR
 
     long _CE, _CS
@@ -33,14 +37,14 @@ VAR
 
 OBJ
 
-    spi     : "com.spi"
-    core    : "core.con.nrf24l01"
+    spi     : "com.spi"                         ' smart-pin SPI engine (20MHz+)
+    core    : "core.con.nrf24l01"               ' hw-specific constants
 
 PUB Null()
 ' This is not a top-level object
 
-PUB Start(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): status | tmp[2], i
-
+PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): status | tmp[2], i
+' Start using custom I/O settings
     if lookdown(CE_PIN: 0..63) and lookdown(CS_PIN: 0..63) and {
 }   lookdown(SCK_PIN: 0..63) and lookdown(MOSI_PIN: 0..63) and {
 }   lookdown(MISO_PIN: 0..63)
@@ -63,7 +67,7 @@ PUB Start(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): status
     ' if this point is reached, something above failed
     ' Double check I/O pin assignments, connections, power
     ' Lastly - make sure you have at least one free core/cog
-    return FALSE                                ' something above failed
+    return FALSE
 
 PUB Stop()
 
@@ -100,7 +104,7 @@ PUB Defaults() | pipe_nr
     repeat pipe_nr from 0 to 5
         payloadlen(0, pipe_nr)
     dynamicpayload(%000000)
-    dynpayloadenabled(FALSE)
+    payloadlencfg(PKTLEN_FIXED)
     enableack(FALSE)
 
 PUB Preset_RX250k()
@@ -423,22 +427,6 @@ PUB DynamicPayload(mask=-2): curr_mask
             readreg(core.DYNPD, 1, @curr_mask)
             return curr_mask & core.DYNPD_MASK
 
-PUB DynPayloadEnabled(state=-2): curr_state
-' Enable Dynamic Payload Length
-'   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
-'   Any other value polls the chip and returns the current setting
-'   NOTE: Must be state to use the DynamicPayload method.
-    curr_state := 0
-    readreg(core.FEAT, 1, @curr_state)
-    case abs(state)
-        0, 1:
-            state := abs(state) << core.EN_DPL
-        other:
-            return ((curr_state >> core.EN_DPL) & 1) == 1
-
-    state := ((curr_state & core.EN_DPL_MASK) | state) & core.FEAT_MASK
-    writereg(core.FEAT, 1, @state)
-
 PUB EnableACK(state=-2): curr_state
 ' Enable payload with ACK
 ' XXX Add timing notes/code from datasheet, p.63, note d
@@ -570,6 +558,24 @@ PUB PayloadLen(length=-2, pipe_nr=0): curr_len
 
         other:
             return
+
+PUB PayloadLenCfg(mode=-2): curr_mode
+' Set packet length mode
+'   Valid values:
+'       PKTLEN_FIXED (0): fixed-length packet/payload
+'       PKTLEN_VAR (1): variable-length packet/payload
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Must be PKTLEN_VAR to use the DynamicPayload() method.
+    curr_mode := 0
+    readreg(core.FEAT, 1, @curr_mode)
+    case abs(mode)
+        0, 1:
+            mode := abs(mode) << core.EN_DPL
+        other:
+            return (((curr_mode >> core.EN_DPL) & 1) == 1)
+
+    mode := ((curr_mode & core.EN_DPL_MASK) | mode)
+    writereg(core.FEAT, 1, @mode)
 
 PUB PayloadReady(): flag
 ' Flag indicating received payload ready
@@ -807,9 +813,9 @@ PUB TXPayload(nr_bytes, ptr_buff)
     case nr_bytes
         1..32:
             writereg(core.CMD_W_TX_PAYLOAD, nr_bytes, ptr_buff)
-            ce(1)
-            waitus(10)
-            ce(0)
+            pinh(_CE)
+            waitus(core.THCE)
+            pinl(_CE)
         other:
             return
 
