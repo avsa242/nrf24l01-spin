@@ -6,7 +6,7 @@
         TX Mode (P2 version)
     Copyright (c) 2021
     Started Apr 30, 2020
-    Updated Jan 2, 2021
+    Updated Sep 29, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -93,7 +93,7 @@ PUB Setup()
     ser.clear()
     ser.strln("Serial terminal started")
 
-    if nrf24.start(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
+    if nrf24.startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
         ser.strln("NRF24L01+ driver started")
     else
         ser.strln("NRF24L01+ driver failed to start - halting")
