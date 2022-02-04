@@ -34,7 +34,7 @@ OBJ
     cfg         : "core.con.boardcfg.flip"
     time        : "time"
     int         : "string.integer"
-    nrf24       : "wireless.transceiver.nrf24l01.spi"
+    nrf24       : "wireless.transceiver.nrf24l01"
 
 VAR
 
