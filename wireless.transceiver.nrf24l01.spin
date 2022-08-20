@@ -40,7 +40,6 @@ OBJ
     spi     : "com.spi.bitbang"                 ' PASM SPI engine (~4MHz)
     core    : "core.con.nrf24l01"               ' hw-specific constants
     time    : "time"                            ' basic timekeeping methods
-    io      : "io"                              ' I/O pin abstraction
 
 PUB Null{}
 ' This is not a top-level object
@@ -56,8 +55,8 @@ PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status | tmp[2], i
             time.usleep(core#TPOR)
             time.usleep(core#TPD2STBY)
 
-            io.low(_CE)
-            io.output(_CE)
+            outa[_CE] := 0
+            dira[_CE] := 1
 
             defaults{}                          ' nRF24L01+ has no RESET pin,
                                                 '   so set defaults
@@ -236,7 +235,7 @@ PUB CE(state)
 '       RX mode:
 '           0: Enter Idle mode
 '           1: Active receive mode
-    io.set(_CE, state)
+    outa[_CE] := state
     time.usleep(core#THCE)
 
 PUB AddressWidth(bytes): curr_width
