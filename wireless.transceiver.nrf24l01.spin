@@ -37,7 +37,7 @@ VAR
 
 OBJ
 
-    spi     : "com.spi.bitbang"                 ' PASM SPI engine (~4MHz)
+    spi     : "com.spi.bitbang-nocs"            ' PASM SPI engine (~4MHz)
     core    : "core.con.nrf24l01"               ' hw-specific constants
     time    : "time"                            ' basic timekeeping methods
 
@@ -49,14 +49,15 @@ PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status | tmp[2], i
     if lookdown(CE_PIN: 0..31) and lookdown(CS_PIN: 0..31) and {
 }   lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and {
 }   lookdown(MISO_PIN: 0..31)
-        if (status := spi.init(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, {
-}       core#SPI_MODE))
+        if (status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, core#SPI_MODE))
             longmove(@_CE, @CE_PIN, 2)
             time.usleep(core#TPOR)
             time.usleep(core#TPD2STBY)
 
             outa[_CE] := 0
             dira[_CE] := 1
+            outa[_CS] := 1
+            dira[_CS] := 1
 
             defaults{}                          ' nRF24L01+ has no RESET pin,
                                                 '   so set defaults
@@ -848,24 +849,26 @@ PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
     case reg_nr
         core#CMD_W_TX_PAYLOAD:
-            spi.deselectafter(false)
+            outa[_CS] := 0
             spi.wr_byte(reg_nr)
-            spi.deselectafter(true)
             spi.wrblock_lsbf(ptr_buff, nr_bytes)
+            outa[_CS] := 1
         core#CMD_FLUSH_TX, core#CMD_FLUSH_RX:
-            spi.deselectafter(true)
+            outa[_CS] := 0
             spi.wr_byte(reg_nr)
+            outa[_CS] := 1
         $00..$17, $1C..$1D:
             reg_nr |= core#W_REG
             case nr_bytes
                 0:
-                    spi.deselectafter(true)
+                    outa[_CS] := 0
                     spi.wr_byte(reg_nr)
+                    outa[_CS] := 1
                 1..5:
-                    spi.deselectafter(false)
+                    outa[_CS] := 0
                     spi.wr_byte(reg_nr)
-                    spi.deselectafter(true)
                     spi.wrblock_lsbf(ptr_buff, nr_bytes)
+                    outa[_CS] := 1
                 other:
                     return
         other:
@@ -875,22 +878,22 @@ PRI readreg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Read nr_bytes from device into ptr_buff
     case reg_nr
         core#CMD_R_RX_PAYLOAD:
-            spi.deselectafter(false)
+            outa[_CS] := 0
             spi.wr_byte(reg_nr)
-            spi.deselectafter(true)
             spi.rdblock_lsbf(ptr_buff, nr_bytes)
+            outa[_CS] := 1
         core#RPD:
-            spi.deselectafter(false)
+            outa[_CS] := 0
             spi.wr_byte(reg_nr)
-            spi.deselectafter(true)
             byte[ptr_buff][0] := spi.rd_byte{}
+            outa[_CS] := 1
         $00..$08, $0A..$17, $1C..$1D:
             case nr_bytes
                 1..5:
-                    spi.deselectafter(false)
+                    outa[_CS] := 0
                     spi.wr_byte(reg_nr)
-                    spi.deselectafter(true)
                     spi.rdblock_lsbf(ptr_buff, nr_bytes)
+                    outa[_CS] := 1
                 other:
                     return
         other:
