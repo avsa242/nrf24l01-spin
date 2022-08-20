@@ -3,7 +3,7 @@
     Filename: wireless.transceiver.nrf24l01.spi.spin
     Author: Jesse Burt
     Description: Driver for Nordic Semi. nRF24L01+
-    Copyright (c) 2021
+    Copyright (c) 2022
     Started Jan 6, 2019
     Updated Sep 29, 2021
     See end of file for terms of use.
@@ -32,7 +32,7 @@ CON
 
 VAR
 
-    long _CE, _CS, _SCK, _MOSI, _MISO
+    long _CE, _CS
     word _status
 
 OBJ
@@ -52,7 +52,7 @@ PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status | tmp[2], i
 }   lookdown(MISO_PIN: 0..31)
         if (status := spi.init(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, {
 }       core#SPI_MODE))
-            longmove(@_CE, @CE_PIN, 5)
+            longmove(@_CE, @CE_PIN, 2)
             time.usleep(core#TPOR)
             time.usleep(core#TPD2STBY)
 
@@ -60,12 +60,12 @@ PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status | tmp[2], i
             io.output(_CE)
 
             defaults{}                          ' nRF24L01+ has no RESET pin,
-{                                                '   so set defaults
+                                                '   so set defaults
             rxaddr(@tmp, 0, READ)               ' there's also no device ID, so
             repeat i from 0 to 4                '   read pipe #0's address
                 if tmp.byte[i] <> $E7           ' doesn't match default?
                     return FALSE                ' connection prob, or no nRF24
-}
+
             return                              ' nRF24 found
     ' if this point is reached, something above failed
     ' Double check I/O pin assignments, connections, power
