@@ -20,11 +20,11 @@ CON
     SER_BAUD    = 115_200
 
     { SPI configuration }
-    CE_PIN      = 0
-    CS_PIN      = 1
-    SCK_PIN     = 2
-    MOSI_PIN    = 3
-    MISO_PIN    = 4
+    CE_PIN      = 8'0
+    CS_PIN      = 9'1
+    SCK_PIN     = 10'2
+    MOSI_PIN    = 11'3
+    MISO_PIN    = 12'4
 
     CHANNEL     = 2                             ' 0..125
 ' --

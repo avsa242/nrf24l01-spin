@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2022
     Started Jan 6, 2019
-    Updated Aug 20, 2022
+    Updated Sep 20, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -41,10 +41,10 @@ OBJ
     core    : "core.con.nrf24l01"               ' hw-specific constants
     time    : "time"                            ' basic timekeeping methods
 
-PUB Null{}
+PUB null{}
 ' This is not a top-level object
 
-PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status | tmp[2], i
+PUB startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status | tmp[2], i
 ' Start using custom I/O settings
     if lookdown(CE_PIN: 0..31) and lookdown(CS_PIN: 0..31) and {
 }   lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and {
@@ -72,14 +72,13 @@ PUB Startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status | tmp[2], i
     ' Lastly - make sure you have at least one free core/cog
     return FALSE
 
-PUB Stop{}
-
-    outa[_CE] := 0
-    sleep{}
-    spi.deinit{}
+PUB stop{}
+' Stop the driver
     outa[_CS] := 1
+    outa[_CE] := 0
+    spi.deinit{}
 
-PUB Defaults{} | pipe_nr
+PUB defaults{} | pipe_nr
 ' The nRF24L01+ has no RESET pin or function to restore the chip to a known initial operating state,
 '   so use this method to establish default settings, per the datasheet
     crccheckenabled(TRUE)
@@ -110,7 +109,7 @@ PUB Defaults{} | pipe_nr
     payloadlencfg(PKTLEN_FIXED)
     enableack(FALSE)
 
-PUB Preset_RX250k{}
+PUB preset_rx250k{}
 ' Receive mode, 250kbps (AutoAck enabled)
     rxmode{}
     flushrx{}
@@ -120,7 +119,7 @@ PUB Preset_RX250k{}
     autoackenabledpipes(%111111)
     datarate(250_000)
 
-PUB Preset_RX250k_NoAA{}
+PUB preset_rx250k_noaa{}
 ' Receive mode, 250kbps (AutoAck disabled)
     rxmode{}
     flushrx{}
@@ -130,7 +129,7 @@ PUB Preset_RX250k_NoAA{}
     autoackenabledpipes(%000000)
     datarate(250_000)
 
-PUB Preset_RX1M{}
+PUB preset_rx1m{}
 ' Receive mode, 1Mbps (AutoAck enabled)
     rxmode{}
     flushrx{}
@@ -140,7 +139,7 @@ PUB Preset_RX1M{}
     autoackenabledpipes(%111111)
     datarate(1_000_000)
 
-PUB Preset_RX1M_NoAA{}
+PUB preset_rx1m_noaa{}
 ' Receive mode, 1Mbps (AutoAck disabled)
     rxmode{}
     flushrx{}
@@ -150,7 +149,7 @@ PUB Preset_RX1M_NoAA{}
     autoackenabledpipes(%000000)
     datarate(1_000_000)
 
-PUB Preset_RX2M{}
+PUB preset_rx2m{}
 ' Receive mode, 2Mbps (AutoAck enabled)
     rxmode{}
     flushrx{}
@@ -160,7 +159,7 @@ PUB Preset_RX2M{}
     autoackenabledpipes(%111111)
     datarate(2_000_000)
 
-PUB Preset_RX2M_NoAA{}
+PUB preset_rx2m_noaa{}
 ' Receive mode, 2Mbps (AutoAck disabled)
     rxmode{}
     flushrx{}
@@ -170,7 +169,7 @@ PUB Preset_RX2M_NoAA{}
     autoackenabledpipes(%000000)
     datarate(2_000_000)
 
-PUB Preset_TX250k{}
+PUB preset_tx250k{}
 ' Transmit mode, 250kbps (AutoAck enabled)
     txmode{}
     flushtx{}
@@ -180,7 +179,7 @@ PUB Preset_TX250k{}
     datarate(250_000)
     autoretransmitdelay(1500)                   ' covers worst-case
 
-PUB Preset_TX250k_NoAA{}
+PUB preset_tx250k_noaa{}
 ' Transmit mode, 250kbps (AutoAck disabled)
     txmode{}
     flushtx{}
@@ -189,7 +188,7 @@ PUB Preset_TX250k_NoAA{}
     intclear(%111)
     datarate(250_000)
 
-PUB Preset_TX1M{}
+PUB preset_tx1m{}
 ' Transmit mode, 1Mbit (AutoAck enabled)
     txmode{}
     flushtx{}
@@ -199,7 +198,7 @@ PUB Preset_TX1M{}
     datarate(1_000_000)
     autoretransmitdelay(500)                    ' covers worst-case
 
-PUB Preset_TX1M_NoAA{}
+PUB preset_tx1m_noaa{}
 ' Transmit mode, 1Mbit (AutoAck disabled)
     txmode{}
     flushtx{}
@@ -208,7 +207,7 @@ PUB Preset_TX1M_NoAA{}
     intclear(%111)
     datarate(1_000_000)
 
-PUB Preset_TX2M{}
+PUB preset_tx2m{}
 ' Transmit mode, 2Mbit (AutoAck enabled)
     txmode{}
     flushtx{}
@@ -218,7 +217,7 @@ PUB Preset_TX2M{}
     datarate(2_000_000)
     autoretransmitdelay(500)                    ' covers worst-case
 
-PUB Preset_TX2M_NoAA{}
+PUB preset_tx2m_noaa{}
 ' Transmit mode, 2Mbit (AutoAck disabled)
     txmode{}
     flushtx{}
@@ -227,7 +226,7 @@ PUB Preset_TX2M_NoAA{}
     intclear(%111)
     datarate(2_000_000)
 
-PUB CE(state)
+PUB ce(state)
 ' Set state of nRF24L01+ Chip Enable pin
 '   Valid values:
 '       TX mode:
@@ -239,7 +238,7 @@ PUB CE(state)
     outa[_CE] := state
     time.usleep(core#THCE)
 
-PUB AddressWidth(bytes): curr_width
+PUB addresswidth(bytes): curr_width
 ' Set width, in bytes, of RX/TX address field
 '   Valid values: 3, 4, *5
 '   Any other value polls the chip and returns the current setting
@@ -254,7 +253,7 @@ PUB AddressWidth(bytes): curr_width
     bytes := ((curr_width & core#AW_MASK) | bytes)
     writereg(core#SETUP_AW, 1, @bytes)
 
-PUB AfterRX(next_state)
+PUB afterrx(next_state)
 ' Define state to transition to after packet rcvd
 '   0: Remain in active RX state, ready to receive packets
 '   Any other value: Change to RX state, but immediately enter a lower-power
@@ -265,7 +264,7 @@ PUB AfterRX(next_state)
     else
         ce(1)
 
-PUB AutoAckEnabledPipes(pipe_mask): curr_mask
+PUB autoackenabledpipes(pipe_mask): curr_mask
 ' Enable the Auto Acknowledgement function
 '   (aka Enhanced ShockBurst - (TM) NORDIC Semi.)
 '   per set data pipe mask:
@@ -284,7 +283,7 @@ PUB AutoAckEnabledPipes(pipe_mask): curr_mask
             readreg(core#EN_AA, 1, @curr_mask)
             return (curr_mask & core#EN_AA_MASK)
 
-PUB AutoRetransmitCount(tries): curr_tries
+PUB autoretransmitcount(tries): curr_tries
 ' Setup of automatic retransmission - Auto Retransmit Count
 ' Defines number of attempts to re-transmit on fail of Auto-Acknowledge
 '   Valid values: 0..15 (default 3; 0 disables re-transmit)
@@ -299,7 +298,7 @@ PUB AutoRetransmitCount(tries): curr_tries
     tries := ((curr_tries & core#ARC_MASK) | tries)
     writereg(core#SETUP_RETR, 1, @tries)
 
-PUB AutoRetransmitDelay(delay_us): curr_dly
+PUB autoretransmitdelay(delay_us): curr_dly
 ' Setup of automatic retransmission - Auto Retransmit Delay, in microseconds
 ' Delay defined from end of transmission to start of next transmission
 '   Valid values: *250..4000 (in steps of 250)
@@ -327,7 +326,7 @@ PUB AutoRetransmitDelay(delay_us): curr_dly
     delay_us := ((curr_dly & core#ARD_MASK) | delay_us)
     writereg(core#SETUP_RETR, 1, @delay_us)
 
-PUB CarrierFreq(freq): curr_freq
+PUB carrierfreq(freq): curr_freq
 ' Set carrier frequency, in MHz
 '   Valid values: 2400..2525 (default 2402)
 '   Any other value polls the chip and returns the current setting
@@ -337,7 +336,7 @@ PUB CarrierFreq(freq): curr_freq
         other:
             return (2400 + channel(-2))
 
-PUB Channel(number): curr_chan
+PUB channel(number): curr_chan
 ' Set RF channel
 '   Valid values: 0..125 (default 2)
 '   Any other value polls the chip and returns the current setting
@@ -347,7 +346,7 @@ PUB Channel(number): curr_chan
         other:
             readreg(core#RF_CH, 1, @curr_chan)
 
-PUB CRCCheckEnabled(enabled): curr_state
+PUB crccheckenabled(enabled): curr_state
 ' Enable CRC
 '   Valid values: FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
@@ -363,7 +362,7 @@ PUB CRCCheckEnabled(enabled): curr_state
     enabled := ((curr_state & core#EN_CRC_MASK) | enabled)
     writereg(core#CFG, 1, @enabled)
 
-PUB CRCLength(length): curr_len
+PUB crclength(length): curr_len
 ' Set CRC length, in bytes
 '   Valid values: *1, 2
 '   Any other value polls the chip and returns the current setting
@@ -378,7 +377,7 @@ PUB CRCLength(length): curr_len
     length := ((curr_len & core#CRCO_MASK) | length)
     writereg(core#CFG, 1, @length)
 
-PUB DataRate(rate): curr_rate
+PUB datarate(rate): curr_rate
 ' Set RF data rate, in bps
 '   Valid values: 250_000, 1_000_000, *2_000_000
 '   Any other value polls the chip and returns the current setting
@@ -400,7 +399,7 @@ PUB DataRate(rate): curr_rate
 
     writereg(core#RF_SETUP, 1, @curr_rate)
 
-PUB DynamicACK(state): curr_state
+PUB dynamicack(state): curr_state
 ' Enable selective auto-acknowledge feature
 ' When enabled, the receive will not auto-acknowledge packets sent to it.
 ' XXX expand
@@ -417,7 +416,7 @@ PUB DynamicACK(state): curr_state
     state := ((curr_state & core#EN_DYN_ACK_MASK) | state)
     writereg(core#FEAT, 1, @state)
 
-PUB DynamicPayload(mask): curr_mask
+PUB dynamicpayload(mask): curr_mask
 ' Control which data pipes (0 through 5) have dynamic payload length enabled, using a 6-bit mask
 '   Data pipe:     5    0   5    0
 '                  |....|   |....|
@@ -430,7 +429,7 @@ PUB DynamicPayload(mask): curr_mask
             readreg(core#DYNPD, 1, @curr_mask)
             return (curr_mask & core#DYNPD_MASK)
 
-PUB EnableACK(state): curr_state
+PUB enableack(state): curr_state
 ' Enable payload with ACK
 ' XXX Add timing notes/code from datasheet, p.63, note d
 '   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
@@ -446,15 +445,15 @@ PUB EnableACK(state): curr_state
     state := ((curr_state & core#EN_ACK_PAY_MASK) | state)
     writereg(core#FEAT, 1, @state)
 
-PUB FlushRX{}
+PUB flushrx{}
 ' Flush receive FIFO buffer
     writereg(core#CMD_FLUSH_RX, 0, 0)
 
-PUB FlushTX{}
+PUB flushtx{}
 ' Flush transmit FIFO buffer
     writereg(core#CMD_FLUSH_TX, 0, 0)
 
-PUB FreqDeviation(freq): curr_freq
+PUB freqdeviation(freq): curr_freq
 ' Set frequency deviation, in Hz
 '   NOTE: Read-only, for compatibility only
     case datarate(-2)
@@ -463,11 +462,11 @@ PUB FreqDeviation(freq): curr_freq
         2_000_000:
             return 320_000
 
-PUB Idle{}
+PUB idle{}
 ' Set to idle state
     outa[_CE] := 0
 
-PUB IntClear(mask)
+PUB intclear(mask)
 ' Clear interrupts
 '   Valid values: [bits 2..0]
 '       Bit:    Interrupt:
@@ -483,7 +482,7 @@ PUB IntClear(mask)
         other:
             return
 
-PUB IntMask(mask): curr_mask
+PUB intmask(mask): curr_mask
 ' Control which events will trigger an interrupt on the IRQ pin,
 '   Valid values: [bits 2..0]
 '       Bit:    Interrupt will be asserted on IRQ pin if:
@@ -503,7 +502,7 @@ PUB IntMask(mask): curr_mask
     mask := ((curr_mask & core#MASKINT_MASK) | mask)
     writereg(core#CFG, 1, @mask)
 
-PUB LostPackets{}: pkt_cnt
+PUB lostpackets{}: pkt_cnt
 ' Count lost packets
 '   Returns: Number of lost packets since last channel/carrier freq set
 '   Max value is 15
@@ -511,7 +510,7 @@ PUB LostPackets{}: pkt_cnt
     readreg(core#OBSERVE_TX, 1, @pkt_cnt)
     return ((pkt_cnt >> core#PLOS_CNT) & core#PLOS_CNT_BITS)
 
-PUB MaxRetransReached{}: flag
+PUB maxretransreached{}: flag
 ' Flag indicating maximum number of retransmit attempts reached
 '   Returns: TRUE (-1) if max reached, FALSE (0) otherwise
 '   NOTE: If this flag is set, it must be cleared (IntClear(%001))
@@ -521,21 +520,21 @@ PUB MaxRetransReached{}: flag
     readreg(core#STATUS, 1, @flag)
     return (((flag >> core#MAX_RT) & 1) == 1)
 
-PUB NodeAddress(ptr_addr)
+PUB nodeaddress(ptr_addr)
 ' Set node address
 '   NOTE: This sets the address for Receive pipe 0 as well as the Transmit
 '       address
     rxaddr(ptr_addr, 0, WRITE)
     txaddr(ptr_addr, WRITE)
 
-PUB PacketsRetransmitted{}: pkt_cnt
+PUB packetsretransmitted{}: pkt_cnt
 ' Count retransmitted packets
 '   Returns: Number of packets retransmitted since the start of transmission
 '       of a new packet
     readreg(core#OBSERVE_TX, 1, @pkt_cnt)
     return (pkt_cnt & core#ARC_CNT)
 
-PUB PayloadLen(length, pipe_nr): curr_len
+PUB payloadlen(length, pipe_nr): curr_len
 ' Set length of static payload, in bytes
 '   Returns number of bytes in RX payload in data pipe, or 0 if pipe unused
 '   Valid values:
@@ -557,7 +556,7 @@ PUB PayloadLen(length, pipe_nr): curr_len
         other:
             return
 
-PUB PayloadLenCfg(mode): curr_mode
+PUB payloadlencfg(mode): curr_mode
 ' Set packet length mode
 '   Valid values:
 '       PKTLEN_FIXED (0): fixed-length packet/payload
@@ -575,21 +574,21 @@ PUB PayloadLenCfg(mode): curr_mode
     mode := ((curr_mode & core#EN_DPL_MASK) | mode)
     writereg(core#FEAT, 1, @mode)
 
-PUB PayloadReady{}: flag
+PUB payloadready{}: flag
 ' Flag indicating received payload ready
 '   Returns: TRUE (-1) if interrupt flag asserted, FALSE (0) otherwise
     flag := 0
     readreg(core#STATUS, 1, @flag)
     return (((flag >> core#RX_DR) & 1) == 1)
 
-PUB PayloadSent{}: flag
+PUB payloadsent{}: flag
 ' Flag indicating transmitted payload sent
 '   (and acknowledged by receiver, if auto-ack is in use)
     flag := 0
     readreg(core#STATUS, 1, @flag)
     return (((flag >> core#TX_DS) & 1) == 1)
 
-PUB PipesEnabled(mask): curr_mask
+PUB pipesenabled(mask): curr_mask
 ' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
 '   Data pipe:     5    0   5    0
 '                  |....|   |....|
@@ -602,7 +601,7 @@ PUB PipesEnabled(mask): curr_mask
             readreg(core#EN_RXADDR, 1, @curr_mask)
             return (curr_mask & core#EN_ADDR_MASK)
 
-PUB PLL_Lock(state): curr_state
+PUB pll_lock(state): curr_state
 ' Force PLL Lock signal (intended for testing only)
 '   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
@@ -617,7 +616,7 @@ PUB PLL_Lock(state): curr_state
     state := ((curr_state & core#PLL_LOCK_MASK) | state)
     writereg(core#RF_SETUP, 1, @state)
 
-PUB Powered(state): curr_state
+PUB powered(state): curr_state
 ' Power on or off
 '   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
@@ -632,7 +631,7 @@ PUB Powered(state): curr_state
     state := ((curr_state & core#PWR_UP_MASK) | state)
     writereg(core#CFG, 1, @state)
 
-PUB RPD{}: flag
+PUB rpd{}: flag
 ' Received Power Detector/Carrier Detect
 '   Returns:
 '       FALSE (0): No Carrier
@@ -641,14 +640,14 @@ PUB RPD{}: flag
     readreg(core#RPD, 1, @flag)
     return (flag == 1)
 
-PUB RSSI{}: level
+PUB rssi{}: level
 ' RSSI (emulated)
 '   Returns:
 '       -64: Carrier detected
 '       -255 No carrier
     return lookupz(||(rpd{}): -255, -64)
 
-PUB RXAddr(ptr_buff, pipe, rw)
+PUB rxaddr(ptr_buff, pipe, rw)
 ' Set receive address of pipe number 'pipe' from buffer at address ptr_buff
 '   Valid values:
 '       ptr_buff:
@@ -686,7 +685,7 @@ PUB RXAddr(ptr_buff, pipe, rw)
         other:                                  ' Invalid pipe
             return
 
-PUB RXBandwidth(bw): curr_bw
+PUB rxbandwidth(bw): curr_bw
 ' Set transceiver bandwidth, in Hz
 '   NOTE: Read-only, for compatibility only
     case datarate(-2)
@@ -695,7 +694,7 @@ PUB RXBandwidth(bw): curr_bw
         2_000_000:
             return 2_000_000
 
-PUB RXFIFOEmpty{}: flag
+PUB rxfifoempty{}: flag
 ' Flag indicating RX FIFO empty
 '   Returns:
 '       TRUE (-1): RX FIFO empty
@@ -704,7 +703,7 @@ PUB RXFIFOEmpty{}: flag
     readreg(core#FIFO_STATUS, 1, @flag)
     return ((flag & 1) == 1)
 
-PUB RXFIFOFull{}: flag
+PUB rxfifofull{}: flag
 ' Flag indicating RX FIFO full
 '   Returns:
 '       TRUE (-1): RX FIFO full
@@ -713,12 +712,12 @@ PUB RXFIFOFull{}: flag
     readreg(core#FIFO_STATUS, 1, @flag)
     return (((flag >> core#RXFIFO_FULL) & 1) == 1)
 
-PUB RXMode{}
+PUB rxmode{}
 ' Change chip state to RX (receive)
     rxtx(RX)
     outa[_CE] := 1
 
-PUB RXPayload(nr_bytes, ptr_buff)
+PUB rxpayload(nr_bytes, ptr_buff)
 ' Receive payload stored in FIFO
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
@@ -728,12 +727,12 @@ PUB RXPayload(nr_bytes, ptr_buff)
     else
         return
 
-PUB RXPipePending{}: pipe_nr
+PUB rxpipepending{}: pipe_nr
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
     return ((nrfstatus{} >> core#RX_P_NO) & core#RX_P_NO_BITS)
 
-PUB RXTX(role): curr_role
+PUB rxtx(role): curr_role
 ' Set to Primary RX or TX
 '   Valid values: *0: TX, 1: RX
 '   Any other value polls the chip and returns the current setting
@@ -748,15 +747,15 @@ PUB RXTX(role): curr_role
     role := ((curr_role & core#PRIM_RX_MASK) | role)
     writereg(core#CFG, 1, @role)
 
-PUB Sleep{}
+PUB sleep{}
 ' Power down chip
     powered(FALSE)
 
-PUB Syncword(ptr_syncwd): curr_syncwd
+PUB syncword(ptr_syncwd): curr_syncwd
 ' Set syncword
     nodeaddress(ptr_syncwd)
 
-PUB TESTCW(state): curr_state
+PUB testcw(state): curr_state
 ' Enable continuous carrier transmit (intended for testing only)
 '   Valid values: *FALSE: Disable, TRUE (-1 or 1): Enable.
 '   Any other value polls the chip and returns the current setting
@@ -771,7 +770,7 @@ PUB TESTCW(state): curr_state
     state := ((curr_state & core#CONT_WAVE_MASK) | state)
     writereg(core#RF_SETUP, 1, @state)
 
-PUB TXAddr(ptr_addr, rw)
+PUB txaddr(ptr_addr, rw)
 ' Set transmit address
 '   Valid values:
 '       ptr_addr:
@@ -789,22 +788,22 @@ PUB TXAddr(ptr_addr, rw)
             readreg(core#TX_ADDR, 5, ptr_addr)
             return
 
-PUB TXFIFOEmpty{}: flag
+PUB txfifoempty{}: flag
 ' Flag indicating TX FIFO empty
 '   Returns TRUE if empty, FALSE if there's data in TX FIFO
     readreg(core#FIFO_STATUS, 1, @flag)
     return (((flag >> core#TXFIFO_EMPTY) & 1) == 1)
 
-PUB TXFIFOFull{}: flag
+PUB txfifofull{}: flag
 ' Flag indicating TX FIFO full
 '   Returns: TRUE if full, FALSE if locations available in TX FIFO
     return ((nrfstatus{} & 1) == 1)
 
-PUB TXMode{}
+PUB txmode{}
 ' Change chip state to TX (transmit)
     rxtx(TX)
 
-PUB TXPayload(nr_bytes, ptr_buff)
+PUB txpayload(nr_bytes, ptr_buff)
 ' Queue payload to be transmitted
 '   Valid values:
 '       nr_bytes: 1..32 (Any other value is ignored)
@@ -817,7 +816,7 @@ PUB TXPayload(nr_bytes, ptr_buff)
         other:
             return
 
-PUB TXPower(pwr): curr_pwr
+PUB txpower(pwr): curr_pwr
 ' Set transmit mode RF output power, in dBm
 '   Valid values: -18, -12, -6, *0
 '   Any other value polls the chip and returns the current setting
@@ -834,18 +833,18 @@ PUB TXPower(pwr): curr_pwr
     pwr := ((curr_pwr & core#RF_PWR_MASK) | pwr)
     writereg(core#RF_SETUP, 1, @pwr)
 
-PUB TXReuse{}: flag
+PUB txreuse{}: flag
 ' Flag indicating last transmitted payload is to be re-used
 '   Returns:
 '       TRUE (-1): last transmitted payload reused, FALSE (0) otherwise
     readreg(core#FIFO_STATUS, 1, @flag)
     return (((flag >> core#TXFIFO_REUSE) & 1) == 1)
 
-PRI nrfStatus{}: nrf_status
+PRI nrfstatus{}: nrf_status
 ' Interrupt and data available status
     readreg(core#STATUS, 1, @nrf_status)
 
-PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
+PRI writereg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
     case reg_nr
         core#CMD_W_TX_PAYLOAD:

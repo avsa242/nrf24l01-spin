@@ -21,11 +21,20 @@ CON
     SER_BAUD    = 2_000_000
 
     { SPI configuration }
+    BASEPIN         = 16
+
+    CE_PIN          = BASEPIN+4
+    CS_PIN          = BASEPIN+5
+    SCK_PIN         = BASEPIN+2
+    MOSI_PIN        = BASEPIN+0
+    MISO_PIN        = BASEPIN+1
+{
     CE_PIN      = 0
     CS_PIN      = 1
     SCK_PIN     = 2
     MOSI_PIN    = 3                             ' MOSI and MISO must be within
     MISO_PIN    = 4                             '   3 pins +/- of SCK
+}
     SCK_FREQ    = 10_000_000                    ' 10_000_000 max
 
     CHANNEL     = 2                             ' 0..125
