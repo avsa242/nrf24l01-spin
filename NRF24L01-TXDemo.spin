@@ -5,7 +5,7 @@
     Description: nRF24L01+ Transmit demo
     Copyright (c) 2022
     Started Nov 23, 2019
-    Updated Aug 20, 2022
+    Updated Oct 8, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -60,17 +60,17 @@ PUB main{} | payld_cnt, max_retrans, pkts_retrans, lost_pkts
     nrf24.preset_tx2m{}                         ' 2Mbps
 '    nrf24.preset_tx2m_noaa{}                    ' 2Mbps, no Auto-Ack
 
-    nrf24.txpower(0)                            ' -18, -12, -6, 0 (dBm)
+    nrf24.tx_pwr(0)                             ' -18, -12, -6, 0 (dBm)
 
     _payld_len := 8                             ' 1..32
 
     { set transmit/receive address (note: order in string{} is LSB, ..., MSB) }
-    nrf24.nodeaddress(string($e7, $e7, $e7, $e7, $e7))
+    nrf24.node_addr(string($e7, $e7, $e7, $e7, $e7))
 
 ' --
 
-    nrf24.payloadlen(_payld_len, 0)
-    nrf24.txaddr(@_addr, nrf24#READ)
+    nrf24.payld_len(_payld_len, 0)
+    nrf24.tx_addr(@_addr, nrf24#READ)
 
     ser.clear{}
     ser.position(0, 0)
@@ -81,9 +81,9 @@ PUB main{} | payld_cnt, max_retrans, pkts_retrans, lost_pkts
         str.sprintf1(@_payload, @"TEST%04.4d", payld_cnt++)
 
         { collect and display some packet statistics }
-        max_retrans := nrf24.maxretransreached{}
-        pkts_retrans := nrf24.packetsretransmitted{}
-        lost_pkts := nrf24.lostpackets{}
+        max_retrans := nrf24.max_retrans_reached{}
+        pkts_retrans := nrf24.pkts_retrans{}
+        lost_pkts := nrf24.lost_pkts{}
         ser.position(0, 2)
         ser.str(string("Max retransmissions reached? "))
         ser.strln(lookupz(||(max_retrans): @"No ", @"Yes"))
@@ -95,11 +95,11 @@ PUB main{} | payld_cnt, max_retrans, pkts_retrans, lost_pkts
         ser.printf5(string("Transmitting packet (to %02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r"), {
 }       _addr[4], _addr[3], _addr[2], _addr[1], _addr[0])
         ser.hexdump(@_payload, 0, 4, _payld_len, 16 <# _payld_len)
-        nrf24.txpayload(_payld_len, @_payload)
+        nrf24.tx_payld(_payld_len, @_payload)
 
         { check for transmission error limits and clear them so transmission can continue }
         if (max_retrans)
-            nrf24.intclear(nrf24#MAX_RETRANS)
+            nrf24.int_clear(nrf24#INT_MAX_RETRANS)
         if (lost_pkts => 15)
             nrf24.channel(CHANNEL)
 
