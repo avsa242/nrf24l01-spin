@@ -5,7 +5,7 @@
     Description: Driver for Nordic Semi. nRF24L01+
     Copyright (c) 2022
     Started Jan 6, 2019
-    Updated Oct 8, 2022
+    Updated Oct 9, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -94,7 +94,7 @@ PUB defaults{} | pipe_nr
     pll_lock(FALSE)
     data_rate(2_000_000)
     tx_pwr(0)
-    int_clear(%111)
+    int_clr(%111)
     rx_addr(string($E7, $E7, $E7, $E7, $E7), 0, WRITE)
     rx_addr(string($C2, $C2, $C2, $C2, $C2), 1, WRITE)
     rx_addr(string($C3), 2, WRITE)
@@ -113,7 +113,7 @@ PUB preset_rx250k{}
     rx_mode{}
     flush_rx{}
     powered(TRUE)
-    int_clear(%111)
+    int_clr(%111)
     pipes_ena(%000011)
     auto_ack_pipes_ena(%111111)
     data_rate(250_000)
@@ -123,7 +123,7 @@ PUB preset_rx250k_noaa{}
     rx_mode{}
     flush_rx{}
     powered(TRUE)
-    int_clear(%111)
+    int_clr(%111)
     pipes_ena(%000011)
     auto_ack_pipes_ena(%000000)
     data_rate(250_000)
@@ -133,7 +133,7 @@ PUB preset_rx1m{}
     rx_mode{}
     flush_rx{}
     powered(TRUE)
-    int_clear(%111)
+    int_clr(%111)
     pipes_ena(%000011)
     auto_ack_pipes_ena(%111111)
     data_rate(1_000_000)
@@ -143,7 +143,7 @@ PUB preset_rx1m_noaa{}
     rx_mode{}
     flush_rx{}
     powered(TRUE)
-    int_clear(%111)
+    int_clr(%111)
     pipes_ena(%000011)
     auto_ack_pipes_ena(%000000)
     data_rate(1_000_000)
@@ -153,7 +153,7 @@ PUB preset_rx2m{}
     rx_mode{}
     flush_rx{}
     powered(TRUE)
-    int_clear(%111)
+    int_clr(%111)
     pipes_ena(%000011)
     auto_ack_pipes_ena(%111111)
     data_rate(2_000_000)
@@ -163,7 +163,7 @@ PUB preset_rx2m_noaa{}
     rx_mode{}
     flush_rx{}
     powered(TRUE)
-    int_clear(%111)
+    int_clr(%111)
     pipes_ena(%000011)
     auto_ack_pipes_ena(%000000)
     data_rate(2_000_000)
@@ -174,7 +174,7 @@ PUB preset_tx250k{}
     flush_tx{}
     powered(true)
     auto_ack_pipes_ena(%111111)
-    int_clear(%111)
+    int_clr(%111)
     data_rate(250_000)
     auto_retrans_dly(1500)                   ' covers worst-case
 
@@ -184,7 +184,7 @@ PUB preset_tx250k_noaa{}
     flush_tx{}
     powered(true)
     auto_ack_pipes_ena(%000000)
-    int_clear(%111)
+    int_clr(%111)
     data_rate(250_000)
 
 PUB preset_tx1m{}
@@ -193,7 +193,7 @@ PUB preset_tx1m{}
     flush_tx{}
     powered(true)
     auto_ack_pipes_ena(%111111)
-    int_clear(%111)
+    int_clr(%111)
     data_rate(1_000_000)
     auto_retrans_dly(500)                    ' covers worst-case
 
@@ -203,7 +203,7 @@ PUB preset_tx1m_noaa{}
     flush_tx{}
     powered(true)
     auto_ack_pipes_ena(%000000)
-    int_clear(%111)
+    int_clr(%111)
     data_rate(1_000_000)
 
 PUB preset_tx2m{}
@@ -212,7 +212,7 @@ PUB preset_tx2m{}
     flush_tx{}
     powered(true)
     auto_ack_pipes_ena(%111111)
-    int_clear(%111)
+    int_clr(%111)
     data_rate(2_000_000)
     auto_retrans_dly(500)                    ' covers worst-case
 
@@ -222,7 +222,7 @@ PUB preset_tx2m_noaa{}
     flush_tx{}
     powered(true)
     auto_ack_pipes_ena(%000000)
-    int_clear(%111)
+    int_clr(%111)
     data_rate(2_000_000)
 
 PUB chip_ena(state)
@@ -465,7 +465,7 @@ PUB idle{}
 ' Set to idle state
     outa[_CE] := 0
 
-PUB int_clear(mask)
+PUB int_clr(mask)
 ' Clear interrupts
 '   Valid values: [bits 2..0]
 '       Bit:    Interrupt:
@@ -684,7 +684,7 @@ PUB rx_addr(ptr_buff, pipe, rw)
         other:                                  ' Invalid pipe
             return
 
-PUB rx_bandw(bw): curr_bw
+PUB rx_bw(bw): curr_bw
 ' Set transceiver bandwidth, in Hz
 '   NOTE: Read-only, for compatibility only
     case data_rate(-2)
@@ -750,7 +750,7 @@ PUB sleep{}
 ' Power down chip
     powered(FALSE)
 
-PUB sync_word(ptr_syncwd): curr_syncwd
+PUB syncwd(ptr_syncwd): curr_syncwd
 ' Set syncword
     node_addr(ptr_syncwd)
 
