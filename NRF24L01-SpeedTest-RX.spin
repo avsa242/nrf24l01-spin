@@ -6,7 +6,7 @@
         RX Mode
     Copyright (c) 2021
     Started Apr 30, 2020
-    Updated Oct 8, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -33,7 +33,7 @@ CON
 
 OBJ
 
-    cfg     : "core.con.boardcfg.flip"
+    cfg     : "boardcfg.flip"
     ser     : "com.serial.terminal.ansi"
     time    : "time"
     nrf24   : "wireless.transceiver.nrf24l01"
@@ -76,14 +76,14 @@ PUB main{} | i, iteration, testtime, pipe_nr
     ser.newline
 
     nrf24.flush_rx{}                            ' clear rx fifo
-    nrf24.int_clear(%100)                       ' clear interrupt
+    nrf24.int_clr(%100)                       ' clear interrupt
     repeat
         iteration := 0
         _timer_set := testtime                  ' trigger the timer
 
         repeat while _timer_set                 ' loop while timer is >0
             repeat until nrf24.payld_rdy{}      ' wait for rx data
-            nrf24.int_clear(%100)               ' _must_ clear interrupt
+            nrf24.int_clr(%100)               ' _must_ clear interrupt
             nrf24.rx_payld(PKTLEN, @_rxdata)    ' retrieve payload
             iteration++                         ' tally up # payloads rx'd
 

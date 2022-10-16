@@ -5,7 +5,7 @@
     Description: nRF24L01+ Transmit demo
     Copyright (c) 2022
     Started Nov 23, 2019
-    Updated Oct 8, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -33,7 +33,7 @@ CON
 OBJ
 
     ser  : "com.serial.terminal.ansi"
-    cfg  : "core.con.boardcfg.p2eval"
+    cfg  : "boardcfg.p2eval"
     nrf24: "wireless.transceiver.nrf24l01"
     str  : "string"
 
@@ -99,7 +99,7 @@ PUB main() | payld_cnt, max_retrans, pkts_retrans, lost_pkts
 
         { check for transmission error limits and clear them so transmission can continue }
         if (max_retrans)
-            nrf24.int_clear(nrf24.INT_MAX_RETRANS)
+            nrf24.int_clr(nrf24.INT_MAX_RETRANS)
         if (lost_pkts >= 15)
             nrf24.channel(CHANNEL)
 

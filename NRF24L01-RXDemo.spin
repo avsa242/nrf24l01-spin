@@ -6,7 +6,7 @@
         Will display data from all 6 data pipes
     Copyright (c) 2022
     Started Nov 23, 2019
-    Updated Oct 8, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -33,7 +33,7 @@ CON
 OBJ
 
     ser  : "com.serial.terminal.ansi"
-    cfg  : "core.con.boardcfg.flip"
+    cfg  : "boardcfg.flip"
     nrf24: "wireless.transceiver.nrf24l01"
 
 VAR
@@ -96,7 +96,7 @@ PUB main{} | payld_cnt, recv_pipe, pipe_nr
         ser.hexdump(@_payload, 0, 4, _payld_len, _payld_len)
 
         { clear interrupt and receive buffer for next loop }
-        nrf24.int_clear(nrf24#INT_PAYLD_RDY)
+        nrf24.int_clr(nrf24#INT_PAYLD_RDY)
         nrf24.flush_rx{}
 
 PUB setup{}

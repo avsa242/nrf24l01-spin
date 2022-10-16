@@ -37,7 +37,7 @@ VAR
 
 OBJ
 
-    spi     : "com.spi.bitbang-nocs"            ' PASM SPI engine (~4MHz)
+    spi     : "com.spi.4mhz"            ' PASM SPI engine (~4MHz)
     core    : "core.con.nrf24l01"               ' hw-specific constants
     time    : "time"                            ' basic timekeeping methods
 

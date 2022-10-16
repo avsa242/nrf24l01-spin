@@ -6,7 +6,7 @@
         TX Mode
     Copyright (c) 2022
     Started Apr 30, 2020
-    Updated Oct 8, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -34,7 +34,7 @@ CON
 
 OBJ
 
-    cfg     : "core.con.boardcfg.flip"
+    cfg     : "boardcfg.flip"
     ser     : "com.serial.terminal.ansi"
     time    : "time"
     nrf24   : "wireless.transceiver.nrf24l01"
@@ -79,7 +79,7 @@ PUB main{} | i
     if (nrf24.auto_ack_pipes_ena(-2))           ' decide which loop to run
         repeat                                  ' based on whether auto-ack
             if (nrf24.max_retrans_reached{})    ' is enabled...
-                nrf24.int_clear(%001)
+                nrf24.int_clr(%001)
             nrf24.tx_payld(PKTLEN, @_txdata)
     else                                        ' ...or not
         repeat
