@@ -43,15 +43,15 @@ VAR
     long _ctr_stack[50]
     long _iteration, _timer_set
     byte _rxdata[PKTLEN]
-    byte _addr[5]
+    byte _syncwd[5]
 
 PUB main{} | i, iteration, testtime, pipe_nr
 
     setup{}
     testtime := 1_000                           ' mSec
 
-    bytemove(@_addr, string($E7, $E7, $E7, $E7, $E7), 5)
-    nrf24.rx_addr(@_addr, 0, nrf24#WRITE)       ' set receiver address
+    bytemove(@_syncwd, string($E7, $E7, $E7, $E7, $E7), 5)
+    nrf24.set_syncwd(@_syncwd)                  ' set syncword
 
     nrf24.powered(true)
     nrf24.channel(CHANNEL)
@@ -63,7 +63,7 @@ PUB main{} | i, iteration, testtime, pipe_nr
     nrf24.auto_ack_pipes_ena(%000011)
     nrf24.tx_pwr(0)                             ' -18, -12, -6, 0 (dBm)
                                                 ' (for auto-ack, if enabled)
-    nrf24.crc_check_ena(true)
+    nrf24.crc_check_ena(true)                   ' ignored (always on) if auto-ack is used
     nrf24.crc_len(1)                            ' 1, 2 (bytes)
 
     repeat pipe_nr from 0 to 5                  ' set pipe payload sizes
@@ -73,7 +73,7 @@ PUB main{} | i, iteration, testtime, pipe_nr
     ser.pos_xy(0, 4)
     ser.str(string("Waiting for transmitters on "))
     repeat i from 4 to 0                        ' show address receiving on
-        ser.hex(_addr[i], 2)
+        ser.hex(_syncwd[i], 2)
     ser.newline
 
     nrf24.flush_rx{}                            ' clear rx fifo
@@ -88,7 +88,7 @@ PUB main{} | i, iteration, testtime, pipe_nr
             nrf24.rx_payld(PKTLEN, @_rxdata)    ' retrieve payload
             iteration++                         ' tally up # payloads rx'd
 
-        ser.position(0, 6)
+        ser.pos_xy(0, 6)
         report(testtime, iteration)             ' show the results
 
 PRI cog_counter | time_left

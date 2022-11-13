@@ -42,14 +42,14 @@ OBJ
 VAR
 
     byte _txdata[PKTLEN]
-    byte _addr[5]
+    byte _syncwd[5]
 
 PUB main{} | i
 
     setup{}
 
-    bytemove(@_addr, string($E7, $E7, $E7, $E7, $E7), 5)
-    nrf24.node_addr(@_addr)                     ' set transmitter address
+    bytemove(@_syncwd, string($E7, $E7, $E7, $E7, $E7), 5)
+    nrf24.set_syncwd(@_syncwd)                  ' set syncword
 
     nrf24.channel(CHANNEL)
     nrf24.tx_mode{}
@@ -58,12 +58,12 @@ PUB main{} | i
     nrf24.payld_len(PKTLEN)                     ' set pipe 0 to 32 bytes width
 
 ' Experiment with these to observe effect on throughput
-'   NOTE: The receiver's settings _must_ match these (except txpower())
+'   NOTE: The receiver's settings _must_ match these (except tx_pwr())
     nrf24.data_rate(2_000_000)                  ' 250_000, 1_000_000, 2_000_000
-    nrf24.tx_pwr(0)                             ' -18, -12, -6, 0 (dBm)
-    nrf24.crc_check_ena(true)
-    nrf24.crc_len(1)                            ' 1, 2 bytes
     nrf24.auto_ack_pipes_ena(%000011)           ' pipe mask [5..0]
+    nrf24.tx_pwr(0)                             ' -18, -12, -6, 0 (dBm)
+    nrf24.crc_check_ena(true)                   ' ignored (always on) if auto-ack is used
+    nrf24.crc_len(1)                            ' 1, 2 bytes
 
     repeat i from 0 to PKTLEN-1                 ' fill transmit buffer with
         _txdata.byte[i] := 32+i                 ' ASCII 32..32+(PKTLEN-1)
@@ -72,8 +72,8 @@ PUB main{} | i
     ser.str(string("Transmitting "))
     ser.dec(PKTLEN)
     ser.str(string(" byte payloads to "))
-    repeat i from 0 to 4                        ' show the address being
-        ser.hex(_addr[i], 2)                    ' transmitted to
+    repeat i from 0 to 4                        ' show the syncword
+        ser.hex(_syncwd[i], 2)
     ser.newline{}
 
     nrf24.flush_tx{}

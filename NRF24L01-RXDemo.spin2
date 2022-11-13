@@ -41,7 +41,7 @@ VAR
 
     byte _payload[32]
     byte _payld_len
-    byte _addr[5]
+    byte _syncwd[5]
 
 PUB main() | payld_cnt, recv_pipe, pipe_nr
 
@@ -52,8 +52,9 @@ PUB main() | payld_cnt, recv_pipe, pipe_nr
 
     _payld_len := 8                             ' 1..32
 
-    { set receive address (note: order in string() is LSB, ..., MSB) }
-    nrf24.rx_addr(string($e7, $e7, $e7, $e7, $e7), 0, nrf24.WRITE)
+    { set syncword (note: order in string() is LSB, ..., MSB) }
+    nrf24.set_pipe_nr(0)
+    nrf24.set_syncwd(string($e7, $e7, $e7, $e7, $e7))
 
     ' choose a receive mode preset (250kbps, 1Mbps, 2Mbps)
     '   with optional Auto-Ack/ShockBurst  (power-on default)
@@ -86,7 +87,7 @@ PUB main() | payld_cnt, recv_pipe, pipe_nr
 
         { check which pipe the data was received in and retrieve the payload into local buffer }
         recv_pipe := nrf24.rx_pipe_pending()
-        nrf24.rx_addr(@_addr, recv_pipe, nrf24.READ)
+        nrf24.syncwd(@_syncwd)
         nrf24.rx_payld(_payld_len, @_payload)
         payld_cnt++
 
@@ -94,7 +95,7 @@ PUB main() | payld_cnt, recv_pipe, pipe_nr
         ser.pos_xy(0, 5 + (recv_pipe * 4))
         ser.printf(@"Received packet on pipe %d ", recv_pipe)
         ser.printf(@"(%02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r", {
-}       _addr[4], _addr[3], _addr[2], _addr[1], _addr[0])
+}       _syncwd[4], _syncwd[3], _syncwd[2], _syncwd[1], _syncwd[0])
         ser.hexdump(@_payload, 0, 4, _payld_len, _payld_len)
 
         { clear interrupt and receive buffer for next loop }

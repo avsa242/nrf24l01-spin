@@ -41,7 +41,7 @@ VAR
 
     byte _payload[32]
     byte _payld_len
-    byte _addr[5]
+    byte _syncwd[5]
 
 PUB main() | payld_cnt, max_retrans, pkts_retrans, lost_pkts
 
@@ -64,14 +64,14 @@ PUB main() | payld_cnt, max_retrans, pkts_retrans, lost_pkts
 
     _payld_len := 8                             ' 1..32
 
-    { set transmit/receive address (note: order in string() is LSB, ..., MSB) }
-    nrf24.node_addr(string($e7, $e7, $e7, $e7, $e7))
+    { set syncword (note: order in string() is LSB, ..., MSB) }
+    nrf24.set_syncwd(string($e7, $e7, $e7, $e7, $e7))
 
 ' --
 
     nrf24.set_pipe_nr(0)
     nrf24.payld_len(_payld_len)
-    nrf24.tx_addr(@_addr, nrf24.READ)
+    nrf24.syncwd(@_syncwd)
 
     ser.clear()
     ser.pos_xy(0, 0)
@@ -94,7 +94,7 @@ PUB main() | payld_cnt, max_retrans, pkts_retrans, lost_pkts
         { display payload and transmit it }
         ser.pos_xy(0, 6)
         ser.printf(@"Transmitting packet (to %02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r", {
-}       _addr[4], _addr[3], _addr[2], _addr[1], _addr[0])
+}       _syncwd[4], _syncwd[3], _syncwd[2], _syncwd[1], _syncwd[0])
         ser.hexdump(@_payload, 0, 4, _payld_len, 16 <# _payld_len)
         nrf24.tx_payld(_payld_len, @_payload)
 
