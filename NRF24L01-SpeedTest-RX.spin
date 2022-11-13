@@ -6,7 +6,7 @@
         RX Mode
     Copyright (c) 2021
     Started Apr 30, 2020
-    Updated Oct 16, 2022
+    Updated Nov 13, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -19,11 +19,11 @@ CON
     LED         = cfg#LED1
     SER_BAUD    = 115_200
 
-    CE_PIN      = 8
-    CS_PIN      = 9
-    SCK_PIN     = 10
-    MOSI_PIN    = 11
-    MISO_PIN    = 12
+    CE_PIN      = 0
+    CS_PIN      = 1
+    SCK_PIN     = 2
+    MOSI_PIN    = 3
+    MISO_PIN    = 4
 
     PKTLEN      = 32                            ' 1..32 (bytes)
     CHANNEL     = 2                             ' 0..125 (2.400..2.525GHz)
@@ -67,23 +67,24 @@ PUB main{} | i, iteration, testtime, pipe_nr
     nrf24.crc_len(1)                            ' 1, 2 (bytes)
 
     repeat pipe_nr from 0 to 5                  ' set pipe payload sizes
-        nrf24.payld_len(PKTLEN, pipe_nr)        ' _must_ match TX
+        nrf24.set_pipe_nr(pipe_nr)
+        nrf24.payld_len(PKTLEN)                 ' _must_ match TX
 
-    ser.position(0, 4)
+    ser.pos_xy(0, 4)
     ser.str(string("Waiting for transmitters on "))
     repeat i from 4 to 0                        ' show address receiving on
         ser.hex(_addr[i], 2)
     ser.newline
 
     nrf24.flush_rx{}                            ' clear rx fifo
-    nrf24.int_clr(%100)                       ' clear interrupt
+    nrf24.int_clr(%100)                         ' clear interrupt
     repeat
         iteration := 0
         _timer_set := testtime                  ' trigger the timer
 
         repeat while _timer_set                 ' loop while timer is >0
             repeat until nrf24.payld_rdy{}      ' wait for rx data
-            nrf24.int_clr(%100)               ' _must_ clear interrupt
+            nrf24.int_clr(%100)                 ' _must_ clear interrupt
             nrf24.rx_payld(PKTLEN, @_rxdata)    ' retrieve payload
             iteration++                         ' tally up # payloads rx'd
 

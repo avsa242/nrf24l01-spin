@@ -35,6 +35,7 @@ VAR
     long _CE, _CS
     word _status
     byte _tx_cmd
+    byte _pipe_nr
 
 OBJ
 
@@ -101,7 +102,8 @@ PUB defaults() | pipe_nr
     rx_addr(string($C6), 5, WRITE)
     tx_addr(string($E7, $E7, $E7, $E7, $E7), WRITE)
     repeat pipe_nr from 0 to 5
-        payld_len(0, pipe_nr)
+        set_pipe_nr(pipe_nr)
+        payld_len(0)
     dyn_payld_len_ena(%000000)
     payld_len_cfg(PKTLEN_FIXED)
     payld_in_ack_ena(FALSE)
@@ -561,19 +563,17 @@ PUB payld_in_ack_ena(state=-2): curr_state
     state := ((curr_state & core.EN_ACK_PAY_MASK) | state)
     writereg(core.FEAT, 1, @state)
 
-PUB payld_len(length=-2, pipe_nr=0): curr_len
+PUB payld_len(length=-2): curr_len
 ' Set length of static payload, in bytes
 '   Valid values:
-'       pipe: 0..5 (clamped to range)
 '       length: 0..32 (default 0)
-'   Any other value for length polls the chip and returns the current setting
+'   Any other value polls the chip and returns the current setting
 '   NOTE: Setting a length of 0 effectively disables the pipe
     curr_len := 0
-    pipe_nr := 0 #> pipe_nr <# 5
-    readreg(core.RX_PW_P0 + pipe_nr, 1, @curr_len)
+    readreg(core.RX_PW_P0 + _pipe_nr, 1, @curr_len)
     case length
         0..32:
-            writereg(core.RX_PW_P0 + pipe_nr, 1, @length)
+            writereg(core.RX_PW_P0 + _pipe_nr, 1, @length)
             return length
         other:
             return (curr_len & core.RX_PW_BITS)
@@ -581,10 +581,10 @@ PUB payld_len(length=-2, pipe_nr=0): curr_len
 PUB payld_len_cfg(mode=-2): curr_mode
 ' Set packet length mode
 '   Valid values:
-'       PKTLEN_FIXED (0): fixed-length packet/payload
+'       PKTLEN_FIXED (0): fixed-length packet/payload (default)
 '       PKTLEN_VAR (1): variable-length packet/payload
 '   Any other value polls the chip and returns the current setting
-'   NOTE: Must be PKTLEN_VAR to use the DynamicPayload() method.
+'   NOTE: Must be PKTLEN_VAR to use the dyn_payld_len_ena() method.
     curr_mode := 0
     readreg(core.FEAT, 1, @curr_mode)
     case abs(mode)
@@ -759,6 +759,11 @@ PUB rx_tx(role=-2): curr_role
 
     role := ((curr_role & core.PRIM_RX_MASK) | role)
     writereg(core.CFG, 1, @role)
+
+PUB set_pipe_nr(pipe_nr)
+' Set pipe number for subsequent function calls
+'   Valid values: 0..5 (clamped to range)
+    _pipe_nr := 0 #> pipe_nr <# 5
 
 PUB sleep()
 ' Power down chip

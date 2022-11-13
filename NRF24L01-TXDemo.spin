@@ -5,7 +5,7 @@
     Description: nRF24L01+ Transmit demo
     Copyright (c) 2022
     Started Nov 23, 2019
-    Updated Oct 16, 2022
+    Updated Nov 13, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -20,11 +20,11 @@ CON
     SER_BAUD    = 115_200
 
     { SPI configuration }
-    CE_PIN      = 8'0
-    CS_PIN      = 9'1
-    SCK_PIN     = 10'2
-    MOSI_PIN    = 11'3
-    MISO_PIN    = 12'4
+    CE_PIN      = 0
+    CS_PIN      = 1
+    SCK_PIN     = 2
+    MOSI_PIN    = 3
+    MISO_PIN    = 4
 
     CHANNEL     = 2                             ' 0..125
 ' --
@@ -69,11 +69,12 @@ PUB main{} | payld_cnt, max_retrans, pkts_retrans, lost_pkts
 
 ' --
 
-    nrf24.payld_len(_payld_len, 0)
+    nrf24.set_pipe_nr(0)
+    nrf24.payld_len(_payld_len)
     nrf24.tx_addr(@_addr, nrf24#READ)
 
     ser.clear{}
-    ser.position(0, 0)
+    ser.pos_xy(0, 0)
     ser.printf1(string("Transmit mode (channel %d)\n\r"), nrf24.channel(-2))
 
     repeat
@@ -84,14 +85,14 @@ PUB main{} | payld_cnt, max_retrans, pkts_retrans, lost_pkts
         max_retrans := nrf24.max_retrans_reached{}
         pkts_retrans := nrf24.pkts_retrans{}
         lost_pkts := nrf24.lost_pkts{}
-        ser.position(0, 2)
+        ser.pos_xy(0, 2)
         ser.str(string("Max retransmissions reached? "))
         ser.strln(lookupz(||(max_retrans): @"No ", @"Yes"))
         ser.printf1(string("Packets retransmitted: %2.2d\n\r"), pkts_retrans)
         ser.printf1(string("Lost packets: %2.2d\n\r"), lost_pkts)
 
         { display payload and transmit it }
-        ser.position(0, 6)
+        ser.pos_xy(0, 6)
         ser.printf5(string("Transmitting packet (to %02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r"), {
 }       _addr[4], _addr[3], _addr[2], _addr[1], _addr[0])
         ser.hexdump(@_payload, 0, 4, _payld_len, 16 <# _payld_len)

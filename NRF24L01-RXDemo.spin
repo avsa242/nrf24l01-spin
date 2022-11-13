@@ -6,7 +6,7 @@
         Will display data from all 6 data pipes
     Copyright (c) 2022
     Started Nov 23, 2019
-    Updated Oct 16, 2022
+    Updated Nov 13, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -66,10 +66,11 @@ PUB main{} | payld_cnt, recv_pipe, pipe_nr
 
     { set all pipes to the same payload length }
     repeat pipe_nr from 0 to 5
-        nrf24.payld_len(_payld_len, pipe_nr)
+        nrf24.set_pipe_nr(pipe_nr)
+        nrf24.payld_len(_payld_len)
 
     ser.clear{}
-    ser.position(0, 0)
+    ser.pos_xy(0, 0)
     ser.printf1(string("Receive mode (channel %d)\n\r"), nrf24.channel(-2))
     ser.strln(string("Listening for transmitters..."))
 
@@ -78,7 +79,7 @@ PUB main{} | payld_cnt, recv_pipe, pipe_nr
         { clear local buffer and wait until a payload is received }
         bytefill(@_payload, 0, 32)
         repeat
-            ser.position(0, 3)
+            ser.pos_xy(0, 3)
             ser.printf1(string("Payloads received: %d "), payld_cnt)
         until nrf24.payld_rdy{}
 
@@ -89,7 +90,7 @@ PUB main{} | payld_cnt, recv_pipe, pipe_nr
         payld_cnt++
 
         { display payload received through each pipe number on a separate line }
-        ser.position(0, 5 + (recv_pipe * 4))
+        ser.pos_xy(0, 5 + (recv_pipe * 4))
         ser.printf1(string("Received packet on pipe %d "), recv_pipe)
         ser.printf5(string("(%02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r"), {
 }       _addr[4], _addr[3], _addr[2], _addr[1], _addr[0])

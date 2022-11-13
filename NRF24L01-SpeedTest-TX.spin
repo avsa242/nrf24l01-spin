@@ -6,7 +6,7 @@
         TX Mode
     Copyright (c) 2022
     Started Apr 30, 2020
-    Updated Oct 16, 2022
+    Updated Nov 13, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -20,11 +20,11 @@ CON
     LED         = cfg#LED1
     SER_BAUD    = 115_200
 
-    CE_PIN      = 8
-    CS_PIN      = 9
-    SCK_PIN     = 10
-    MOSI_PIN    = 11
-    MISO_PIN    = 12
+    CE_PIN      = 0
+    CS_PIN      = 1
+    SCK_PIN     = 2
+    MOSI_PIN    = 3
+    MISO_PIN    = 4
 
     PKTLEN      = 32                            ' 1..32 (bytes)
     CHANNEL     = 2                             ' 0..125 (2.400..2.525GHz)
@@ -54,7 +54,8 @@ PUB main{} | i
     nrf24.channel(CHANNEL)
     nrf24.tx_mode{}
     nrf24.powered(true)
-    nrf24.payld_len(PKTLEN, 0)                  ' set pipe 0 to 32 bytes width
+    nrf24.set_pipe_nr(0)
+    nrf24.payld_len(PKTLEN)                     ' set pipe 0 to 32 bytes width
 
 ' Experiment with these to observe effect on throughput
 '   NOTE: The receiver's settings _must_ match these (except txpower())
@@ -67,13 +68,13 @@ PUB main{} | i
     repeat i from 0 to PKTLEN-1                 ' fill transmit buffer with
         _txdata.byte[i] := 32+i                 ' ASCII 32..32+(PKTLEN-1)
 
-    ser.position(0, 3)
+    ser.pos_xy(0, 3)
     ser.str(string("Transmitting "))
     ser.dec(PKTLEN)
     ser.str(string(" byte payloads to "))
     repeat i from 0 to 4                        ' show the address being
         ser.hex(_addr[i], 2)                    ' transmitted to
-    ser.newline
+    ser.newline{}
 
     nrf24.flush_tx{}
     if (nrf24.auto_ack_pipes_ena(-2))           ' decide which loop to run
