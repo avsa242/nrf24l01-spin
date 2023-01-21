@@ -42,21 +42,11 @@ VAR
 
     byte _payload[PAYLD_LEN]
 
-PUB main() | payld_cnt
+PUB main()
 
     setup()
 
-    ser.clear()
-
-    payld_cnt := 0
-    repeat
-        { payload to transmit }
-        str.sprintf(@_payload, @"TEST%04.4d", payld_cnt++)
-        nrf24.tx_payld(PAYLD_LEN, @_payload)
-
-        { clear interrupt so TX can continue }
-        nrf24.int_clear(nrf24.INT_MAX_RETRANS)
-        waitms(10)
+    ' your transmit code here
 
     repeat
 
@@ -64,6 +54,7 @@ PUB setup()
 
     ser.start(SER_BAUD)
     waitms(30)
+    ser.clear()
     ifnot (nrf24.startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN))
         ser.strln(@"NRF24L01 driver failed to start")
         { double-check I/O pins if the driver doesn't start }

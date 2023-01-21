@@ -46,18 +46,15 @@ PUB main{}
 
     setup{}
 
-    repeat
-        repeat until nrf24.payld_rdy{}          ' wait for an incoming payload
-        nrf24.rx_payld(PAYLD_LEN, @_payload)    ' copy it into our local buffer
-        ser.printf1(@"Received: %s\n\r", @_payload)
+    ' your receive code here
 
-        { clear interrupt so RX can continue }
-        nrf24.int_clear(nrf24#INT_PAYLD_RDY)
+    repeat
 
 PUB setup{}
 
     ser.start(SER_BAUD)
     time.msleep(30)
+    ser.clear{}
     ifnot (nrf24.startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN))
         ser.strln(@"NRF24L01 driver failed to start")
         { double-check I/O pins if the driver doesn't start }
