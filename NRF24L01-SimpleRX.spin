@@ -6,7 +6,7 @@
         * Minimal receive functionality demo code
     Copyright (c) 2023
     Started Jan 5, 2023
-    Updated Jan 5, 2023
+    Updated Jul 17, 2023
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -17,25 +17,17 @@ CON
     _xinfreq    = cfg#_xinfreq
 
 ' -- User-modifiable constants
-    LED         = cfg#LED1
     SER_BAUD    = 115_200
-
-    { SPI configuration }
-    CE_PIN      = 0
-    CS_PIN      = 1
-    SCK_PIN     = 2
-    MOSI_PIN    = 3
-    MISO_PIN    = 4
 ' --
 
     PAYLD_LEN   = 8
 
 OBJ
 
-    ser  : "com.serial.terminal.ansi"
-    cfg  : "boardcfg.flip"
-    nrf24: "wireless.transceiver.nrf24l01"
-    time : "time"
+    ser:    "com.serial.terminal.ansi"
+    cfg:    "boardcfg.flip"
+    nrf24:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
+    time:   "time"
 
 VAR
 
@@ -45,7 +37,7 @@ PUB main{}
 
     ser.start(SER_BAUD)
     time.msleep(30)
-    ifnot (nrf24.startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN))
+    ifnot ( nrf24.start() )
         ser.strln(@"NRF24L01 driver failed to start")
         { double-check I/O pins if the driver doesn't start }
         repeat
@@ -65,7 +57,7 @@ PUB main{}
 
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2023 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

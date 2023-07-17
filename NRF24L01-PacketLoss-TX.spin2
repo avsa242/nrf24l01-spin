@@ -8,7 +8,7 @@
         for packet loss with NRF24L01-PacketLoss-RX.spin2.
     Copyright (c) 2023
     Started Jan 5, 2023
-    Updated Jan 5, 2023
+    Updated Jul 17, 2023
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -19,31 +19,22 @@ CON
     _xtlfreq    = cfg._xtlfreq
 
 ' -- User-modifiable constants
-    LED         = cfg.LED1
     SER_BAUD    = 2_000_000
-
-    { SPI configuration }
-    CE_PIN      = 4
-    CS_PIN      = 5
-    SCK_PIN     = 2
-    MOSI_PIN    = 0
-    MISO_PIN    = 1
-    SCK_FREQ    = 10_000_000                    ' 10_000_000 max
 ' --
 
     PAYLD_LEN   = 2
 
 OBJ
 
-    ser  : "com.serial.terminal.ansi"
-    cfg  : "boardcfg.p2eval"
-    radio: "wireless.transceiver.nrf24l01"
-    str  : "string"
+    ser:    "com.serial.terminal.ansi"
+    cfg:    "boardcfg.p2eval"
+    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
+    str:    "string"
 
 PUB main() | payld_cnt
 
     ser.start(SER_BAUD)
-    ifnot (radio.startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN))
+    ifnot ( radio.start() )
         ser.strln(@"NRF24L01 driver failed to start")
         repeat
 
@@ -66,7 +57,7 @@ PUB main() | payld_cnt
 
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2023 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
