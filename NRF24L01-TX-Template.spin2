@@ -18,14 +18,13 @@ CON
     _xtlfreq    = cfg._xtlfreq
 
 ' -- User-modifiable constants
-    SER_BAUD    = 2_000_000
     PAYLD_LEN   = 8                             ' 1..32
 ' --
 
 OBJ
 
-    ser:    "com.serial.terminal.ansi"
     cfg:    "boardcfg.p2eval"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
     nrf24:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
     str:    "string"
 
@@ -43,8 +42,7 @@ PUB main()
 
 PUB setup()
 
-    ser.start(SER_BAUD)
-    waitms(30)
+    ser.start()
     ser.clear()
     ifnot ( nrf24.start() )
         ser.strln(@"NRF24L01 driver failed to start")

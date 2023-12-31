@@ -6,26 +6,22 @@
        *  Minimal transmit functionality demo code
     Copyright (c) 2023
     Started Jan 5, 2023
-    Updated Jul 17, 2023
+    Updated Dec 31, 2023
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
-    _clkfreq    = cfg#_clkfreq_def
-    _xtlfreq    = cfg#_xtlfreq
-
-' -- User-modifiable constants
-    SER_BAUD    = 2_000_000
-' --
+    _clkfreq    = cfg._clkfreq_def
+    _xtlfreq    = cfg._xtlfreq
 
     PAYLD_LEN   = 8
 
 OBJ
 
-    ser:    "com.serial.terminal.ansi"
     cfg:    "boardcfg.p2eval"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
     nrf24:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
     str:    "string"
 
@@ -35,7 +31,7 @@ VAR
 
 PUB main() | payld_cnt
 
-    ser.start(SER_BAUD)
+    ser.start()
     ser.clear()
     ifnot ( nrf24.start() )
         ser.strln(@"NRF24L01 driver failed to start")

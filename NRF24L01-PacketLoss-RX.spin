@@ -8,7 +8,7 @@
             for packet loss.
     Copyright (c) 2023
     Started Jan 5, 2023
-    Updated Jul 17, 2023
+    Updated Dec 31, 2023
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -18,22 +18,18 @@ CON
     _clkmode    = cfg#_clkmode
     _xinfreq    = cfg#_xinfreq
 
-' -- User-modifiable constants
-    SER_BAUD    = 115_200
-' --
-
     PAYLD_LEN   = 2
 
 OBJ
 
-    ser:    "com.serial.terminal.ansi"
     cfg:    "boardcfg.flip"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
     radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
     time:   "time"
 
 PUB main{} | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
 
-    ser.start(SER_BAUD)
+    ser.start()
     time.msleep(30)
     ifnot ( radio.start() )
         ser.strln(string("NRF24L01 driver failed to start"))

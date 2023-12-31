@@ -18,14 +18,13 @@ CON
     _xinfreq    = cfg#_xinfreq
 
 ' -- User-modifiable constants
-    SER_BAUD    = 115_200
     PAYLD_LEN   = 8                             ' 1..32
 ' --
 
 OBJ
 
-    ser:    "com.serial.terminal.ansi"
     cfg:    "boardcfg.flip"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
     nrf24:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
     time:   "time"
 
@@ -43,7 +42,7 @@ PUB main{}
 
 PUB setup{}
 
-    ser.start(SER_BAUD)
+    ser.start()
     time.msleep(30)
     ser.clear{}
     ifnot ( nrf24.start() )

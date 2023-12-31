@@ -8,7 +8,7 @@
             for packet loss.
     Copyright (c) 2023
     Started Jan 5, 2023
-    Updated Jul 17, 2023
+    Updated Dec 31, 2023
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -18,21 +18,17 @@ CON
     _clkfreq    = cfg._clkfreq_def
     _xtlfreq    = cfg._xtlfreq
 
-' -- User-modifiable constants
-    SER_BAUD    = 2_000_000
-' --
-
     PAYLD_LEN   = 2
 
 OBJ
 
-    ser:    "com.serial.terminal.ansi"
     cfg:    "boardcfg.p2eval"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
     radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
 
 PUB main() | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
 
-    ser.start(SER_BAUD)
+    ser.start()
     ifnot ( radio.start() )
         ser.strln(@"NRF24L01 driver failed to start")
         { double-check I/O pins if the driver doesn't start }
