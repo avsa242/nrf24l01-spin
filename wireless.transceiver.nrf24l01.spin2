@@ -1,42 +1,45 @@
 {
-    --------------------------------------------
-    Filename: wireless.transceiver.nrf24l01.spin2
-    Author: Jesse Burt
-    Description: Driver for Nordic Semi. nRF24L01+ (P2 version)
-    Copyright (c) 2023
-    Started Nov 2, 2019
-    Updated Jul 15, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       wireless.transceiver.nrf24l01.spin
+    Description:    Driver for Nordic Semi. nRF24L01+
+    Author:         Jesse Burt
+    Started:        Jan 6, 2019
+    Updated:        Aug 26, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
 
+    { default I/O settings; these can be overridden in the parent object }
+    CE              = 0
+    CS              = 1
+    SCK             = 2
+    MOSI            = 3
+    MISO            = 4
+    SPI_FREQ        = 1_000_000
+
+    ' limits
     PAYLD_LEN_MAX   = 32
 
-    TX              = 0
-    RX              = 1
 
-' RXAddr and TXAddr constants
+    ' RXAddr and TXAddr constants
     READ            = 0
     WRITE           = 1
 
-' Interrupt flags
+    ' Interrupt flags (use with int_mask(), int_clear() )
     INT_PAYLD_RDY   = 1 << 2
     INT_PAYLD_SENT  = 1 << 1
     INT_MAX_RETRANS = 1 << 0
 
-' Packet length modes
+    ' Packet length modes
     PKTLEN_FIXED    = 0
     PKTLEN_VAR      = 1
 
-    { default I/O settings; these can be overridden in the parent object }
-    CE          = 0
-    CS          = 1
-    SCK         = 2
-    MOSI        = 3
-    MISO        = 4
-    SPI_FREQ    = 1_000_000
+
+    TX              = 0
+    RX              = 1
+
 
 VAR
 
@@ -44,31 +47,42 @@ VAR
     word _status
     byte _tx_cmd
     byte _pipe_nr
+    byte _defer_tx
+
 
 OBJ
 
-    spi     : "com.spi.25mhz"                   ' smart-pin SPI engine (20MHz+)
-    core    : "core.con.nrf24l01"               ' hw-specific constants
+    spi:    "com.spi.25mhz"                     ' SPI engine
+    core:   "core.con.nrf24l01"                 ' hw-specific constants
+
 
 PUB null()
 ' This is not a top-level object
+
 
 PUB start(): status
 ' Start the driver using default I/O settings
     return startx(CE, CS, SCK, MOSI, MISO, SPI_FREQ)
 
-PUB startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): status | tmp[2], i
+
+PUB startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ): status | tmp[2], i
 ' Start using custom I/O settings
+'   CE_PIN:     Chip Enable
+'   CS_PIN:     SPI chip select
+'   SCK_PIN:    SPI Clock
+'   MOSI_PIN:   SPI Master-Out Slave-In
+'   MISO_PIN:   SPI Master-In Slave-Out
+'   Returns:
+'       cogid+1 of SPI engine on success
+'       0 on failure
     if ( lookdown(CE_PIN: 0..63) and lookdown(CS_PIN: 0..63) and lookdown(SCK_PIN: 0..63) and ...
         lookdown(MOSI_PIN: 0..63) and lookdown(MISO_PIN: 0..63) )
         if ( status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, core.SPI_MODE, SCK_HZ) )
             longmove(@_CE, @CE_PIN, 2)
             waitus(core.TPOR)
             waitus(core.TPD2STBY)
-
             pinl(_CE)
             pinh(_CS)
-
             defaults()                          ' nRF24L01+ has no RESET pin,
                                                 '   so set defaults
             rx_addr(@tmp, 0, READ)              ' there's also no device ID, so
@@ -81,11 +95,13 @@ PUB startx(CE_PIN, CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): statu
     ' Lastly - make sure you have at least one free core/cog
     return FALSE
 
+
 PUB stop()
 ' Stop the driver
     pinf(_CS)
     pinf(_CE)
     spi.deinit()
+
 
 PUB defaults() | pipe_nr
 ' The nRF24L01+ has no RESET pin or function to restore the chip to a known initial operating state,
@@ -125,8 +141,10 @@ PUB defaults() | pipe_nr
     dyn_payld_len_ena(%000000)
     payld_len_cfg(PKTLEN_FIXED)
     payld_in_ack_ena(FALSE)
-    _tx_cmd := core#CMD_W_TX_PAYLOAD
+    _tx_cmd := core.CMD_W_TX_PAYLOAD
     _pipe_nr := 0
+    _defer_tx := false                          ' when writing a payload, transmit it immediately
+
 
 PUB preset_rx250k()
 ' Receive mode, 250kbps (AutoAck enabled)
@@ -138,6 +156,7 @@ PUB preset_rx250k()
     auto_ack_pipes_ena(%111111)
     data_rate(250_000)
 
+
 PUB preset_rx250k_noaa()
 ' Receive mode, 250kbps (AutoAck disabled)
     rx_mode()
@@ -147,6 +166,7 @@ PUB preset_rx250k_noaa()
     pipes_ena(%000011)
     auto_ack_pipes_ena(%000000)
     data_rate(250_000)
+
 
 PUB preset_rx1m()
 ' Receive mode, 1Mbps (AutoAck enabled)
@@ -158,6 +178,7 @@ PUB preset_rx1m()
     auto_ack_pipes_ena(%111111)
     data_rate(1_000_000)
 
+
 PUB preset_rx1m_noaa()
 ' Receive mode, 1Mbps (AutoAck disabled)
     rx_mode()
@@ -167,6 +188,7 @@ PUB preset_rx1m_noaa()
     pipes_ena(%000011)
     auto_ack_pipes_ena(%000000)
     data_rate(1_000_000)
+
 
 PUB preset_rx2m()
 ' Receive mode, 2Mbps (AutoAck enabled)
@@ -178,6 +200,7 @@ PUB preset_rx2m()
     auto_ack_pipes_ena(%111111)
     data_rate(2_000_000)
 
+
 PUB preset_rx2m_noaa()
 ' Receive mode, 2Mbps (AutoAck disabled)
     rx_mode()
@@ -187,6 +210,7 @@ PUB preset_rx2m_noaa()
     pipes_ena(%000011)
     auto_ack_pipes_ena(%000000)
     data_rate(2_000_000)
+
 
 PUB preset_tx250k()
 ' Transmit mode, 250kbps (AutoAck enabled)
@@ -198,6 +222,7 @@ PUB preset_tx250k()
     data_rate(250_000)
     auto_retrans_dly(1500)                   ' covers worst-case
 
+
 PUB preset_tx250k_noaa()
 ' Transmit mode, 250kbps (AutoAck disabled)
     tx_mode()
@@ -206,6 +231,7 @@ PUB preset_tx250k_noaa()
     auto_ack_pipes_ena(%000000)
     int_clear(%111)
     data_rate(250_000)
+
 
 PUB preset_tx1m()
 ' Transmit mode, 1Mbit (AutoAck enabled)
@@ -217,6 +243,7 @@ PUB preset_tx1m()
     data_rate(1_000_000)
     auto_retrans_dly(500)                    ' covers worst-case
 
+
 PUB preset_tx1m_noaa()
 ' Transmit mode, 1Mbit (AutoAck disabled)
     tx_mode()
@@ -225,6 +252,7 @@ PUB preset_tx1m_noaa()
     auto_ack_pipes_ena(%000000)
     int_clear(%111)
     data_rate(1_000_000)
+
 
 PUB preset_tx2m()
 ' Transmit mode, 2Mbit (AutoAck enabled)
@@ -236,6 +264,7 @@ PUB preset_tx2m()
     data_rate(2_000_000)
     auto_retrans_dly(500)                    ' covers worst-case
 
+
 PUB preset_tx2m_noaa()
 ' Transmit mode, 2Mbit (AutoAck disabled)
     tx_mode()
@@ -245,22 +274,12 @@ PUB preset_tx2m_noaa()
     int_clear(%111)
     data_rate(2_000_000)
 
-PUB chip_ena(state)
-' Set state of nRF24L01+ Chip Enable pin
-'   Valid values:
-'       TX mode:
-'           0: Enter Idle mode
-'           1: Initiate transmission of queued data
-'       RX mode:
-'           0: Enter Idle mode
-'           1: Active receive mode
-    pinw(_CE, state)
-    waitus(core.THCE)
 
 PUB ack_next()
 ' Acknowledge the next payload
 '   NOTE: Use to resume normal auto-acknowledgement of packets after dont_ack_next() is called
-    _tx_cmd := core#CMD_W_TX_PAYLOAD            ' change the TX command strobe for the next payload
+    _tx_cmd := core.CMD_W_TX_PAYLOAD            ' change the TX command strobe for the next payload
+
 
 PUB after_rx(next_state)
 ' Define state to transition to after packet rcvd
@@ -272,6 +291,7 @@ PUB after_rx(next_state)
         idle()
     else
         chip_ena(1)
+
 
 PUB auto_ack_pipes_ena(pipe_mask=-2): curr_mask
 ' Enable the Auto Acknowledgement function
@@ -292,6 +312,7 @@ PUB auto_ack_pipes_ena(pipe_mask=-2): curr_mask
             readreg(core.EN_AA, 1, @curr_mask)
             return (curr_mask & core.EN_AA_MASK)
 
+
 PUB auto_retrans_cnt(tries=-2): curr_tries
 ' Setup of automatic retransmission - Auto Retransmit Count
 ' Defines number of attempts to re-transmit on fail of Auto-Acknowledge
@@ -301,11 +322,11 @@ PUB auto_retrans_cnt(tries=-2): curr_tries
     readreg(core.SETUP_RETR, 1, @curr_tries)
     case tries
         0..15:
+            tries := ((curr_tries & core.ARC_MASK) | tries)
+            writereg(core.SETUP_RETR, 1, @tries)
         other:
             return (curr_tries & core.ARC_BITS)
 
-    tries := ((curr_tries & core.ARC_MASK) | tries)
-    writereg(core.SETUP_RETR, 1, @tries)
 
 PUB auto_retrans_dly(delay_us=-2): curr_dly
 ' Setup of automatic retransmission - Auto Retransmit Delay, in microseconds
@@ -328,12 +349,12 @@ PUB auto_retrans_dly(delay_us=-2): curr_dly
     case delay_us
         250..4000:
             delay_us := ((delay_us / 250) - 1) << core.ARD
+            delay_us := ((curr_dly & core.ARD_MASK) | delay_us)
+            writereg(core.SETUP_RETR, 1, @delay_us)
         other:
             curr_dly := (((curr_dly >> core.ARD) & core.ARD_BITS) + 1)
             return (curr_dly * 250)
 
-    delay_us := ((curr_dly & core.ARD_MASK) | delay_us)
-    writereg(core.SETUP_RETR, 1, @delay_us)
 
 PUB rpd = carrier_detected
 PUB carrier_detected(): flag
@@ -345,6 +366,7 @@ PUB carrier_detected(): flag
     readreg(core.RPD, 1, @flag)
     return (flag == 1)
 
+
 PUB carrier_freq(freq=-2): curr_freq
 ' Set carrier frequency, in kHz
 '   Valid values: 2_400_000..2_525_000 (default: 2_402_000)
@@ -355,6 +377,7 @@ PUB carrier_freq(freq=-2): curr_freq
         other:
             return ( (2_400 + channel()) * 1_000)
 
+
 PUB channel(number=-2): curr_chan
 ' Set RF channel
 '   Valid values: 0..125 (default: 2)
@@ -363,7 +386,22 @@ PUB channel(number=-2): curr_chan
         0..125:
             writereg(core.RF_CH, 1, @number)
         other:
+            curr_chan := 0
             readreg(core.RF_CH, 1, @curr_chan)
+
+
+PUB chip_ena(state)
+' Set state of nRF24L01+ Chip Enable pin
+'   Valid values:
+'       TX mode:
+'           0: Enter Idle mode
+'           1: Initiate transmission of queued data
+'       RX mode:
+'           0: Enter Idle mode
+'           1: Active receive mode
+    pinw(_CE, state)
+    waitus(core.THCE)
+
 
 PUB crc_check_ena(state=-2): curr_state
 ' Enable CRC
@@ -375,11 +413,11 @@ PUB crc_check_ena(state=-2): curr_state
     case abs(state)
         0, 1:
             state := abs(state) << core.EN_CRC
+            state := ((curr_state & core.EN_CRC_MASK) | state)
+            writereg(core.CFG, 1, @state)
         other:
             return (((curr_state >> core.EN_CRC) & 1) == 1)
 
-    state := ((curr_state & core.EN_CRC_MASK) | state)
-    writereg(core.CFG, 1, @state)
 
 PUB crc_len(length=-2): curr_len
 ' Set CRC length, in bytes
@@ -390,11 +428,11 @@ PUB crc_len(length=-2): curr_len
     case length
         1, 2:
             length := (length-1) << core.CRCO
+            length := ((curr_len & core.CRCO_MASK) | length)
+            writereg(core.CFG, 1, @length)
         other:
             return (((curr_len >> core.CRCO) & 1) + 1)
 
-    length := ((curr_len & core.CRCO_MASK) | length)
-    writereg(core.CFG, 1, @length)
 
 PUB data_rate(rate=-2): curr_rate
 ' Set RF data rate, in bps
@@ -418,13 +456,27 @@ PUB data_rate(rate=-2): curr_rate
 
     writereg(core.RF_SETUP, 1, @curr_rate)
 
+
+PUB defer_tx(s=true)
+' Defer payloads queued for transmission until manually triggered
+'   Valid values: TRUE (non-zero values), FALSE (0)
+    if ( s )
+        ' transmissions queued with tx_payld() will be deferred for transmission over the air
+        '   until chip_ena() is called with 1
+        _defer_tx := 1
+    else
+        ' transmissions queued will be transmitted immediately after queuing
+        _defer_tx := 0
+
+
 PUB dont_ack_next()
 ' Instruct the remote receiving node not to acknowledge the next payload sent
 '   NOTE: This is ignored if auto_ack_pipes_ena() is zero
 '   NOTE: This setting persists until disabled with ack_next()
 '   NOTE: The instruction will be sent at the time the payload is sent
 '   NOTE: dyn_ack_ena() must be set to TRUE for this setting to be effective
-    _tx_cmd := core#CMD_W_TX_PAYLOAD_NOACK      ' change the TX command strobe for the next payload
+    _tx_cmd := core.CMD_W_TX_PAYLOAD_NOACK      ' change the TX command strobe for the next payload
+
 
 PUB dyn_ack_ena(state=-2): curr_state
 ' Enable selective auto-acknowledge feature
@@ -436,11 +488,11 @@ PUB dyn_ack_ena(state=-2): curr_state
     case abs(state)
         0, 1:
             state := abs(state) << core.EN_DYN_ACK
+            state := ((curr_state & core.EN_DYN_ACK_MASK) | state)
+            writereg(core.FEAT, 1, @state)
         other:
             return (((curr_state >> core.EN_DYN_ACK) & 1) == 1)
 
-    state := ((curr_state & core.EN_DYN_ACK_MASK) | state)
-    writereg(core.FEAT, 1, @state)
 
 PUB dyn_payld_len_ena(mask=-2): curr_mask
 ' Control which data pipes (0 through 5) have dynamic payload length enabled, using a 6-bit mask
@@ -455,15 +507,24 @@ PUB dyn_payld_len_ena(mask=-2): curr_mask
             readreg(core.DYNPD, 1, @curr_mask)
             return (curr_mask & core.DYNPD_MASK)
 
+
+PUB fifo_rx_bytes(): c
+' Get number of bytes in receive FIFO
+    c := 0
+    readreg(core.CMD_R_RX_PL_WID, 1, @c)
+
+
 PUB flush_rx()
 ' Flush receive FIFO buffer
     writereg(core.CMD_FLUSH_RX, 0, 0)
+
 
 PUB flush_tx()
 ' Flush transmit FIFO buffer
     writereg(core.CMD_FLUSH_TX, 0, 0)
 
-PUB freq_dev(freq): curr_freq
+
+PUB freq_dev(freq=-2): curr_freq
 ' Set frequency deviation, in Hz
 '   NOTE: Read-only, for compatibility only
     case data_rate()
@@ -472,9 +533,11 @@ PUB freq_dev(freq): curr_freq
         2_000_000:
             return 320_000
 
+
 PUB idle()
 ' Set to idle state
     pinl(_CE)
+
 
 PUB int_clear(mask)
 ' Clear interrupts
@@ -492,6 +555,7 @@ PUB int_clear(mask)
         other:
             return
 
+
 PUB int_mask(mask=-2): curr_mask
 ' Control which events will trigger an interrupt on the IRQ pin,
 '   Valid values: [bits 2..0]
@@ -506,11 +570,11 @@ PUB int_mask(mask=-2): curr_mask
     case mask
         %000..%111:
             mask := (!mask) << core.MASKINT     ' invert bits: chip internal
+            mask := ((curr_mask & core.MASKINT_MASK) | mask)
+            writereg(core.CFG, 1, @mask)
         other:                                  '   logic is inverse
             return !((curr_mask >> core.MASKINT) & core.MASKINT_BITS)
 
-    mask := ((curr_mask & core.MASKINT_MASK) | mask)
-    writereg(core.CFG, 1, @mask)
 
 PUB lost_pkts(): pkt_cnt
 ' Count lost packets
@@ -519,6 +583,7 @@ PUB lost_pkts(): pkt_cnt
 '   NOTE: To reset, re-set the Channel or CarrierFreq
     readreg(core.OBSERVE_TX, 1, @pkt_cnt)
     return ((pkt_cnt >> core.PLOS_CNT) & core.PLOS_CNT_BITS)
+
 
 PUB max_retrans_reached(): flag
 ' Flag indicating maximum number of retransmit attempts reached
@@ -530,6 +595,7 @@ PUB max_retrans_reached(): flag
     readreg(core.STATUS, 1, @flag)
     return (((flag >> core.MAX_RT) & 1) == 1)
 
+
 PUB node_addr(ptr_addr)
 ' Set node address
 '   NOTE: This sets the address for Receive pipe 0 as well as the Transmit
@@ -537,12 +603,14 @@ PUB node_addr(ptr_addr)
     rx_addr(ptr_addr, 0, WRITE)
     tx_addr(ptr_addr, WRITE)
 
+
 PUB pkts_retrans(): pkt_cnt
 ' Count retransmitted packets
 '   Returns: Number of packets retransmitted since the start of transmission
 '       of a new packet
     readreg(core.OBSERVE_TX, 1, @pkt_cnt)
     return (pkt_cnt & core.ARC_CNT)
+
 
 PUB payld_in_ack_ena(state=-2): curr_state
 ' Enable payload from RX node within ACK packet
@@ -561,11 +629,11 @@ PUB payld_in_ack_ena(state=-2): curr_state
     case abs(state)
         0, 1:
             state := abs(state) << core.EN_ACK_PAY
+            state := ((curr_state & core.EN_ACK_PAY_MASK) | state)
+            writereg(core.FEAT, 1, @state)
         other:
             return (((curr_state >> core.EN_ACK_PAY) & 1) == 1)
 
-    state := ((curr_state & core.EN_ACK_PAY_MASK) | state)
-    writereg(core.FEAT, 1, @state)
 
 PUB payld_len(length=-2): curr_len
 ' Set length of static payload, in bytes
@@ -582,6 +650,7 @@ PUB payld_len(length=-2): curr_len
         other:
             return (curr_len & core.RX_PW_BITS)
 
+
 PUB payld_len_cfg(mode=-2): curr_mode
 ' Set packet length mode
 '   Valid values:
@@ -594,11 +663,11 @@ PUB payld_len_cfg(mode=-2): curr_mode
     case abs(mode)
         0, 1:
             mode := abs(mode) << core.EN_DPL
+            mode := ((curr_mode & core.EN_DPL_MASK) | mode)
+            writereg(core.FEAT, 1, @mode)
         other:
             return (((curr_mode >> core.EN_DPL) & 1) == 1)
 
-    mode := ((curr_mode & core.EN_DPL_MASK) | mode)
-    writereg(core.FEAT, 1, @mode)
 
 PUB payld_rdy(): flag
 ' Flag indicating received payload ready
@@ -607,12 +676,14 @@ PUB payld_rdy(): flag
     readreg(core.STATUS, 1, @flag)
     return (((flag >> core.RX_DR) & 1) == 1)
 
+
 PUB payld_sent(): flag
 ' Flag indicating transmitted payload sent
 '   (and acknowledged by receiver, if auto-ack is in use)
     flag := 0
     readreg(core.STATUS, 1, @flag)
     return (((flag >> core.TX_DS) & 1) == 1)
+
 
 PUB pipes_ena(mask=-2): curr_mask
 ' Control which data pipes (0 through 5) are enabled, using a 6-bit mask
@@ -627,6 +698,7 @@ PUB pipes_ena(mask=-2): curr_mask
             readreg(core.EN_RXADDR, 1, @curr_mask)
             return (curr_mask & core.EN_ADDR_MASK)
 
+
 PUB pll_lock(state=-2): curr_state
 ' Force PLL Lock signal (intended for testing only)
 '   Valid values: TRUE (-1 or 1), FALSE (0) (default: FALSE)
@@ -636,11 +708,11 @@ PUB pll_lock(state=-2): curr_state
     case abs(state)
         0, 1:
             state := abs(state) << core.PLL_LOCK
+            state := ((curr_state & core.PLL_LOCK_MASK) | state)
+            writereg(core.RF_SETUP, 1, @state)
         other:
             return (((curr_state >> core.PLL_LOCK) & 1) == 1)
 
-    state := ((curr_state & core.PLL_LOCK_MASK) | state)
-    writereg(core.RF_SETUP, 1, @state)
 
 PUB powered(state=-2): curr_state
 ' Power on or off
@@ -651,11 +723,11 @@ PUB powered(state=-2): curr_state
     case abs(state)
         0, 1:
             state := abs(state) << core.PWR_UP
+            state := ((curr_state & core.PWR_UP_MASK) | state)
+            writereg(core.CFG, 1, @state)
         other:
             return (((curr_state >> core.PWR_UP) & 1) == 1)
 
-    state := ((curr_state & core.PWR_UP_MASK) | state)
-    writereg(core.CFG, 1, @state)
 
 PUB rssi(): level
 ' RSSI (emulated)
@@ -666,6 +738,7 @@ PUB rssi(): level
         return -64
     else
         return -255
+
 
 PUB rx_addr(ptr_buff, pipe=0, rw=0) ' kept for legacy compatibility
 ' Set receive address of pipe number 'pipe' from buffer at address ptr_buff
@@ -705,7 +778,8 @@ PUB rx_addr(ptr_buff, pipe=0, rw=0) ' kept for legacy compatibility
         other:                                  ' Invalid pipe
             return
 
-PUB rx_bw(bw): curr_bw
+
+PUB rx_bw(bw=-2): curr_bw
 ' Set transceiver bandwidth, in Hz
 '   NOTE: Read-only, for compatibility only
     case data_rate()
@@ -713,6 +787,7 @@ PUB rx_bw(bw): curr_bw
             return 1_000_000
         2_000_000:
             return 2_000_000
+
 
 PUB rx_fifo_empty(): flag
 ' Flag indicating RX FIFO empty
@@ -723,6 +798,7 @@ PUB rx_fifo_empty(): flag
     readreg(core.FIFO_STATUS, 1, @flag)
     return ((flag & 1) == 1)
 
+
 PUB rx_fifo_full(): flag
 ' Flag indicating RX FIFO full
 '   Returns:
@@ -732,10 +808,12 @@ PUB rx_fifo_full(): flag
     readreg(core.FIFO_STATUS, 1, @flag)
     return (((flag >> core.RXFIFO_FULL) & 1) == 1)
 
+
 PUB rx_mode()
 ' Change chip state to RX (receive)
     rx_tx(RX)
     pinh(_CE)
+
 
 PUB rx_payld(nr_bytes, ptr_buff)
 ' Receive payload stored in FIFO
@@ -744,10 +822,12 @@ PUB rx_payld(nr_bytes, ptr_buff)
 '   Any other value is ignored
     readreg(core.CMD_R_RX_PAYLOAD, (1 #> nr_bytes <# 32), ptr_buff)
 
+
 PUB rx_pipe_pending(): pipe_nr
 ' Returns pipe number of pending data available in FIFO
 '   Returns: Pipe number 0..5, or 7 if FIFO is empty
     return ((nrf_status() >> core.RX_P_NO) & core.RX_P_NO_BITS)
+
 
 PUB rx_tx(role=-2): curr_role
 ' Set to Primary RX or TX
@@ -758,20 +838,22 @@ PUB rx_tx(role=-2): curr_role
     case role
         0, 1:
             role := role << core.PRIM_RX
+            role := ((curr_role & core.PRIM_RX_MASK) | role)
+            writereg(core.CFG, 1, @role)
         other:
             return ((curr_role >> core.PRIM_RX) & 1)
 
-    role := ((curr_role & core.PRIM_RX_MASK) | role)
-    writereg(core.CFG, 1, @role)
 
 PUB set_pipe_nr(pipe_nr)
 ' Set pipe number for subsequent function calls
 '   Valid values: 0..5 (clamped to range)
     _pipe_nr := 0 #> pipe_nr <# 5
 
+
 PUB sleep()
 ' Power down chip
     powered(FALSE)
+
 
 PUB syncwd(ptr_syncwd) | addr_w
 ' Get syncword
@@ -788,6 +870,7 @@ PUB syncwd(ptr_syncwd) | addr_w
         2..5:
             readreg(core.RX_ADDR_P0 + _pipe_nr, 1, ptr_syncwd)
 
+
 PUB set_syncwd(ptr_syncwd) | addr_w
 ' Set syncword
 '   ptr_syncwd: pointer to syncword bytes
@@ -798,10 +881,11 @@ PUB set_syncwd(ptr_syncwd) | addr_w
     case _pipe_nr
         0, 1:
             addr_w := syncwd_len(-2)
-            writereg(core#RX_ADDR_P0 + _pipe_nr, addr_w, ptr_syncwd)
+            writereg(core.RX_ADDR_P0 + _pipe_nr, addr_w, ptr_syncwd)
         2..5:                                   ' Pipes 2..5 are limited to 1 byte (hdw limit)
-            writereg(core#RX_ADDR_P0 + _pipe_nr, 1, ptr_syncwd)
-    writereg(core#TX_ADDR, 5, ptr_syncwd)
+            writereg(core.RX_ADDR_P0 + _pipe_nr, 1, ptr_syncwd)
+    writereg(core.TX_ADDR, 5, ptr_syncwd)
+
 
 PUB addr_width = syncwd_len
 PUB syncwd_len(l=-2): curr_width
@@ -813,11 +897,11 @@ PUB syncwd_len(l=-2): curr_width
     case l
         3, 4, 5:
             l -= 2                              ' adjust to bitfield value
+            l := ((curr_width & core.AW_MASK) | l)
+            writereg(core.SETUP_AW, 1, @l)
         other:
             return ((curr_width & core.AW_BITS) + 2)
 
-    l := ((curr_width & core.AW_MASK) | l)
-    writereg(core.SETUP_AW, 1, @l)
 
 PUB test_cw(state=-2): curr_state
 ' Enable continuous carrier transmit (intended for testing only)
@@ -828,11 +912,11 @@ PUB test_cw(state=-2): curr_state
     case abs(state)
         0, 1:
             state := abs(state) << core.CONT_WAVE
+            state := ((curr_state & core.CONT_WAVE_MASK) | state)
+            writereg(core.RF_SETUP, 1, @state)
         other:
             return (((curr_state >> core.CONT_WAVE) & 1) == 1)
 
-    state := ((curr_state & core.CONT_WAVE_MASK) | state)
-    writereg(core.RF_SETUP, 1, @state)
 
 PUB tx_addr(ptr_addr, rw=0)
 ' Set transmit address
@@ -852,29 +936,35 @@ PUB tx_addr(ptr_addr, rw=0)
             readreg(core.TX_ADDR, 5, ptr_addr)
             return
 
+
 PUB tx_fifo_empty(): flag
 ' Flag indicating TX FIFO empty
 '   Returns TRUE if empty, FALSE if there's data in TX FIFO
     readreg(core.FIFO_STATUS, 1, @flag)
     return (((flag >> core.TXFIFO_EMPTY) & 1) == 1)
 
+
 PUB tx_fifo_full(): flag
 ' Flag indicating TX FIFO full
 '   Returns: TRUE if full, FALSE if locations available in TX FIFO
     return ((nrf_status() & 1) == 1)
 
+
 PUB tx_mode()
 ' Change chip state to TX (transmit)
     rx_tx(TX)
+
 
 PUB tx_payld(nr_bytes, ptr_buff)
 ' Queue payload to be transmitted
 '   Valid values:
 '       nr_bytes: 1..32 (clamped to range)
     writereg(_tx_cmd, (1 #> nr_bytes <# 32), ptr_buff)
-    pinh(_CE)
-    waitus(core.THCE)
-    pinl(_CE)
+    ifnot ( _defer_tx )
+        pinh(_CE)
+        waitus(core.THCE)
+        pinl(_CE)
+
 
 PUB tx_pwr(pwr=-2): curr_pwr
 ' Set transmit mode RF output power, in dBm
@@ -887,12 +977,12 @@ PUB tx_pwr(pwr=-2): curr_pwr
         -18, -12, -6, 0:
             pwr := lookdownz(pwr: -18, -12, -6, 0)
             pwr := pwr << core.RF_PWR
+            pwr := ((curr_pwr & core.RF_PWR_MASK) | pwr)
+            writereg(core.RF_SETUP, 1, @pwr)
         other:
             curr_pwr := ((curr_pwr >> core.RF_PWR) & core.RF_PWR_BITS)
             return lookupz(curr_pwr: -18, -12, -6, 0)
 
-    pwr := ((curr_pwr & core.RF_PWR_MASK) | pwr)
-    writereg(core.RF_SETUP, 1, @pwr)
 
 PUB tx_will_reuse(): flag
 ' Flag indicating last transmitted payload is to be re-used
@@ -901,66 +991,76 @@ PUB tx_will_reuse(): flag
     readreg(core.FIFO_STATUS, 1, @flag)
     return (((flag >> core.TXFIFO_REUSE) & 1) == 1)
 
+
 PRI nrf_status(): nrf_status
 ' Interrupt and data available status
     readreg(core.STATUS, 1, @nrf_status)
+
 
 PRI writereg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
     case reg_nr
         core.CMD_W_TX_PAYLOAD:
             pinl(_CS)
-            spi.wr_byte(reg_nr)
-            spi.wrblock_lsbf(ptr_buff, nr_bytes)
+                spi.wr_byte(reg_nr)
+                spi.wrblock_lsbf(ptr_buff, nr_bytes)
             pinh(_CS)
         core.CMD_FLUSH_TX, core.CMD_FLUSH_RX:
             pinl(_CS)
-            spi.wr_byte(reg_nr)
+                spi.wr_byte(reg_nr)
             pinh(_CS)
         $00..$17, $1C..$1D:
             reg_nr |= core.W_REG
             case nr_bytes
                 0:
                     pinl(_CS)
-                    spi.wr_byte(reg_nr)
+                        spi.wr_byte(reg_nr)
                     pinh(_CS)
                 1..5:
                     pinl(_CS)
-                    spi.wr_byte(reg_nr)
-                    spi.wrblock_lsbf(ptr_buff, nr_bytes)
+                        spi.wr_byte(reg_nr)
+                        spi.wrblock_lsbf(ptr_buff, nr_bytes)
                     pinh(_CS)
                 other:
                     return
         other:
             return
 
-PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
+
+PRI readreg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Read nr_bytes from device into ptr_buff
     case reg_nr
         core.CMD_R_RX_PAYLOAD:
             pinl(_CS)
-            spi.wr_byte(reg_nr)
-            spi.rdblock_lsbf(ptr_buff, nr_bytes)
+                spi.wr_byte(reg_nr)
+                spi.rdblock_lsbf(ptr_buff, nr_bytes)
+            pinh(_CS)
+        core.CMD_R_RX_PL_WID:
+            pinl(_CS)
+                spi.wr_byte(reg_nr)
+                spi.rdblock_lsbf(ptr_buff, 1)
             pinh(_CS)
         core.RPD:
             pinl(_CS)
-            spi.wr_byte(reg_nr)
-            byte[ptr_buff][0] := spi.rd_byte()
+                spi.wr_byte(reg_nr)
+                byte[ptr_buff][0] := spi.rd_byte()
             pinh(_CS)
         $00..$08, $0A..$17, $1C..$1D:
             case nr_bytes
                 1..5:
                     pinl(_CS)
-                    spi.wr_byte(reg_nr)
-                    spi.rdblock_lsbf(ptr_buff, nr_bytes)
+                        spi.wr_byte(reg_nr)
+                        spi.rdblock_lsbf(ptr_buff, nr_bytes)
                     pinh(_CS)
                 other:
                     return
         other:
             return
+
+
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

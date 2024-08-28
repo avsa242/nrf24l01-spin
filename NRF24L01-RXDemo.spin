@@ -1,31 +1,31 @@
 {
-    --------------------------------------------
-    Filename: NRF24L01-RXDemo.spin
-    Author: Jesse Burt 
-    Description: nRF24L01+ Receive demo
-        Will display data from all 6 data pipes
-    Copyright (c) 2023
-    Started Nov 23, 2019
-    Updated Dec 31, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       NRF24L01-RXDemo.spin
+    Description:    nRF24L01+ Receive demo
+        * Will display data from all 6 data pipes
+    Author:         Jesse Burt
+    Started:        Nov 23, 2019
+    Updated:        Aug 26, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
 
-    _clkmode    = cfg#_clkmode
-    _xinfreq    = cfg#_xinfreq
+    _clkmode    = xtal1+pll16x
+    _xinfreq    = 5_000_000
 
 ' -- User-modifiable constants
     CHANNEL     = 2                             ' 0..125
 ' --
 
+
 OBJ
 
-    cfg:    "boardcfg.flip"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    nrf24:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
+    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
     time:   "time"
+
 
 VAR
 
@@ -33,38 +33,39 @@ VAR
     byte _payld_len
     byte _syncwd[5]
 
-PUB main{} | payld_cnt, recv_pipe, pipe_nr
 
-    setup{}                                     ' start serial term. and nRF24
+PUB main() | payld_cnt, recv_pipe, pipe_nr
+
+    setup()                                     ' start serial term. and nRF24
 
 ' -- User-modifiable settings (NOTE: These settings _must_ match the transmit side) }
-    nrf24.channel(CHANNEL)
+    radio.channel(CHANNEL)
 
     _payld_len := 8                             ' 1..32
 
     { set syncword (note: order in string() is LSB, ..., MSB) }
-    nrf24.set_pipe_nr(0)
-    nrf24.set_syncwd(string($e7, $e7, $e7, $e7, $e7))
+    radio.set_pipe_nr(0)
+    radio.set_syncwd(string($e7, $e7, $e7, $e7, $e7))
 
     ' choose a receive mode preset (250kbps, 1Mbps, 2Mbps)
     '   with optional Auto-Ack/ShockBurst  (power-on default)
-'    nrf24.preset_rx250k{}                       ' 250kbps
-'    nrf24.preset_rx250k_noaa{}                  ' 250kbps, No Auto-Ack
-'    nrf24.preset_1m{}                           ' 1Mbps
-'    nrf24.preset_1m_noaa{}                      ' 1Mbps, No Auto-Ack
-    nrf24.preset_rx2m{}                         ' 2Mbps
-'    nrf24.preset_rx2m_noaa{}                    ' 2Mbps, No Auto-Ack
+'    radio.preset_rx250k()                       ' 250kbps
+'    radio.preset_rx250k_noaa()                  ' 250kbps, No Auto-Ack
+'    radio.preset_1m()                           ' 1Mbps
+'    radio.preset_1m_noaa()                      ' 1Mbps, No Auto-Ack
+    radio.preset_rx2m()                         ' 2Mbps
+'    radio.preset_rx2m_noaa()                    ' 2Mbps, No Auto-Ack
 ' --
 
     { set all pipes to the same payload length }
     repeat pipe_nr from 0 to 5
-        nrf24.set_pipe_nr(pipe_nr)
-        nrf24.payld_len(_payld_len)
+        radio.set_pipe_nr(pipe_nr)
+        radio.payld_len(_payld_len)
 
-    ser.clear{}
+    ser.clear()
     ser.pos_xy(0, 0)
-    ser.printf1(string("Receive mode (channel %d)\n\r"), nrf24.channel(-2))
-    ser.strln(string("Listening for transmitters..."))
+    ser.printf1(@"Receive mode (channel %d)\n\r", radio.channel())
+    ser.strln(@"Listening for transmitters...")
 
     payld_cnt := 0
     repeat
@@ -72,40 +73,43 @@ PUB main{} | payld_cnt, recv_pipe, pipe_nr
         bytefill(@_payload, 0, 32)
         repeat
             ser.pos_xy(0, 3)
-            ser.printf1(string("Payloads received: %d "), payld_cnt)
-        until nrf24.payld_rdy{}
+            ser.printf1(@"Payloads received: %d ", payld_cnt)
+        until radio.payld_rdy()
 
         { check which pipe the data was received in and retrieve the payload into local buffer }
-        recv_pipe := nrf24.rx_pipe_pending{}
-        nrf24.syncwd(@_syncwd)
-        nrf24.rx_payld(_payld_len, @_payload)
+        recv_pipe := radio.rx_pipe_pending()
+        radio.syncwd(@_syncwd)
+        radio.rx_payld(_payld_len, @_payload)
         payld_cnt++
 
         { display payload received through each pipe number on a separate line }
         ser.pos_xy(0, 5 + (recv_pipe * 4))
-        ser.printf1(string("Received packet on pipe %d "), recv_pipe)
-        ser.printf5(string("(%02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r"), {
-}       _syncwd[4], _syncwd[3], _syncwd[2], _syncwd[1], _syncwd[0])
+        ser.printf1(@"Received packet on pipe %d ", recv_pipe)
+        ser.printf5(@"(%02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r",_syncwd[4], ...
+                                                                _syncwd[3], ...
+                                                                _syncwd[2], ...
+                                                                _syncwd[1], ...
+                                                                _syncwd[0])
         ser.hexdump(@_payload, 0, 4, _payld_len, _payld_len)
 
         { clear interrupt and receive buffer for next loop }
-        nrf24.int_clear(nrf24#INT_PAYLD_RDY)
-        nrf24.flush_rx{}
+        radio.int_clear(radio.INT_PAYLD_RDY)
+        radio.flush_rx()
 
-PUB setup{}
+
+PUB setup()
 
     ser.start()
     time.msleep(30)
-    if ( nrf24.start() )
-        ser.strln(string("nRF24L01+ driver started"))
+    if ( radio.start() )
+        ser.strln(@"nRF24L01+ driver started")
     else
-        ser.strln(string("nRF24L01+ driver failed to start - halting"))
+        ser.strln(@"nRF24L01+ driver failed to start - halting")
         repeat
 
 DAT
-
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

@@ -1,34 +1,45 @@
 {
-    --------------------------------------------
-    Filename: NRF24L01-PacketLoss-RX.spin2
-    Author: Jesse Burt 
-    Description: nRF24L01+ Receive demo (P2 version)
+----------------------------------------------------------------------------------------------------
+    Filename:       NRF24L01-PacketLoss-RX.spin2
+    Description:    nRF24L01+ Receive demo
         * Packet loss measurement
-        Run NRF24L01-PacketLoss-TX.spin2 on another node, and monitor this node
+        Run NRF24L01-PacketLoss-TX.spin on another node, and monitor this node
             for packet loss.
-    Copyright (c) 2023
-    Started Jan 5, 2023
-    Updated Dec 31, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+    Author:         Jesse Burt
+    Started:        Jan 5, 2023
+    Updated:        Aug 26, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
+#include "core.con.click.spin2"
 
 CON
 
-    _clkfreq    = cfg._clkfreq_def
-    _xtlfreq    = cfg._xtlfreq
+    _clkfreq    = 180_000_000
+    _xtlfreq    = 20_000_000
+
+' -- User-modifiable constants
+    CLICK_BASE  = 16                            ' 0, 16, 32, 48
+' --
 
     PAYLD_LEN   = 2
 
+
 OBJ
 
-    cfg:    "boardcfg.p2eval"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
-    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
+
+    { use with MikroE Click boards - define the CLICK_BASE I/O pin above and leave these as-is }
+    radio:  "wireless.transceiver.nrf24l01" | CE=RES_PIN, CS=CS_PIN, SCK=SCK_PIN, MOSI=MOSI_PIN, MISO=MISO_PIN, SPI_FREQ=10_000_000
+
+    { use custom I/O pins; comment out the line above and uncomment this one }
+'    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
+
 
 PUB main() | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
 
     ser.start()
+
     ifnot ( radio.start() )
         ser.strln(@"NRF24L01 driver failed to start")
         { double-check I/O pins if the driver doesn't start }
@@ -52,7 +63,7 @@ PUB main() | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
 
         { if the serial number of this packet is less than the previous one,
             assume the transmitter restarted, and reset the counters }
-        if (pkt_cnt < prev_cnt)
+        if ( pkt_cnt < prev_cnt )
             prev_cnt := pkt_cnt
             pkts_lost := 0
             rxcnt := 0
@@ -61,15 +72,16 @@ PUB main() | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
             we know we missed one or more packets }
         diff := (pkt_cnt-prev_cnt)
         prev_cnt := pkt_cnt
-        if (diff > 1)
+        if ( diff > 1 )
             pkts_lost := (pkts_lost + diff)
 
         { clear interrupt so RX can continue }
         radio.int_clear(radio.INT_PAYLD_RDY)
 
+
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

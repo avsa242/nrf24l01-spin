@@ -1,57 +1,69 @@
 {
-    --------------------------------------------
-    Filename: NRF24L01-SimpleRX.spin2
-    Author: Jesse Burt 
-    Description: nRF24L01+ Receive demo
+----------------------------------------------------------------------------------------------------
+    Filename:       NRF24L01-SimpleRX.spin2
+    Description:    nRF24L01+ Receive demo
         * Minimal receive functionality demo code
-    Copyright (c) 2023
-    Started Jan 5, 2023
-    Updated Dec 31, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+    Author:         Jesse Burt
+    Started:        Jan 5, 2023
+    Updated:        Aug 26, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
+#include "core.con.click.spin2"
 
 CON
 
-    _clkfreq    = cfg._clkfreq_def
-    _xtlfreq    = cfg._xtlfreq
+    _clkfreq    = 180_000_000
+    _xtlfreq    = 20_000_000
 
+' -- User-modifiable constants
+    CLICK_BASE  = 0                             ' 0, 16, 32, 48
     PAYLD_LEN   = 8
+' --
+
 
 OBJ
 
-    cfg:    "boardcfg.p2eval"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
-    nrf24:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
+
+    { use with MikroE Click boards - define the CLICK_BASE I/O pin above and leave these as-is }
+    radio:  "wireless.transceiver.nrf24l01" | CE=RES_PIN, CS=CS_PIN, SCK=SCK_PIN, MOSI=MOSI_PIN, MISO=MISO_PIN, SPI_FREQ=10_000_000
+
+    { use custom I/O pins; comment out the line above and uncomment this one }
+'    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
+
 
 VAR
 
     byte _payload[PAYLD_LEN]
 
+
 PUB main()
 
     ser.start()
-    ifnot ( nrf24.start() )
+
+    ifnot ( radio.start() )
         ser.strln(@"NRF24L01 driver failed to start")
         { double-check I/O pins if the driver doesn't start }
         repeat
 
-    nrf24.preset_rx2m()                         ' set up for defaults, 2Mbps speed
-    nrf24.payld_len(PAYLD_LEN)                  ' expect to receive PAYLD_LEN number of bytes
+    radio.preset_rx2m()                         ' set up for defaults, 2Mbps speed
+    radio.payld_len(PAYLD_LEN)                  ' expect to receive PAYLD_LEN number of bytes
 
     ser.clear()
 
     repeat
-        repeat until nrf24.payld_rdy()
-        nrf24.rx_payld(PAYLD_LEN, @_payload)
+        repeat until radio.payld_rdy()
+        radio.rx_payld(PAYLD_LEN, @_payload)
         ser.printf(@"Received: %s\n\r", @_payload)
 
         { clear interrupt so RX can continue }
-        nrf24.int_clear(nrf24.INT_PAYLD_RDY)
+        radio.int_clear(radio.INT_PAYLD_RDY)
+
 
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

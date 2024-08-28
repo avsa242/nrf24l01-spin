@@ -1,60 +1,61 @@
 {
-    --------------------------------------------
-    Filename: NRF24L01-PacketLoss-RX.spin
-    Author: Jesse Burt 
-    Description: nRF24L01+ Receive demo
+----------------------------------------------------------------------------------------------------
+    Filename:       NRF24L01-PacketLoss-RX.spin
+    Description:    nRF24L01+ Receive demo
         * Packet loss measurement
         Run NRF24L01-PacketLoss-TX.spin on another node, and monitor this node
             for packet loss.
-    Copyright (c) 2023
-    Started Jan 5, 2023
-    Updated Dec 31, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+    Author:         Jesse Burt
+    Started:        Jan 5, 2023
+    Updated:        Aug 26, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
+
 
 CON
 
-    _clkmode    = cfg#_clkmode
-    _xinfreq    = cfg#_xinfreq
+    _clkmode    = xtal1+pll16x
+    _xinfreq    = 5_000_000
 
     PAYLD_LEN   = 2
 
+
 OBJ
 
-    cfg:    "boardcfg.flip"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
     radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
     time:   "time"
 
-PUB main{} | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
+
+PUB main() | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
 
     ser.start()
     time.msleep(30)
     ifnot ( radio.start() )
-        ser.strln(string("NRF24L01 driver failed to start"))
+        ser.strln(@"NRF24L01 driver failed to start")
         { double-check I/O pins if the driver doesn't start }
         repeat
 
-    radio.preset_rx2m{}                         ' set up for defaults, 2Mbps speed
+    radio.preset_rx2m()                         ' set up for defaults, 2Mbps speed
     radio.payld_len(PAYLD_LEN)                  ' expect to receive PAYLD_LEN number of bytes
 
-    ser.clear{}
+    ser.clear()
 
     pkts_lost := 0
     rxcnt := prev_cnt := 0
 
     repeat
         ser.pos_xy(0, 0)
-        ser.printf2(string("Packets received: %5.5d    lost: %5.5d"), rxcnt, pkts_lost)
+        ser.printf2(@"Packets received: %5.5d    lost: %5.5d", rxcnt, pkts_lost)
 
-        repeat until radio.payld_rdy{}
+        repeat until radio.payld_rdy()
         radio.rx_payld(PAYLD_LEN, @pkt_cnt)
         rxcnt++
 
         { if the serial number of this packet is less than the previous one,
             assume the transmitter restarted, and reset the counters }
-        if (pkt_cnt < prev_cnt)
+        if ( pkt_cnt < prev_cnt )
             prev_cnt := pkt_cnt
             pkts_lost := 0
             rxcnt := 0
@@ -63,15 +64,16 @@ PUB main{} | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
             we know we missed one or more packets }
         diff := (pkt_cnt-prev_cnt)
         prev_cnt := pkt_cnt
-        if (diff > 1)
+        if ( diff > 1 )
             pkts_lost := (pkts_lost + diff)
 
         { clear interrupt so RX can continue }
-        radio.int_clear(radio#INT_PAYLD_RDY)
+        radio.int_clear(radio.INT_PAYLD_RDY)
+
 
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

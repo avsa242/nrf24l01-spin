@@ -1,36 +1,43 @@
 {
-    --------------------------------------------
-    Filename: NRF24L01-TX-Template.spin2
-    Author: 
-    Description: NRF24L01 Transmit code template
+----------------------------------------------------------------------------------------------------
+    Filename:       NRF24L01-TX-Template.spin2
+    Description:    NRF24L01 Transmit code template
         To use: Copy this file into a new file to use as a basis for a nRF24L01+
             transmit application.
-    Copyright (c) YYYY
-    Started MMM DD, YYYY
-    Updated MMM DD, YYYY
-    See end of file for terms of use.
-    --------------------------------------------
+    Author:         ____________
+    Started:        MMM DD, YYYY
+    Updated:        MMM DD, YYYY
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
+#include "core.con.click.spin2"
 
 CON
 
-    _clkfreq    = cfg._clkfreq_def
-    _xtlfreq    = cfg._xtlfreq
+    _clkfreq    = 180_000_000
+    _xtlfreq    = 20_000_000
 
 ' -- User-modifiable constants
+    CLICK_BASE  = 0                             ' 0, 16, 32, 48
     PAYLD_LEN   = 8                             ' 1..32
 ' --
 
+
 OBJ
 
-    cfg:    "boardcfg.p2eval"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
-    nrf24:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
-    str:    "string"
+
+    { use with MikroE Click boards - define the CLICK_BASE I/O pin above and leave these as-is }
+    radio:  "wireless.transceiver.nrf24l01" | CE=RES_PIN, CS=CS_PIN, SCK=SCK_PIN, MOSI=MOSI_PIN, MISO=MISO_PIN, SPI_FREQ=10_000_000
+
+    { use custom I/O pins; comment out the line above and uncomment this one }
+'    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4, SPI_FREQ=10_000_000
+
 
 VAR
 
     byte _payload[PAYLD_LEN]
+
 
 PUB main()
 
@@ -40,17 +47,21 @@ PUB main()
 
     repeat
 
+
 PUB setup()
 
     ser.start()
+
     ser.clear()
-    ifnot ( nrf24.start() )
+
+    ifnot ( radio.start() )
         ser.strln(@"NRF24L01 driver failed to start")
         { double-check I/O pins if the driver doesn't start }
         repeat
 
-    nrf24.preset_tx2m()                         ' set up for defaults, TX, 2Mbps speed
-    nrf24.payld_len(PAYLD_LEN)                  ' expect to receive PAYLD_LEN number of bytes
+    radio.preset_tx2m()                         ' set up for defaults, TX, 2Mbps speed
+    radio.payld_len(PAYLD_LEN)                  ' set data/payload size to PAYLD_LEN number of bytes
+
 
 DAT
 {

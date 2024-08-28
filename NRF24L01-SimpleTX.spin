@@ -1,62 +1,64 @@
 {
-    --------------------------------------------
-    Filename: NRF24L01-SimpleTX.spin
-    Author: Jesse Burt
-    Description: nRF24L01+ Transmit demo
+----------------------------------------------------------------------------------------------------
+    Filename:       NRF24L01-SimpleTX.spin
+    Description:    nRF24L01+ Transmit demo
         * Minimal transmit functionality demo code
-    Copyright (c) 2023
-    Started Jan 5, 2023
-    Updated Dec 31, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+    Author:         Jesse Burt
+    Started:        Jan 5, 2023
+    Updated:        Aug 26, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
 
-    _clkmode    = cfg#_clkmode
-    _xinfreq    = cfg#_xinfreq
+    _clkmode    = xtal1+pll16x
+    _xinfreq    = 5_000_000
 
     PAYLD_LEN   = 8
 
+
 OBJ
 
-    cfg:    "boardcfg.flip"
-    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    nrf24:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
     str:    "string"
     time:   "time"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
+    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
+
 
 VAR
 
     byte _payload[PAYLD_LEN]
 
-PUB main{} | payld_cnt
+
+PUB main() | payld_cnt
 
     ser.start()
     time.msleep(30)
     ser.clear()
-    ifnot ( nrf24.start() )
+    ifnot ( radio.start() )
         ser.strln(@"NRF24L01 driver failed to start")
         repeat
 
-    nrf24.preset_tx2m{}                         ' set up for defaults, 2Mbps speed
-    nrf24.payld_len(PAYLD_LEN)                  ' send PAYLD_LEN number of bytes
+    radio.preset_tx2m()                         ' set up for defaults, 2Mbps speed
+    radio.payld_len(PAYLD_LEN)                  ' send PAYLD_LEN number of bytes
 
-    ser.clear{}
+    ser.clear()
 
     payld_cnt := 0
     repeat
         { payload to transmit }
         str.sprintf1(@_payload, @"TEST%04.4d", payld_cnt++)
-        nrf24.tx_payld(PAYLD_LEN, @_payload)
+        radio.tx_payld(PAYLD_LEN, @_payload)
 
         { clear interrupt so TX can continue }
-        nrf24.int_clear(nrf24.INT_MAX_RETRANS)
+        radio.int_clear(radio.INT_MAX_RETRANS)
         time.msleep(10)
+
 
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
