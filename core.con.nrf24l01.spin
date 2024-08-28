@@ -1,13 +1,12 @@
 {
-    --------------------------------------------
-    Filename: core.con.nrf24l01.spin
-    Author: Jesse Burt
-    Description: nRF24L01+-specific constants
-    Copyright (c) 2021
-    Started Jan 6, 2019
-    Updated Mar 19, 2021
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       core.con.nrf24l01.spin
+    Description:    nRF24L01+-specific constants
+    Author:         Jesse Burt
+    Started:        Jan 6, 2019
+    Updated:        Aug 26, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
@@ -184,12 +183,14 @@ CON
         EN_ACK_PAY_MASK     = (1 << EN_ACK_PAY) ^ FEAT_MASK
         EN_DYN_ACK_MASK     = 1 ^ FEAT_MASK
 
-PUB null{}
-'' This is not a top-level object
+
+PUB null()
+' This is not a top-level object
+
 
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
