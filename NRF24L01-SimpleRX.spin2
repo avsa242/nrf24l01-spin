@@ -17,7 +17,7 @@ CON
     _xtlfreq    = 20_000_000
 
 ' -- User-modifiable constants
-    CLICK_BASE  = 0                             ' 0, 16, 32, 48
+    CLICK_BASE  = 16                             ' 0, 16, 32, 48
     PAYLD_LEN   = 8
 ' --
 
@@ -47,7 +47,7 @@ PUB main()
         { double-check I/O pins if the driver doesn't start }
         repeat
 
-    radio.preset_rx2m()                         ' set up for defaults, 2Mbps speed
+    radio.preset_rx2m_noaa()                         ' set up for defaults, 2Mbps speed
     radio.payld_len(PAYLD_LEN)                  ' expect to receive PAYLD_LEN number of bytes
 
     ser.clear()

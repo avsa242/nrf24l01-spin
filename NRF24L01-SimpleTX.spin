@@ -23,7 +23,7 @@ OBJ
     str:    "string"
     time:   "time"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
+    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=4, MISO=3
 
 
 VAR
@@ -31,7 +31,7 @@ VAR
     byte _payload[PAYLD_LEN]
 
 
-PUB main() | payld_cnt
+PUB main() | payld_cnt, s
 
     ser.start()
     time.msleep(30)
@@ -40,18 +40,26 @@ PUB main() | payld_cnt
         ser.strln(@"NRF24L01 driver failed to start")
         repeat
 
-    radio.preset_tx2m()                         ' set up for defaults, 2Mbps speed
+    radio.preset_tx2m_noaa()                         ' set up for defaults, 2Mbps speed
     radio.payld_len(PAYLD_LEN)                  ' send PAYLD_LEN number of bytes
 
     ser.clear()
 
     payld_cnt := 0
+    radio.int_mask(radio.INT_PAYLD_SENT|radio.INT_MAX_RETRANS)'radio.INT_PAYLD_SENT)
+    radio.int_clear(radio.INT_PAYLD_SENT|radio.INT_MAX_RETRANS)'radio.INT_PAYLD_SENT)
+
+    ser.printf1(@"int=%032.32b\n\r", radio.int_mask())
+'    repeat
+    dira[6] := 0
     repeat
         { payload to transmit }
         str.sprintf1(@_payload, @"TEST%04.4d", payld_cnt++)
         radio.tx_payld(PAYLD_LEN, @_payload)
 
         { clear interrupt so TX can continue }
+        'repeat until radio.payld_sent()
+        repeat until not ina[6]
         radio.int_clear(radio.INT_MAX_RETRANS)
         time.msleep(10)
 
