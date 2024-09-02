@@ -13,8 +13,8 @@
 
 CON
 
-    _xtlfreq    = 180_000_000
-    _clkfreq    = 20_000_000
+    _clkfreq    = 180_000_000
+    _xtlfreq    = 20_000_000
 
 ' -- User-modifiable constants
     CLICK_BASE  = 0                             ' 0, 16, 32, 48
