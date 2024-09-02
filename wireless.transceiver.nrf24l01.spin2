@@ -400,7 +400,9 @@ PUB chip_ena(state)
 '           0: Enter Idle mode
 '           1: Active receive mode
     pinw(_CE, state)
+#ifdef __OUTPUT_ASM__
     waitus(core.THCE)
+#endif
 
 
 PUB crc_check_ena(state=-2): curr_state

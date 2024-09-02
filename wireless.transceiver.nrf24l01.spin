@@ -406,7 +406,7 @@ PUB chip_ena(state)
 '           0: Enter Idle mode
 '           1: Active receive mode
     outa[_CE] := state
-#ifdef __PASM__
+#ifdef __OUTPUT_ASM__
     time.usleep(core.THCE)
 #endif
 
