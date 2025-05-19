@@ -5,8 +5,8 @@
         * Minimal receive functionality demo code
     Author:         Jesse Burt
     Started:        Jan 5, 2023
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        May 19, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -21,7 +21,7 @@ CON
 OBJ
 
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=4, MISO=3
+    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
     time:   "time"
 
 
@@ -47,7 +47,7 @@ PUB main()
     repeat
         repeat until radio.payld_rdy()
         radio.rx_payld(PAYLD_LEN, @_payload)
-        ser.printf1(@"Received: %s\n\r", @_payload)
+        ser.printf(@"Received: %s\n\r", @_payload)
 
         { clear interrupt so RX can continue }
         radio.int_clear(radio.INT_PAYLD_RDY)
@@ -55,7 +55,7 @@ PUB main()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

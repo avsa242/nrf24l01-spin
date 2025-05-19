@@ -5,8 +5,8 @@
         * Minimal transmit functionality demo code
     Author:         Jesse Burt
     Started:        Jan 5, 2023
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        May 19, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 #include "core.con.click.spin2"
@@ -61,12 +61,13 @@ PUB main() | payld_cnt
 
         { clear interrupt so TX can continue }
         radio.int_clear(radio.INT_MAX_RETRANS)
+        ser.printf(@"sent %s\n\r", @_payload)
         waitms(10)
 
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
