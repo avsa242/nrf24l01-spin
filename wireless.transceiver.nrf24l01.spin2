@@ -4,8 +4,8 @@
     Description:    Driver for Nordic Semi. nRF24L01+
     Author:         Jesse Burt
     Started:        Jan 6, 2019
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Jun 2, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -529,7 +529,7 @@ PUB idle()
     pinl(_CE)
 
 
-PUB int_clear(mask)
+PUB int_clear(mask): s
 ' Clear interrupts
 '   Valid values: [bits 2..0] (clamped to valid bits only)
 '       Bit:    Interrupt:
@@ -708,7 +708,7 @@ PUB rssi(): level
         return -255
 
 
-PUB rx_addr(ptr_buff, pipe=0, rw=0) ' kept for legacy compatibility
+PUB rx_addr(ptr_buff, pipe=0, rw=0): s ' kept for legacy compatibility
 ' Set receive address of pipe number 'pipe' from buffer at address ptr_buff
 '   Valid values:
 '       ptr_buff:
@@ -816,7 +816,7 @@ PUB set_pipe_nr(pipe_nr)
     _pipe_nr := 0 #> pipe_nr <# 5
 
 
-PUB set_syncwd(ptr_syncwd) | addr_w
+PUB set_syncwd(ptr_syncwd): s | addr_w
 ' Set syncword
 '   ptr_syncwd: pointer to syncword bytes
 '   NOTE: The length of the syncword written depends on the current pipe number set by
@@ -879,7 +879,7 @@ PUB test_cw(state=-2): curr_state
             return (((curr_state >> core.CONT_WAVE) & 1) == 1)
 
 
-PUB tx_addr(ptr_addr, rw=0)
+PUB tx_addr(ptr_addr, rw=0): s
 ' Set transmit address
 '   Valid values:
 '       ptr_addr:
@@ -1006,7 +1006,7 @@ PRI readreg(reg_nr, nr_bytes=1, p_buff=0): v | tmp
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
