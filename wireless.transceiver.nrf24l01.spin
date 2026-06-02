@@ -410,9 +410,9 @@ PUB crc_check_ena(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Forced on if any data pipe is using auto-acknowledgement
     curr_state := readreg(core.CFG)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.EN_CRC
+            state := abs(state) << core.EN_CRC
             state := ((curr_state & core.EN_CRC_MASK) | state)
             return writereg(core.CFG, 1, state)
         other:
@@ -482,9 +482,9 @@ PUB dyn_ack_ena(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: To tell the remote RX node not to acknowledge a packet, call dont_ack_next()
     curr_state := readreg(core.FEAT)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.EN_DYN_ACK
+            state := abs(state) << core.EN_DYN_ACK
             state := ((curr_state & core.EN_DYN_ACK_MASK) | state)
             return writereg(core.FEAT, 1, state)
         other:
@@ -610,9 +610,9 @@ PUB payld_in_ack_ena(state=-2): curr_state
 '       >5 bytes             +  1_000_000
 '       any                  +  250_000
     curr_state := readreg(core.FEAT)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.EN_ACK_PAY
+            state := abs(state) << core.EN_ACK_PAY
             state := ((curr_state & core.EN_ACK_PAY_MASK) | state)
             return writereg(core.FEAT, 1, state)
         other:
@@ -641,9 +641,9 @@ PUB payld_len_cfg(mode=-2): curr_mode
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Must be PKTLEN_VAR to use the dyn_payld_len_ena() method.
     curr_mode := readreg(core.FEAT)
-    case ||(mode)
+    case abs(mode)
         0, 1:
-            mode := ||(mode) << core.EN_DPL
+            mode := abs(mode) << core.EN_DPL
             mode := ((curr_mode & core.EN_DPL_MASK) | mode)
             return writereg(core.FEAT, 1, mode)
         other:
@@ -678,9 +678,9 @@ PUB pll_lock(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0) (default: FALSE)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.RF_SETUP)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.PLL_LOCK
+            state := abs(state) << core.PLL_LOCK
             state := ((curr_state & core.PLL_LOCK_MASK) | state)
             return writereg(core.RF_SETUP, 1, state)
         other:
@@ -692,9 +692,9 @@ PUB powered(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0) (default: FALSE)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.CFG)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.PWR_UP
+            state := abs(state) << core.PWR_UP
             state := ((curr_state & core.PWR_UP_MASK) | state)
             return writereg(core.CFG, 1, state)
         other:
@@ -706,7 +706,7 @@ PUB rssi(): level
 '   Returns:
 '       -64: Carrier detected
 '       -255 No carrier
-    if ( ||(carrier_detected()) )
+    if ( abs(carrier_detected()) )
         return -64
     else
         return -255
@@ -874,9 +874,9 @@ PUB test_cw(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0) (default: FALSE)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.RF_SETUP)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.CONT_WAVE
+            state := abs(state) << core.CONT_WAVE
             state := ((curr_state & core.CONT_WAVE_MASK) | state)
             return writereg(core.RF_SETUP, 1, state)
         other:

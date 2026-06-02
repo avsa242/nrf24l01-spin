@@ -7,8 +7,8 @@
             for packet loss.
     Author:         Jesse Burt
     Started:        Jan 5, 2023
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Jun 2, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -47,7 +47,7 @@ PUB main() | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
 
     repeat
         ser.pos_xy(0, 0)
-        ser.printf2(@"Packets received: %5.5d    lost: %5.5d", rxcnt, pkts_lost)
+        ser.printf(@"Packets received: %5.5d    lost: %5.5d", rxcnt, pkts_lost)
 
         repeat until radio.payld_rdy()
         radio.rx_payld(PAYLD_LEN, @pkt_cnt)
@@ -73,7 +73,7 @@ PUB main() | rxcnt, pkt_cnt, prev_cnt, diff, pkts_lost
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

@@ -5,8 +5,8 @@
         * Will display data from all 6 data pipes
     Author:         Jesse Burt
     Started:        Nov 23, 2019
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Jun 2, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -64,7 +64,7 @@ PUB main() | payld_cnt, recv_pipe, pipe_nr
 
     ser.clear()
     ser.pos_xy(0, 0)
-    ser.printf1(@"Receive mode (channel %d)\n\r", radio.channel())
+    ser.printf(@"Receive mode (channel %d)\n\r", radio.channel())
     ser.strln(@"Listening for transmitters...")
 
     payld_cnt := 0
@@ -73,7 +73,7 @@ PUB main() | payld_cnt, recv_pipe, pipe_nr
         bytefill(@_payload, 0, 32)
         repeat
             ser.pos_xy(0, 3)
-            ser.printf1(@"Payloads received: %d ", payld_cnt)
+            ser.printf(@"Payloads received: %d ", payld_cnt)
         until radio.payld_rdy()
 
         { check which pipe the data was received in and retrieve the payload into local buffer }
@@ -84,8 +84,8 @@ PUB main() | payld_cnt, recv_pipe, pipe_nr
 
         { display payload received through each pipe number on a separate line }
         ser.pos_xy(0, 5 + (recv_pipe * 4))
-        ser.printf1(@"Received packet on pipe %d ", recv_pipe)
-        ser.printf5(@"(%02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r",_syncwd[4], ...
+        ser.printf(@"Received packet on pipe %d ", recv_pipe)
+        ser.printf(@"(%02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r",_syncwd[4], ...
                                                                 _syncwd[3], ...
                                                                 _syncwd[2], ...
                                                                 _syncwd[1], ...
@@ -109,7 +109,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

@@ -5,8 +5,8 @@
         * RX Mode
     Author:         Jesse Burt
     Started:        Apr 30, 2020
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Jun 2, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 CON
@@ -103,7 +103,7 @@ PRI report(testtime, iterations) | rate_iterations, rate_bytes, rate_kbits
     rate_bytes := (iterations * PKTLEN) / (testtime/1000)   ' # bytes/sec
     rate_kbits := (rate_bytes * 8) / 1024                   ' # kbits/sec
 
-    ser.printf4(@"Total iterations: %d, iterations/sec: %d, Bps: %d (%dkbps)",  iterations, ...
+    ser.printf(@"Total iterations: %d, iterations/sec: %d, Bps: %d (%dkbps)",   iterations, ...
                                                                                 rate_iterations, ...
                                                                                 rate_bytes, ...
                                                                                 rate_kbits)

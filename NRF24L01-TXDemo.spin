@@ -4,8 +4,8 @@
     Description:    nRF24L01+ Transmit demo
     Author:         Jesse Burt
     Started:        Nov 23, 2019
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Jun 2, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -66,7 +66,7 @@ PUB main() | payld_cnt, max_retrans, pkts_retrans, lost_pkts
 
     ser.clear()
     ser.pos_xy(0, 0)
-    ser.printf1(@"Transmit mode (channel %d)\n\r", radio.channel())
+    ser.printf(@"Transmit mode (channel %d)\n\r", radio.channel())
 
     repeat
         { payload to transmit }
@@ -78,13 +78,13 @@ PUB main() | payld_cnt, max_retrans, pkts_retrans, lost_pkts
         lost_pkts := radio.lost_pkts()
         ser.pos_xy(0, 2)
         ser.str(@"Max retransmissions reached? ")
-        ser.strln(lookupz(||(max_retrans): @"No ", @"Yes"))
-        ser.printf1(@"Packets retransmitted: %2.2d\n\r", pkts_retrans)
-        ser.printf1(@"Lost packets: %2.2d\n\r", lost_pkts)
+        ser.strln(lookupz(abs(max_retrans): @"No ", @"Yes"))
+        ser.printf(@"Packets retransmitted: %2.2d\n\r", pkts_retrans)
+        ser.printf(@"Lost packets: %2.2d\n\r", lost_pkts)
 
         { display payload and transmit it }
         ser.pos_xy(0, 6)
-        ser.printf5(@"Transmitting packet (to %02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r", ...
+        ser.printf(@"Transmitting packet (to %02.2x:%02.2x:%02.2x:%02.2x:%02.2x)\n\r", ...
                         _syncwd[4], _syncwd[3], _syncwd[2], _syncwd[1], _syncwd[0])
         ser.hexdump(@_payload, 0, 4, _payld_len, 16 <# _payld_len)
         radio.tx_payld(_payld_len, @_payload)
@@ -114,7 +114,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
