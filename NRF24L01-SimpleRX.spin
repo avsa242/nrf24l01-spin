@@ -5,8 +5,8 @@
         * Minimal receive functionality demo code
     Author:         Jesse Burt
     Started:        Jan 5, 2023
-    Updated:        May 19, 2025
-    Copyright (c) 2025 - See end of file for terms of use.
+    Updated:        Sep 10, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -16,12 +16,13 @@ CON
     _xinfreq    = 5_000_000
 
     PAYLD_LEN   = 8
+    NRF_INT_PIN = 14
 
 
 OBJ
 
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
+    radio:  "wireless.transceiver.nrf24l01" | CE=1, CS=2, SCK=3, MOSI=4, MISO=5
     time:   "time"
 
 
@@ -41,21 +42,37 @@ PUB main()
 
     radio.preset_rx2m()                         ' set up for defaults, 2Mbps speed
     radio.payld_len(PAYLD_LEN)                  ' expect to receive PAYLD_LEN number of bytes
-
+    radio.int_mask(radio.INT_PAYLD_RDY)         ' assert interrupt when payload is received
     ser.clear()
 
+'{  ' Register polling method
     repeat
-        repeat until radio.payld_rdy()
+        repeat
+        until radio.payld_rdy()
         radio.rx_payld(PAYLD_LEN, @_payload)
         ser.printf(@"Received: %s\n\r", @_payload)
 
-        { clear interrupt so RX can continue }
+        ' clear interrupt so RX can continue
         radio.int_clear(radio.INT_PAYLD_RDY)
+'}
+
+{   ' Interrupt pin polling method
+    dira[NRF_INT_PIN] := 0                      ' interrupt pin: input
+    radio.int_mask(radio.INT_PAYLD_RDY)         ' assert interrupt when payload is received
+    repeat
+        repeat
+        until ina[NRF_INT_PIN] == 0             ' wait for nRF24 interrupt (active low)
+        radio.rx_payld(PAYLD_LEN, @_payload)
+        ser.printf(@"Received: %s\n\r", @_payload)
+
+        ' clear interrupt so RX can continue
+        radio.int_clear(radio.INT_PAYLD_RDY)
+}
 
 
 DAT
 {
-Copyright 2025 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
