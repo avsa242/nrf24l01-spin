@@ -5,8 +5,8 @@
         * TX Mode
     Author:         Jesse Burt
     Started:        Apr 30, 2020
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Sep 11, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -27,7 +27,7 @@ OBJ
 
     time:   "time"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    radio:  "wireless.transceiver.nrf24l01" | CE=0, CS=1, SCK=2, MOSI=3, MISO=4
+    radio:  "wireless.transceiver.nrf24l01" | CE=1, CS=2, SCK=3, MOSI=4, MISO=5
 
 
 VAR
@@ -40,6 +40,7 @@ PUB main() | i
 
     setup()
 
+    cognew(cog_report(), @_report_stack)
     bytemove(@_syncwd, string($E7, $E7, $E7, $E7, $E7), 5)
     radio.set_syncwd(@_syncwd)                  ' set syncword
 
@@ -74,9 +75,23 @@ PUB main() | i
             if (radio.max_retrans_reached())    ' is enabled...
                 radio.int_clear(%001)
             radio.tx_payld(PKTLEN, @_txdata)
+            _pkts++
     else                                        ' ...or not
         repeat
             radio.tx_payld(PKTLEN, @_txdata)
+
+
+var long _report_stack[100], _pkts
+pub cog_report() | t
+
+    t := cnt
+    repeat
+        if ( abs(cnt-t) > clkfreq )
+            ser.pos_xy(0, 5)
+            ser.printf(@"pkts/sec: %5.5d", _pkts)
+            _pkts := 0
+            t := cnt
+
 
 
 PUB setup()
@@ -95,7 +110,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

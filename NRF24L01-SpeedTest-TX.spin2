@@ -5,8 +5,8 @@
         * TX Mode
     Author:         Jesse Burt
     Started:        Apr 30, 2020
-    Updated:        Aug 26, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Sep 11, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 #include "core.con.click.spin2"
@@ -17,7 +17,7 @@ CON
     _xtlfreq    = 20_000_000
 
 ' -- User-modifiable constants
-    CLICK_BASE  = 0                             ' 0, 16, 32, 48
+    CLICK_BASE  = 16                             ' 0, 16, 32, 48
     PKTLEN      = 32                            ' 1..32 (bytes)
     CHANNEL     = 2                             ' 0..125 (2.400..2.525GHz)
 ' --
@@ -46,6 +46,7 @@ PUB main() | i
 
     setup()
 
+    cogspin(NEWCOG, cog_report(), @_report_stack)
     bytemove(@_syncwd, string($E7, $E7, $E7, $E7, $E7), 5)
     radio.set_syncwd(@_syncwd)                  ' set syncword
 
@@ -80,9 +81,22 @@ PUB main() | i
             if (radio.max_retrans_reached())    ' is enabled...
                 radio.int_clear(%001)
             radio.tx_payld(PKTLEN, @_txdata)
+            _pkts++
     else                                        ' ...or not
         repeat
             radio.tx_payld(PKTLEN, @_txdata)
+
+
+var long _report_stack[100], _pkts
+pub cog_report() | t
+
+    t := getms()
+    repeat
+        if ( (getms()-t) > 1_000 )
+            ser.pos_xy(0, 5)
+            ser.printf(@"pkts/sec: %5.5d", _pkts)
+            _pkts := 0
+            t := getms()
 
 
 PUB setup()
@@ -100,7 +114,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
